@@ -27,7 +27,7 @@ interface AppState {
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
   joinHousehold: (inviteCode: string) => Promise<void>;
   // Wallets
-  addWallet: (name: string, type: Wallet['type'], balance: number) => Promise<void>;
+  addWallet: (name: string, type: Wallet['type'], balance: number) => Promise<Wallet>;
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
@@ -93,47 +93,114 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
-      const currentProfile: Profile = prof ?? {
-        id: userId,
-        email,
-        full_name: email.split('@')[0] ?? 'User',
-        role: 'single',
-        avatar_url: null,
-        household_id: null,
-        created_at: new Date().toISOString(),
-      };
+      let currentProfile: Profile;
+      if (!prof) {
+        // No profile row in DB yet — insert one as the user is authenticated.
+        const newProfile: Profile = {
+          id: userId,
+          email,
+          full_name: email.split('@')[0] ?? 'User',
+          role: 'single',
+          avatar_url: null,
+          household_id: null,
+          created_at: new Date().toISOString(),
+        };
+        const { error: insertErr } = await supabase.from('profiles').insert(newProfile);
+        if (insertErr) {
+          throw insertErr;
+        }
+        currentProfile = newProfile;
+      } else {
+        currentProfile = prof as Profile;
+      }
       setProfile(currentProfile);
 
-      if (currentProfile.household_id) {
-        // Load household
+      let householdId = currentProfile.household_id;
+      let householdData: Household | null = null;
+
+      if (householdId) {
         const { data: hh } = await supabase
           .from('households')
           .select('*')
-          .eq('id', currentProfile.household_id)
+          .eq('id', householdId)
           .maybeSingle();
-        setHousehold(hh as Household | null);
-
-        // Load wallets
-        const { data: w } = await supabase
-          .from('wallets')
-          .select('*')
-          .eq('household_id', currentProfile.household_id);
-        setWallets((w as Wallet[]) ?? []);
-
-        // Load transactions
-        const { data: tx } = await supabase
-          .from('transactions')
-          .select('*')
-          .order('created_at', { ascending: false });
-        setTransactions((tx as Transaction[]) ?? []);
-
-        // Load budgets
-        const { data: bg } = await supabase
-          .from('budgets')
-          .select('*')
-          .eq('household_id', currentProfile.household_id);
-        setBudgets((bg as Budget[]) ?? []);
+        householdData = hh as Household | null;
       }
+
+      if (!householdData) {
+        // Only automatically create a personal household for brand-new users.
+        // This avoids creating a new household repeatedly on reload if the
+        // user's profile somehow lacks `household_id` temporarily.
+        const justRegistered = typeof window !== 'undefined' && localStorage.getItem('duitbersama_just_registered') === 'true';
+        if (!justRegistered) {
+          // Don't auto-create here; leave household null and empty collections.
+          setHousehold(null);
+          setWallets([]);
+          setTransactions([]);
+          setBudgets([]);
+          return;
+        }
+
+        // Automatically create a personal household for first-time users.
+        const inviteCode = generateInviteCode();
+        const newHousehold: Household = {
+          id: crypto.randomUUID(),
+          name: 'My Personal Finance',
+          invite_code: inviteCode,
+          mode: 'single',
+          partner_name: null,
+          created_at: new Date().toISOString(),
+        };
+
+        const { error: hhError } = await supabase.from('households').insert({
+          id: newHousehold.id,
+          name: newHousehold.name,
+          invite_code: newHousehold.invite_code,
+          mode: newHousehold.mode,
+          partner_name: newHousehold.partner_name,
+        });
+        if (hhError) throw hhError;
+
+        const { error: profileError } = await supabase.from('profiles').update({
+          household_id: newHousehold.id,
+          role: 'single',
+        }).eq('id', currentProfile.id);
+        if (profileError) throw profileError;
+
+        // Clear the registration flag so we don't re-create on future reloads
+        try { localStorage.removeItem('duitbersama_just_registered'); } catch {}
+
+        setHousehold(newHousehold);
+        setProfile({ ...currentProfile, household_id: newHousehold.id, role: 'single' });
+        setWallets([]);
+        setTransactions([]);
+        setBudgets([]);
+        return;
+      }
+
+      setHousehold(householdData);
+      householdId = householdData.id;
+
+      // Load wallets
+      const { data: w } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('household_id', householdId);
+      setWallets((w as Wallet[]) ?? []);
+
+      // Load transactions
+      const { data: tx } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setTransactions((tx as Transaction[]) ?? []);
+
+      // Load budgets
+      const { data: bg } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('household_id', householdId);
+      setBudgets((bg as Budget[]) ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -178,17 +245,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
       if (signUpError) throw signUpError;
-      if (data.user) {
-        // Create profile
+
+      const user = data.user;
+      const session = data.session;
+
+      // Insert profile record even when email confirmation is required.
+      if (user) {
         await supabase.from('profiles').insert({
-          id: data.user.id,
+          id: user.id,
           email,
           full_name: fullName,
           role: 'single',
         });
+      }
+
+      // Mark that this is a fresh registration so household creation can
+      // run once after the user completes email confirmation and signs in.
+      try { localStorage.setItem('duitbersama_just_registered', 'true'); } catch {}
+
+      if (session && user) {
         setAppMode('live');
         setIsDemo(false);
-        await loadLiveData(data.user.id, email);
+        await loadLiveData(user.id, email);
+      } else {
+        // No session returned (common when email confirmation is required).
+        setError('Registration successful — please confirm your email before signing in. Check your inbox.');
+        return;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
@@ -204,9 +286,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (mode === 'live') {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        // If signOut failed, still try to clear client-side storage below.
+        console.warn('supabase signOut error:', error.message ?? error);
+      }
     }
     localStorage.removeItem('duitbersama_session');
+    // Remove Supabase/Gotrue-related tokens from localStorage to fully clear session
+    try {
+      for (const key of Object.keys(localStorage)) {
+        const k = String(key);
+        if (k.includes('supabase') || k.includes('gotrue') || k.startsWith('sb:') || k.includes('@supabase')) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch {}
+
+    // Clear auth-related cookies (best-effort).
+    try {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      for (const c of cookies) {
+        const [name] = c.split('=');
+        if (/supabase|sb-|sb:|gotrue|access_token/i.test(name)) {
+          document.cookie = `${name}=; Max-Age=0; path=/;`; 
+          document.cookie = `${name}=; Max-Age=0; path=/; domain=${location.hostname};`;
+        }
+      }
+    } catch {}
     setAppMode('demo');
     setIsDemo(false);
     setProfile(null);
@@ -224,35 +331,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const code = generateInviteCode();
     const newHousehold: Household = {
       id: crypto.randomUUID(),
-      name: hhMode === 'couple' ? `${profile?.full_name ?? 'Me'} & ${partnerName ?? 'Partner'}` : 'My Personal Finance',
+      name: hhMode === 'couple'
+        ? `${profile?.full_name ?? 'Me'}${partnerName ? ` & ${partnerName}` : ''}`
+        : 'My Personal Finance',
       invite_code: code,
       mode: hhMode,
-      partner_name: hhMode === 'couple' ? partnerName : null,
+      partner_name: partnerName || null,
       created_at: new Date().toISOString(),
     };
 
     if (mode === 'live' && profile) {
-      const { data, error: hhError } = await supabase
-        .from('households')
-        .insert({
-          name: newHousehold.name,
-          invite_code: code,
-          mode: hhMode,
-          partner_name: partnerName ?? null,
-        })
-        .select()
-        .single();
-      if (hhError) throw hhError;
-      const created = data as Household;
-      await supabase.from('profiles').update({ household_id: created.id, role: hhMode === 'couple' ? 'suami' : 'single' }).eq('id', profile.id);
-      setHousehold(created);
-      setProfile({ ...profile, household_id: created.id, role: hhMode === 'couple' ? 'suami' : 'single' });
-      return created.invite_code;
+      const householdInsert = await supabase.from('households').insert({
+        id: newHousehold.id,
+        name: newHousehold.name,
+        invite_code: code,
+        mode: hhMode,
+        partner_name: partnerName ?? null,
+      });
+      if (householdInsert.error) throw householdInsert.error;
+
+      await supabase.from('profiles').update({ household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' }).eq('id', profile.id);
+
+      setHousehold(newHousehold);
+      setProfile({ ...profile, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' });
+      setWallets([]);
+      return newHousehold.invite_code;
     }
 
     // Demo mode
     setHousehold(newHousehold);
     setProfile(prev => prev ? { ...prev, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' } : prev);
+    setWallets([]);
     return code;
   }, [mode, profile]);
 
@@ -275,10 +384,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [mode, profile]);
 
   const addWallet = useCallback(async (name: string, type: Wallet['type'], balance: number) => {
-    if (!household) return;
+    let hh = household;
+
+    // If user has no household (single-user case), create a personal household
+    // so DB constraints (wallets.household_id NOT NULL) are satisfied.
+    if (!hh) {
+      const newHousehold: Household = {
+        id: crypto.randomUUID(),
+        name: 'My Personal Finance',
+        invite_code: generateInviteCode(),
+        mode: 'single',
+        partner_name: null,
+        created_at: new Date().toISOString(),
+      };
+
+      if (mode === 'live' && profile) {
+        const { error: hhErr } = await supabase.from('households').insert({
+          id: newHousehold.id,
+          name: newHousehold.name,
+          invite_code: newHousehold.invite_code,
+          mode: newHousehold.mode,
+          partner_name: newHousehold.partner_name,
+        });
+        if (hhErr) throw hhErr;
+
+        const { error: profileError } = await supabase.from('profiles').update({ household_id: newHousehold.id, role: 'single' }).eq('id', profile.id);
+        if (profileError) throw profileError;
+
+        hh = newHousehold;
+        setHousehold(newHousehold);
+        setProfile({ ...profile, household_id: newHousehold.id, role: 'single' });
+      } else {
+        // Demo: create locally
+        setHousehold(newHousehold);
+        setProfile(prev => prev ? { ...prev, household_id: newHousehold.id, role: 'single' } : prev);
+        hh = newHousehold;
+      }
+    }
+
     const newWallet: Wallet = {
       id: crypto.randomUUID(),
-      household_id: household.id,
+      household_id: hh.id,
       name,
       type,
       balance,
@@ -288,17 +434,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (mode === 'live') {
       const { data, error } = await supabase.from('wallets').insert({
-        household_id: household.id,
+        household_id: hh.id,
         name,
         type,
         balance,
       }).select().single();
       if (error) throw error;
-      setWallets(prev => [...prev, data as Wallet]);
+      const inserted = (data as Wallet) ?? newWallet;
+      setWallets(prev => [...prev, inserted]);
+      return inserted;
     } else {
       setWallets(prev => [...prev, newWallet]);
+      return newWallet;
     }
-  }, [household, mode]);
+  }, [household, mode, profile]);
 
   const updateWallet = useCallback(async (id: string, updates: Partial<Wallet>) => {
     if (mode === 'live') {

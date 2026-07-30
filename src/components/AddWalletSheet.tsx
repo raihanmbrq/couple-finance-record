@@ -35,13 +35,15 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
     setError('');
     setLoading(true);
     try {
-      await addWallet(name.trim(), type, parseIDRInput(balance));
+      const inserted = await addWallet(name.trim(), type, parseIDRInput(balance));
       setName('');
       setBalance('');
       setType('cash');
       onClose();
-    } catch {
-      setError('Failed to add wallet');
+      console.debug('Inserted wallet', inserted);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      setError(msg || 'Failed to add wallet');
     } finally {
       setLoading(false);
     }

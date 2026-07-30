@@ -3,7 +3,7 @@ import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { QRCodeSVG } from 'qrcode.react';
-import { User, Users, Plus, LogIn, Copy, Check, QrCode, ScanLine, ArrowLeft, Home, Sparkles } from 'lucide-react';
+import { User, Users, Plus, LogIn, Copy, Check, ArrowLeft, Home, Sparkles } from 'lucide-react';
 
 type Step = 'decision' | 'create' | 'join' | 'created';
 
@@ -18,10 +18,6 @@ export function OnboardingScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
-    if (!partnerName.trim()) {
-      setError('Please enter your partner\'s name');
-      return;
-    }
     setError('');
     setLoading(true);
     try {
@@ -88,11 +84,18 @@ export function OnboardingScreen() {
         {step === 'decision' && (
           <div className="space-y-4 animate-fade-in">
             {/* Single Mode */}
+            {error && step === 'decision' && <p className="text-sm text-red-500 mb-2">{error}</p>}
             <button
               onClick={async () => {
+                setError('');
                 setLoading(true);
-                await createHousehold('single');
-                setLoading(false);
+                try {
+                  await createHousehold('single');
+                } catch {
+                  setError('Failed to set up. Please try again.');
+                } finally {
+                  setLoading(false);
+                }
               }}
               disabled={loading}
               className="w-full text-left card-elevated p-5 hover:shadow-card active:scale-[0.98] transition-all duration-150"
@@ -180,10 +183,6 @@ export function OnboardingScreen() {
               className="text-center text-2xl font-bold tracking-widest"
               autoFocus
             />
-            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-stone-300 text-stone-500 font-medium hover:bg-cream-50 transition-colors">
-              <ScanLine className="w-5 h-5" />
-              Scan QR Code
-            </button>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button fullWidth onClick={handleJoin} disabled={loading}>
               {loading ? 'Joining...' : 'Join Household'}

@@ -4,6 +4,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CATEGORIES, type TransactionType, type WalletType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
@@ -23,12 +24,19 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAddWallet, setShowAddWallet] = useState(false);
 
   useEffect(() => {
     if (open && wallets.length > 0 && !walletId) {
       setWalletId(wallets[0].id);
     }
   }, [open, wallets, walletId]);
+
+  useEffect(() => {
+    if (wallets.length > 0 && !walletId) {
+      setWalletId(wallets[0].id);
+    }
+  }, [wallets, walletId]);
 
   const reset = () => {
     setType('expense');
@@ -106,11 +114,21 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
 
         {/* Wallet Selection */}
         <div>
-          <label className="block text-sm font-medium text-stone-600 mb-2">Wallet</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-stone-600">Wallet</label>
+            <button
+              type="button"
+              onClick={() => setShowAddWallet(true)}
+              className="text-sm font-semibold text-teal-700 hover:text-teal-800"
+            >
+              + Add wallet
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             {wallets.map((w) => (
               <button
                 key={w.id}
+                type="button"
                 onClick={() => setWalletId(w.id)}
                 className={`p-3 rounded-xl text-left transition-all border-2 ${
                   walletId === w.id ? 'border-teal-500 bg-teal-50' : 'border-stone-200 bg-cream-50'
@@ -121,6 +139,9 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
               </button>
             ))}
           </div>
+          {wallets.length === 0 && (
+            <p className="text-sm text-stone-500 mt-2">No wallets yet. Add one to start tracking transactions.</p>
+          )}
         </div>
 
         {/* Category */}
@@ -170,6 +191,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
           {loading ? 'Saving...' : 'Save Transaction'}
         </Button>
       </div>
+      <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
     </Sheet>
   );
 }
