@@ -9,6 +9,7 @@ import { CATEGORIES, type TransactionType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
+import { useToast } from '@/context/ToastContext';
 
 interface AddTransactionSheetProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface AddTransactionSheetProps {
 
 export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps) {
   const { wallets, profile, addTransaction } = useApp();
+  const { showToast } = useToast();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [walletId, setWalletId] = useState('');
@@ -72,6 +74,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
       });
       reset();
       onClose();
+      showToast('Transaksi berhasil ditambahkan');
     } catch {
       setError('Failed to save transaction');
     } finally {

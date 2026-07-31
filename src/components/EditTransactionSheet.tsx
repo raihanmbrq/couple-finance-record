@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CATEGORIES, type Transaction, type TransactionType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
-import { ArrowDownCircle, ArrowUpCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Trash2 } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
+import { useToast } from '@/context/ToastContext';
 
 interface EditTransactionSheetProps {
   open: boolean;
@@ -17,7 +18,8 @@ interface EditTransactionSheetProps {
 }
 
 export function EditTransactionSheet({ open, transaction, onClose }: EditTransactionSheetProps) {
-  const { wallets, profile, updateTransaction } = useApp();
+  const { wallets, profile, updateTransaction, deleteTransaction } = useApp();
+  const { showToast } = useToast();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [walletId, setWalletId] = useState('');
@@ -26,8 +28,8 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [showAddWallet, setShowAddWallet] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const selectedWallet = useMemo(() => wallets.find(w => w.id === walletId), [wallets, walletId]);
 
@@ -40,7 +42,6 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
     setNotes(transaction.notes ?? '');
     setTransactionDate(transaction.transaction_date.slice(0, 10));
     setError('');
-    setNotice('');
   }, [open, transaction]);
 
   useEffect(() => {
@@ -48,6 +49,20 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
       setWalletId(wallets[0].id);
     }
   }, [walletId, wallets]);
+
+  const handleDelete = async () => {
+    if (!transaction) return;
+    setLoading(true);
+    try {
+      await deleteTransaction(transaction.id);
+      onClose();
+      showToast('Transaksi berhasil dihapus');
+    } catch {
+      setError('Failed to delete transaction');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!transaction) return;
@@ -74,7 +89,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
         spent_by: profile?.full_name ?? transaction.spent_by,
         transaction_date: `${transactionDate}T12:00:00.000Z`,
       });
-      setNotice('Transaction updated successfully');
+      showToast('Transaksi berhasil diupdate');
       window.setTimeout(() => {
         onClose();
       }, 500);
@@ -88,13 +103,6 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
   return (
     <Sheet open={open} onClose={onClose} title="Edit Transaction">
       <div className="space-y-5">
-        {notice && (
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">
-            <CheckCircle2 className="w-4 h-4" />
-            {notice}
-          </div>
-        )}
-
         <div className="flex gap-2">
           <button
             type="button"
@@ -210,6 +218,46 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
         <Button fullWidth onClick={handleSubmit} disabled={loading}>
           {loading ? 'Updating...' : 'Update Transaction'}
         </Button>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-red-600 bg-red-50 border-2 border-red-200 hover:bg-red-100 transition-all disabled:opacity-50"
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete Transaction
+        </button>
+
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <h2 className="text-lg font-bold text-stone-800">Hapus Transaksi?</h2>
+                <p className="text-sm text-stone-500">Tindakan ini tidak dapat dibatalkan.</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteConfirm(false); handleDelete(); }}
+                  disabled={loading}
+                  className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+                >
+                  {loading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
     </Sheet>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@/context/AppContext';
+import { ToastProvider } from '@/context/ToastContext';
+import { Toaster } from '@/components/ui/Toaster';
 import { AppShell, type TabKey } from '@/components/AppShell';
 import { TopBar } from '@/components/TopBar';
 import { LoginScreen } from '@/screens/LoginScreen';
@@ -36,8 +38,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ToastProvider>
+      <AppProvider>
+        <AppContent />
+        <Toaster />
+      </AppProvider>
+    </ToastProvider>
   );
 }

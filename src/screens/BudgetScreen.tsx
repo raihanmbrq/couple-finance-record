@@ -10,9 +10,11 @@ import { CATEGORIES, getCategory } from '@/lib/types';
 import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
 import { Plus, PiggyBank, Trash2, Target } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
+import { useToast } from '@/context/ToastContext';
 
 export function BudgetScreen() {
   const { budgets, transactions, setBudget, deleteBudget } = useApp();
+  const { showToast } = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
@@ -48,6 +50,7 @@ export function BudgetScreen() {
       setEditCategory(null);
       setEditAmount('');
       setShowAdd(false);
+      showToast('Budget berhasil disimpan');
     } finally {
       setLoading(false);
     }
@@ -146,7 +149,7 @@ export function BudgetScreen() {
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteBudget(budget.id)}
+                      onClick={async () => { await deleteBudget(budget.id); showToast('Budget berhasil dihapus'); }}
                       className="p-1.5 rounded-lg text-stone-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />

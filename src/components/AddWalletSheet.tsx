@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
 import { type WalletType } from '@/lib/types';
 import { PiggyBank, Banknote, Landmark, Smartphone } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 interface AddWalletSheetProps {
   open: boolean;
@@ -21,6 +22,7 @@ const walletTypes: { key: WalletType; label: string; icon: typeof PiggyBank }[] 
 
 export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
   const { addWallet } = useApp();
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [type, setType] = useState<WalletType>('cash');
   const [balance, setBalance] = useState('');
@@ -40,7 +42,7 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
       setBalance('');
       setType('cash');
       onClose();
-      console.debug('Inserted wallet', inserted);
+      showToast('Wallet berhasil ditambahkan');
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       setError(msg || 'Failed to add wallet');

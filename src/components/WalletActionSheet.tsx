@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { type Wallet, type WalletType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
 import { PiggyBank, Banknote, Landmark, Smartphone } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 interface WalletActionSheetProps {
   wallet: Wallet | null;
@@ -22,6 +23,7 @@ const walletTypes: { key: WalletType; label: string; icon: typeof PiggyBank }[] 
 
 export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetProps) {
   const { updateWallet, deleteWallet } = useApp();
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [type, setType] = useState<WalletType>('cash');
   const [balance, setBalance] = useState('');
@@ -58,6 +60,7 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
         balance: parseIDRInput(balance),
       });
       onClose();
+      showToast('Wallet berhasil diupdate');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update wallet');
     } finally {
@@ -76,6 +79,7 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
     try {
       await deleteWallet(wallet.id);
       onClose();
+      showToast('Wallet berhasil dihapus');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete wallet');
     } finally {
