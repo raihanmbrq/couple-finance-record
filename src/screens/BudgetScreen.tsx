@@ -40,6 +40,8 @@ export function BudgetScreen() {
   const totalSpent = budgets.reduce((s, b) => s + (spentByCategory.get(b.category) ?? 0), 0);
   const totalRemaining = totalBudget - totalSpent;
 
+  const isLargeBudget = totalBudget >= 100_000_000;
+
   const handleSetBudget = async () => {
     if (!editCategory) return;
     const amt = parseIDRInput(editAmount);
@@ -89,18 +91,18 @@ export function BudgetScreen() {
           <Target className="w-5 h-5 text-amber-400" />
           <span className="text-stone-300 text-sm font-medium">Monthly Recap</span>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <p className="text-xs text-stone-400 mb-1">Budgeted</p>
-            <p className="font-display font-bold text-base">{formatIDR(totalBudget)}</p>
+        <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
+          <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
+            <p className={`text-xs text-stone-400 ${isLargeBudget ? '' : 'mb-1'}`}>Budgeted</p>
+            <p className="font-display font-bold text-xs">{formatIDR(totalBudget)}</p>
           </div>
-          <div>
-            <p className="text-xs text-stone-400 mb-1">Spent</p>
-            <p className="font-display font-bold text-base text-red-300">{formatIDR(totalSpent)}</p>
+          <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
+            <p className={`text-xs text-stone-400 ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
+            <p className="font-display font-bold text-xs text-red-300">{formatIDR(totalSpent)}</p>
           </div>
-          <div>
-            <p className="text-xs text-stone-400 mb-1">Remaining</p>
-            <p className={`font-display font-bold text-base ${totalRemaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+          <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
+            <p className={`text-xs text-stone-400 ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
+            <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
               {formatIDR(totalRemaining)}
             </p>
           </div>

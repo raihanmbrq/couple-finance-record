@@ -37,6 +37,9 @@ export function HomeScreen() {
 
   const recentTx = transactions.slice(0, 5);
 
+  const incomeStr = formatIDRShort(monthIncome);
+  const expenseStr = formatIDRShort(monthExpense);
+
   return (
     <div className="px-5 py-5 space-y-5">
       {/* Total Balance Hero */}
@@ -47,19 +50,19 @@ export function HomeScreen() {
         </div>
         <p className="font-display font-extrabold text-3xl mb-4">{formatIDR(totalBalance)}</p>
         <div className="flex gap-3">
-          <div className="flex-1 bg-white/10 rounded-xl p-3">
+          <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <ArrowUpRight className="w-4 h-4 text-green-300" />
-              <span className="text-xs text-teal-100">Income</span>
+              <ArrowUpRight className="w-4 h-4 text-green-300 shrink-0" />
+              <span className="text-xs text-teal-100 truncate">Income</span>
             </div>
-            <p className="font-bold text-sm">{formatIDRShort(monthIncome)}</p>
+            <p className={`font-bold truncate ${incomeStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{incomeStr}</p>
           </div>
-          <div className="flex-1 bg-white/10 rounded-xl p-3">
+          <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <ArrowDownRight className="w-4 h-4 text-red-300" />
-              <span className="text-xs text-teal-100">Expense</span>
+              <ArrowDownRight className="w-4 h-4 text-red-300 shrink-0" />
+              <span className="text-xs text-teal-100 truncate">Expense</span>
             </div>
-            <p className="font-bold text-sm">{formatIDRShort(monthExpense)}</p>
+            <p className={`font-bold truncate ${expenseStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{expenseStr}</p>
           </div>
         </div>
       </Card>
@@ -96,14 +99,16 @@ export function HomeScreen() {
                 key={wallet.id}
                 type="button"
                 onClick={() => setActiveWallet(wallet)}
-                className="text-left"
+                className="text-left min-w-0"
               >
-                <Card className="p-4">
+                <Card className="p-4 overflow-hidden">
                   <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
                     <Icon className={`w-5 h-5 ${cfg.color}`} />
                   </div>
                   <p className="text-xs text-stone-500 font-medium mb-0.5 truncate">{wallet.name}</p>
-                  <p className="font-display font-bold text-stone-800 text-lg">{formatIDRShort(wallet.balance)}</p>
+                  <p className="font-display font-bold text-stone-800 truncate text-xs">
+                    {formatIDRShort(wallet.balance)}
+                  </p>
                 </Card>
               </button>
             );
@@ -135,16 +140,16 @@ export function HomeScreen() {
                       <TrendingDown className="w-5 h-5 text-stone-500" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-stone-800 truncate">{tx.notes || cat?.label || tx.category}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-stone-400">{formatRelative(tx.created_at)}</span>
-                      <Badge color="stone" className="text-[10px] py-0.5">{tx.spent_by}</Badge>
-                    </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="font-semibold text-sm text-stone-800 truncate mb-0.5">{tx.notes || cat?.label || tx.category}</p>
+                    <p className="text-[11px] text-stone-500 truncate">{tx.spent_by}</p>
+                    <p className="text-[10px] text-stone-400 truncate">{formatRelative(tx.created_at)}</p>
                   </div>
-                  <p className={`font-bold text-sm ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
-                    {isIncome ? '+' : '-'}{formatIDRShort(tx.amount)}
-                  </p>
+                  <div className="shrink-0 flex items-center">
+                    <p className={`font-bold ${formatIDRShort(tx.amount).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
+                      {isIncome ? '+' : '-'}{formatIDRShort(tx.amount)}
+                    </p>
+                  </div>
                 </button>
               );
             })

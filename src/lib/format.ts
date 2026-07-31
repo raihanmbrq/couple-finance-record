@@ -8,14 +8,12 @@ export function formatIDR(amount: number): string {
 }
 
 export function formatIDRShort(amount: number): string {
-  if (Math.abs(amount) >= 1_000_000_000) {
-    return `Rp ${(amount / 1_000_000_000).toFixed(1)}M`;
+  const absAmount = Math.abs(amount);
+  if (absAmount >= 1_000_000_000) {
+    return `Rp ${(amount / 1_000_000_000).toFixed(1)} M`;
   }
-  if (Math.abs(amount) >= 1_000_000) {
-    return `Rp ${(amount / 1_000_000).toFixed(1)}jt`;
-  }
-  if (Math.abs(amount) >= 1_000) {
-    return `Rp ${(amount / 1_000).toFixed(0)}rb`;
+  if (absAmount >= 100_000_000) {
+    return `Rp ${(amount / 1_000_000).toFixed(1)} JT`;
   }
   return formatIDR(amount);
 }
