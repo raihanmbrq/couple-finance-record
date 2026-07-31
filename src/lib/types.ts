@@ -73,6 +73,7 @@ export const CATEGORIES: Category[] = [
   { key: 'education', label: 'Education', icon: 'GraduationCap', color: 'blue' },
   { key: 'salary', label: 'Salary', icon: 'Banknote', color: 'green' },
   { key: 'other', label: 'Other', icon: 'CircleDot', color: 'stone' },
+  { key: 'transfer', label: 'Transfer', icon: 'ArrowRightLeft', color: 'stone' },
 ];
 
 export function getCategory(key: string): Category | undefined {
