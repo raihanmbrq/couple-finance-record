@@ -3,9 +3,9 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatIDR, formatIDRShort, formatRelative } from '@/lib/format';
 import { getCategory, type Wallet, type WalletType } from '@/lib/types';
-import { TrendingUp, TrendingDown, Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownRight, Landmark, Smartphone, Banknote, PiggyBank } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownRight, Landmark, Smartphone, Banknote, PiggyBank, ChevronDown, Calendar } from 'lucide-react';
 import { useState } from 'react';
-import { AddTransactionSheet } from '@/components/AddTransactionSheet';
+import { getIcon } from '@/lib/icons';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { WalletActionSheet } from '@/components/WalletActionSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
@@ -19,15 +19,24 @@ const walletTypeConfig: Record<WalletType, { icon: typeof WalletIcon; color: str
 
 export function HomeScreen() {
   const { wallets, transactions, profile, isDemo } = useApp();
-  const [showAddTx, setShowAddTx] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
+  const [timeFilter, setTimeFilter] = useState<'1 Bulan Penuh' | 'Last 30 Days' | 'Last 7 Days' | 'Todays'>('1 Bulan Penuh');
+  const now = new Date();
+  
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  });
+
+  const selectedMonthDate = new Date(`${selectedMonth}-01T00:00:00`);
+  const monthName = selectedMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
 
   // This month's income/expense
-  const now = new Date();
   const monthTx = transactions.filter(t => {
     const d = new Date(t.created_at);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -39,6 +48,42 @@ export function HomeScreen() {
 
   const incomeStr = formatIDRShort(monthIncome);
   const expenseStr = formatIDRShort(monthExpense);
+
+  const filteredBreakdownTx = transactions.filter(t => {
+    if (t.type !== 'expense') return false;
+    if (t.category === 'transfer') return false;
+    const txDate = new Date(t.transaction_date || t.created_at);
+    
+    if (timeFilter === '1 Bulan Penuh') {
+      return txDate.getMonth() === selectedMonthDate.getMonth() && txDate.getFullYear() === selectedMonthDate.getFullYear();
+    } else if (timeFilter === 'Last 30 Days') {
+      const diffTime = now.getTime() - txDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 30;
+    } else if (timeFilter === 'Last 7 Days') {
+      const diffTime = now.getTime() - txDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    } else if (timeFilter === 'Todays') {
+      return txDate.getDate() === now.getDate() && txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+    }
+    return false;
+  });
+
+  const totalFilteredExpense = filteredBreakdownTx.reduce((sum, t) => sum + t.amount, 0);
+
+  const expenseByCategory = filteredBreakdownTx.reduce((acc, t) => {
+    acc[t.category] = (acc[t.category] || 0) + t.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const breakdownData = Object.entries(expenseByCategory)
+    .map(([category, amount]) => ({
+      category,
+      amount,
+      percentage: totalFilteredExpense > 0 ? (amount / totalFilteredExpense) * 100 : 0
+    }))
+    .sort((a, b) => b.amount - a.amount);
 
   return (
     <div className="px-5 py-5 space-y-5">
@@ -66,17 +111,6 @@ export function HomeScreen() {
           </div>
         </div>
       </Card>
-
-      {/* Quick Action */}
-      <div className="flex gap-3">
-        <button
-          onClick={() => setShowAddTx(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-teal-700 text-white font-semibold shadow-card hover:bg-teal-800 active:scale-[0.98] transition-all"
-        >
-          <Plus className="w-5 h-5" strokeWidth={2.5} />
-          Add Transaction
-        </button>
-      </div>
 
       {/* Wallets */}
       <div>
@@ -114,6 +148,80 @@ export function HomeScreen() {
             );
           })}
         </div>
+      </div>
+
+      {/* Expense Breakdown */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-display font-bold text-stone-800">Expense Breakdown</h3>
+          <div className="flex items-center gap-2">
+            {timeFilter === '1 Bulan Penuh' && (
+              <div className="relative w-8 h-8 flex items-center justify-center bg-cream-50 border border-stone-200 rounded-lg hover:border-teal-500 transition-colors">
+                <Calendar className="w-4 h-4 text-stone-500" />
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+            )}
+            <div className="relative">
+              <select
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value as any)}
+                className="appearance-none bg-cream-50 border border-stone-200 text-stone-600 text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+              >
+                <option value="1 Bulan Penuh">{monthName}</option>
+                <option value="Last 30 Days">Last 30 Days</option>
+                <option value="Last 7 Days">Last 7 Days</option>
+                <option value="Todays">Todays</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-stone-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+        <Card className="p-1">
+          {breakdownData.length === 0 ? (
+            <p className="text-sm text-stone-400 text-center py-6">No expenses for this period</p>
+          ) : (
+            <div className="divide-y divide-stone-100">
+              {breakdownData.map((item) => {
+                const catInfo = getCategory(item.category);
+                const Icon = getIcon(catInfo?.icon || 'CircleDot');
+                
+                return (
+                  <div key={item.category} className="flex items-center gap-3 p-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-end mb-1.5">
+                        <p className="font-semibold text-sm text-stone-800 truncate pr-2">
+                          {catInfo?.label || item.category}
+                        </p>
+                        <p className="font-bold text-sm text-stone-800">
+                          {formatIDRShort(item.amount)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-teal-500 rounded-full" 
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-semibold text-stone-500 w-8 text-right">
+                          {item.percentage.toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Recent Activity */}
@@ -157,7 +265,6 @@ export function HomeScreen() {
         </Card>
       </div>
 
-      <AddTransactionSheet open={showAddTx} onClose={() => setShowAddTx(false)} />
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
       <WalletActionSheet wallet={activeWallet} open={Boolean(activeWallet)} onClose={() => setActiveWallet(null)} />
       <EditTransactionSheet open={Boolean(editingTransaction)} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
