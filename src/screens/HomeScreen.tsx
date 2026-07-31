@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { WalletActionSheet } from '@/components/WalletActionSheet';
+import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 
 const walletTypeConfig: Record<WalletType, { icon: typeof WalletIcon; color: string; bg: string }> = {
   joint: { icon: PiggyBank, color: 'text-teal-600', bg: 'bg-teal-50' },
@@ -21,6 +22,7 @@ export function HomeScreen() {
   const [showAddTx, setShowAddTx] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
 
@@ -120,7 +122,12 @@ export function HomeScreen() {
               const cat = getCategory(tx.category);
               const isIncome = tx.type === 'income';
               return (
-                <div key={tx.id} className="flex items-center gap-3 p-3.5">
+                <button
+                  key={tx.id}
+                  type="button"
+                  onClick={() => setEditingTransaction(tx)}
+                  className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-cream-50 transition-colors"
+                >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-green-50' : 'bg-cream-100'}`}>
                     {isIncome ? (
                       <TrendingUp className="w-5 h-5 text-green-600" />
@@ -138,7 +145,7 @@ export function HomeScreen() {
                   <p className={`font-bold text-sm ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
                     {isIncome ? '+' : '-'}{formatIDRShort(tx.amount)}
                   </p>
-                </div>
+                </button>
               );
             })
           )}
@@ -148,6 +155,7 @@ export function HomeScreen() {
       <AddTransactionSheet open={showAddTx} onClose={() => setShowAddTx(false)} />
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
       <WalletActionSheet wallet={activeWallet} open={Boolean(activeWallet)} onClose={() => setActiveWallet(null)} />
+      <EditTransactionSheet open={Boolean(editingTransaction)} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
     </div>
   );
 }

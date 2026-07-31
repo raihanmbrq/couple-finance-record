@@ -33,6 +33,7 @@ interface AppState {
   deleteWallet: (id: string) => Promise<void>;
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   // Budgets
   setBudget: (category: string, limitAmount: number) => Promise<void>;
@@ -476,7 +477,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       : tx.amount;
 
     if (mode === 'live') {
-      const { error } = await supabase.from('transactions').insert({        user_id: profile?.id,        wallet_id: tx.wallet_id,
+      const { error } = await supabase.from('transactions').insert({
+        user_id: profile?.id,
+        wallet_id: tx.wallet_id,
         amount: tx.amount,
         type: tx.type,
         category: tx.category,
@@ -499,7 +502,88 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return w;
     }));
-  }, [mode, wallets]);
+  }, [mode, profile, wallets]);
+
+  const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
+    const currentTx = transactions.find((tx) => tx.id === id);
+    if (!currentTx) return;
+
+    const walletId = updates.wallet_id ?? currentTx.wallet_id;
+    const previousWalletId = currentTx.wallet_id;
+    const previousAmount = currentTx.amount;
+    const previousType = currentTx.type;
+    const nextAmount = updates.amount ?? currentTx.amount;
+    const nextType = updates.type ?? currentTx.type;
+    const previousEffect = previousType === 'income' ? previousAmount : -previousAmount;
+    const nextEffect = nextType === 'income' ? nextAmount : -nextAmount;
+    const previousWallet = wallets.find((w) => w.id === previousWalletId);
+    const nextWallet = wallets.find((w) => w.id === walletId);
+
+    const updatedTransaction: Transaction = {
+      ...currentTx,
+      ...updates,
+      id,
+      amount: nextAmount,
+      type: nextType,
+      category: updates.category ?? currentTx.category,
+      notes: updates.notes ?? currentTx.notes,
+      spent_by: updates.spent_by ?? currentTx.spent_by,
+      transaction_date: updates.transaction_date ?? currentTx.transaction_date,
+      wallet_id: walletId,
+      user_id: updates.user_id ?? currentTx.user_id,
+    };
+
+    if (mode === 'live') {
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          user_id: profile?.id ?? currentTx.user_id,
+          wallet_id: walletId,
+          amount: nextAmount,
+          type: nextType,
+          category: updatedTransaction.category,
+          notes: updatedTransaction.notes,
+          spent_by: updatedTransaction.spent_by,
+          transaction_date: updatedTransaction.transaction_date,
+        })
+        .eq('id', id);
+      if (error) throw error;
+
+      if (previousWallet) {
+        const prevWalletBalance = previousWalletId === walletId
+          ? previousWallet.balance - previousEffect + nextEffect
+          : previousWallet.balance - previousEffect;
+        const { error: prevWalletError } = await supabase
+          .from('wallets')
+          .update({ balance: prevWalletBalance })
+          .eq('id', previousWalletId);
+        if (prevWalletError) throw prevWalletError;
+      }
+
+      if (nextWallet && previousWalletId !== walletId) {
+        const nextWalletBalance = nextWallet.balance + nextEffect;
+        const { error: nextWalletError } = await supabase
+          .from('wallets')
+          .update({ balance: nextWalletBalance })
+          .eq('id', walletId);
+        if (nextWalletError) throw nextWalletError;
+      }
+    }
+
+    setTransactions(prev => prev.map((tx) => tx.id === id ? updatedTransaction : tx));
+    setWallets(prev => prev.map((w) => {
+      if (w.id === previousWalletId && previousWalletId === walletId) {
+        return { ...w, balance: w.balance - previousEffect + nextEffect };
+      }
+      if (w.id === previousWalletId && previousWalletId !== walletId) {
+        return { ...w, balance: w.balance - previousEffect };
+      }
+      if (w.id === walletId && previousWalletId !== walletId) {
+        return { ...w, balance: w.balance + nextEffect };
+      }
+      return w;
+    }));
+  }, [mode, profile, transactions, wallets]);
 
   const deleteTransaction = useCallback(async (id: string) => {
     const tx = transactions.find(t => t.id === id);
@@ -585,6 +669,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateWallet,
     deleteWallet,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
     setBudget,
     deleteBudget,

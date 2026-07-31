@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
+import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 import { getCategory, CATEGORIES } from '@/lib/types';
 import { formatDate, formatIDR, formatRelative } from '@/lib/format';
 import { Plus, Search, Filter, TrendingUp, TrendingDown, Receipt, X } from 'lucide-react';
@@ -17,6 +18,7 @@ export function TransactionsScreen() {
   const [filterWallet, setFilterWallet] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
 
   const walletMap = useMemo(() => {
     const map = new Map(wallets.map(w => [w.id, w]));
@@ -187,7 +189,12 @@ export function TransactionsScreen() {
                     const wallet = walletMap.get(tx.wallet_id);
                     const isIncome = tx.type === 'income';
                     return (
-                      <div key={tx.id} className="flex items-center gap-3 p-3.5">
+                      <button
+                        key={tx.id}
+                        type="button"
+                        onClick={() => setEditingTransaction(tx)}
+                        className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-cream-50 transition-colors"
+                      >
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
                           isIncome ? 'bg-green-50' : 'bg-cream-100'
                         }`}>
@@ -204,7 +211,7 @@ export function TransactionsScreen() {
                         <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
                           {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
                         </p>
-                      </div>
+                      </button>
                     );
                   })}
                 </Card>
@@ -215,6 +222,7 @@ export function TransactionsScreen() {
       )}
 
       <AddTransactionSheet open={showAdd} onClose={() => setShowAdd(false)} />
+      <EditTransactionSheet open={Boolean(editingTransaction)} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
     </div>
   );
 }
