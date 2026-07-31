@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { QRCodeSVG } from 'qrcode.react';
-import { User, Users, Plus, LogIn, Copy, Check, ArrowLeft, Home, Sparkles } from 'lucide-react';
+import { User, Users, LogIn, Copy, Check, ArrowLeft, Home, Sparkles } from 'lucide-react';
 
 type Step = 'decision' | 'create' | 'join' | 'created';
 
@@ -73,9 +72,9 @@ export function OnboardingScreen() {
           {step === 'created' && 'Household Created!'}
         </h1>
         <p className="text-sm text-stone-500 mt-1">
-          {step === 'decision' && `Hi ${profile?.full_name ?? 'there'}, let's set up your finance mode.`}
-          {step === 'create' && 'Invite your partner to sync finances together.'}
-          {step === 'join' && 'Enter the invite code from your partner.'}
+          {step === 'decision' && `Hi ${profile?.full_name ?? 'there'}, let's set up your shared space.`}
+          {step === 'create' && 'Create a shared space for your household and invite a partner.'}
+          {step === 'join' && 'Enter the invite code from your partner to join the shared space.'}
           {step === 'created' && 'Share this code with your partner to connect.'}
         </p>
       </div>
@@ -105,7 +104,7 @@ export function OnboardingScreen() {
                   <User className="w-6 h-6 text-teal-700" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-stone-800 mb-0.5">Personal / Single Mode</h3>
+                  <h3 className="font-display font-bold text-stone-800 mb-0.5">Personal Space</h3>
                   <p className="text-sm text-stone-500">Manage your budget independently. Perfect for solo tracking.</p>
                 </div>
               </div>
@@ -121,8 +120,8 @@ export function OnboardingScreen() {
                   <Users className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-stone-800 mb-0.5">Couple / Family Mode</h3>
-                  <p className="text-sm text-stone-500">Sync finances with your partner. Track together in real time.</p>
+                  <h3 className="font-display font-bold text-stone-800 mb-0.5">Shared Space</h3>
+                  <p className="text-sm text-stone-500">Sync finances with your partner or household in one circle.</p>
                 </div>
               </div>
             </button>
@@ -137,8 +136,8 @@ export function OnboardingScreen() {
                   <LogIn className="w-6 h-6 text-stone-600" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-stone-800 mb-0.5">Join Household</h3>
-                  <p className="text-sm text-stone-500">Already have an invite code? Join your partner's household.</p>
+                  <h3 className="font-display font-bold text-stone-800 mb-0.5">Join Shared Space</h3>
+                  <p className="text-sm text-stone-500">Already have a 6-character invite code? Join your partner's space.</p>
                 </div>
               </div>
             </button>
@@ -192,18 +191,9 @@ export function OnboardingScreen() {
 
         {step === 'created' && (
           <div className="space-y-6 animate-fade-in flex flex-col items-center">
-            {/* QR Code */}
-            <div className="card-elevated p-6 flex flex-col items-center gap-4">
+            <div className="card-elevated p-6 flex flex-col items-center gap-4 w-full">
               <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center">
                 <Check className="w-8 h-8 text-green-600" strokeWidth={2.5} />
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-stone-200">
-                <QRCodeSVG
-                  value={createdCode}
-                  size={180}
-                  level="M"
-                  fgColor="#0F766E"
-                />
               </div>
               <div className="text-center">
                 <p className="text-sm text-stone-500 mb-1">Your invite code</p>

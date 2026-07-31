@@ -2,11 +2,12 @@ import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatIDR, formatIDRShort, formatRelative } from '@/lib/format';
-import { getCategory, type WalletType } from '@/lib/types';
+import { getCategory, type Wallet, type WalletType } from '@/lib/types';
 import { TrendingUp, TrendingDown, Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownRight, Landmark, Smartphone, Banknote, PiggyBank } from 'lucide-react';
 import { useState } from 'react';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
+import { WalletActionSheet } from '@/components/WalletActionSheet';
 
 const walletTypeConfig: Record<WalletType, { icon: typeof WalletIcon; color: string; bg: string }> = {
   joint: { icon: PiggyBank, color: 'text-teal-600', bg: 'bg-teal-50' },
@@ -19,6 +20,7 @@ export function HomeScreen() {
   const { wallets, transactions, profile, isDemo } = useApp();
   const [showAddTx, setShowAddTx] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
+  const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
 
@@ -88,13 +90,20 @@ export function HomeScreen() {
             const cfg = walletTypeConfig[wallet.type];
             const Icon = cfg.icon;
             return (
-              <Card key={wallet.id} className="p-4">
-                <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
-                  <Icon className={`w-5 h-5 ${cfg.color}`} />
-                </div>
-                <p className="text-xs text-stone-500 font-medium mb-0.5 truncate">{wallet.name}</p>
-                <p className="font-display font-bold text-stone-800 text-lg">{formatIDRShort(wallet.balance)}</p>
-              </Card>
+              <button
+                key={wallet.id}
+                type="button"
+                onClick={() => setActiveWallet(wallet)}
+                className="text-left"
+              >
+                <Card className="p-4">
+                  <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
+                    <Icon className={`w-5 h-5 ${cfg.color}`} />
+                  </div>
+                  <p className="text-xs text-stone-500 font-medium mb-0.5 truncate">{wallet.name}</p>
+                  <p className="font-display font-bold text-stone-800 text-lg">{formatIDRShort(wallet.balance)}</p>
+                </Card>
+              </button>
             );
           })}
         </div>
@@ -138,6 +147,7 @@ export function HomeScreen() {
 
       <AddTransactionSheet open={showAddTx} onClose={() => setShowAddTx(false)} />
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
+      <WalletActionSheet wallet={activeWallet} open={Boolean(activeWallet)} onClose={() => setActiveWallet(null)} />
     </div>
   );
 }

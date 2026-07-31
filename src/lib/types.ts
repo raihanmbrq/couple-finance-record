@@ -24,6 +24,7 @@ export type WalletType = 'joint' | 'cash' | 'bank' | 'ewallet';
 export interface Wallet {
   id: string;
   household_id: string;
+  user_id?: string;
   name: string;
   type: WalletType;
   balance: number;
@@ -36,17 +37,20 @@ export type TransactionType = 'income' | 'expense';
 export interface Transaction {
   id: string;
   wallet_id: string;
+  user_id?: string;
   amount: number;
   type: TransactionType;
   category: string;
   notes?: string | null;
   spent_by: string;
+  transaction_date: string;
   created_at: string;
 }
 
 export interface Budget {
   id: string;
   household_id: string;
+  user_id?: string;
   category: string;
   limit_amount: number;
   created_at: string;

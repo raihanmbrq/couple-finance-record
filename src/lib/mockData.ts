@@ -32,6 +32,7 @@ export const mockWallets: Wallet[] = [
   {
     id: 'wallet-1',
     household_id: mockHouseholdId,
+    user_id: mockUserId,
     name: 'Joint Account',
     type: 'joint',
     balance: 8_500_000,
@@ -41,6 +42,7 @@ export const mockWallets: Wallet[] = [
   {
     id: 'wallet-2',
     household_id: mockHouseholdId,
+    user_id: mockUserId,
     name: 'Andi Cash',
     type: 'cash',
     balance: 1_250_000,
@@ -50,6 +52,7 @@ export const mockWallets: Wallet[] = [
   {
     id: 'wallet-3',
     household_id: mockHouseholdId,
+    user_id: mockPartnerId,
     name: 'Sari Bank',
     type: 'bank',
     balance: 3_200_000,
@@ -59,6 +62,7 @@ export const mockWallets: Wallet[] = [
   {
     id: 'wallet-4',
     household_id: mockHouseholdId,
+    user_id: mockUserId,
     name: 'GoPay E-Wallet',
     type: 'ewallet',
     balance: 450_000,
@@ -68,18 +72,18 @@ export const mockWallets: Wallet[] = [
 ];
 
 export const mockTransactions: Transaction[] = [
-  { id: 'tx-1', wallet_id: 'wallet-1', amount: 5_000_000, type: 'income', category: 'salary', notes: 'Monthly salary', spent_by: 'Andi Pratama', created_at: daysAgo(2) },
-  { id: 'tx-2', wallet_id: 'wallet-3', amount: 4_200_000, type: 'income', category: 'salary', notes: 'Sari monthly salary', spent_by: 'Sari Wulandari', created_at: daysAgo(2) },
-  { id: 'tx-3', wallet_id: 'wallet-1', amount: 85_000, type: 'expense', category: 'food', notes: 'Groceries at Indomaret', spent_by: 'Sari Wulandari', created_at: hoursAgo(5) },
-  { id: 'tx-4', wallet_id: 'wallet-2', amount: 25_000, type: 'expense', category: 'transport', notes: 'Gojek to office', spent_by: 'Andi Pratama', created_at: hoursAgo(3) },
-  { id: 'tx-5', wallet_id: 'wallet-4', amount: 150_000, type: 'expense', category: 'entertainment', notes: 'Netflix + Spotify', spent_by: 'Andi Pratama', created_at: hoursAgo(8) },
-  { id: 'tx-6', wallet_id: 'wallet-1', amount: 1_200_000, type: 'expense', category: 'bills', notes: 'Electricity & water bill', spent_by: 'Sari Wulandari', created_at: daysAgo(1) },
-  { id: 'tx-7', wallet_id: 'wallet-2', amount: 320_000, type: 'expense', category: 'shopping', notes: 'New shoes', spent_by: 'Andi Pratama', created_at: daysAgo(3) },
-  { id: 'tx-8', wallet_id: 'wallet-3', amount: 65_000, type: 'expense', category: 'food', notes: 'Lunch with friends', spent_by: 'Sari Wulandari', created_at: daysAgo(4) },
-  { id: 'tx-9', wallet_id: 'wallet-1', amount: 200_000, type: 'expense', category: 'health', notes: 'Vitamins & supplements', spent_by: 'Andi Pratama', created_at: daysAgo(5) },
-  { id: 'tx-10', wallet_id: 'wallet-4', amount: 50_000, type: 'expense', category: 'food', notes: 'Coffee at Starbucks', spent_by: 'Sari Wulandari', created_at: daysAgo(6) },
-  { id: 'tx-11', wallet_id: 'wallet-1', amount: 500_000, type: 'expense', category: 'bills', notes: 'Internet bill', spent_by: 'Andi Pratama', created_at: daysAgo(7) },
-  { id: 'tx-12', wallet_id: 'wallet-3', amount: 180_000, type: 'expense', category: 'shopping', notes: 'Skincare', spent_by: 'Sari Wulandari', created_at: daysAgo(8) },
+  { id: 'tx-1', wallet_id: 'wallet-1', user_id: mockUserId, amount: 5_000_000, type: 'income', category: 'salary', notes: 'Monthly salary', spent_by: 'Andi Pratama', transaction_date: daysAgo(2), created_at: daysAgo(2) },
+  { id: 'tx-2', wallet_id: 'wallet-3', user_id: mockPartnerId, amount: 4_200_000, type: 'income', category: 'salary', notes: 'Sari monthly salary', spent_by: 'Sari Wulandari', transaction_date: daysAgo(2), created_at: daysAgo(2) },
+  { id: 'tx-3', wallet_id: 'wallet-1', user_id: mockPartnerId, amount: 85_000, type: 'expense', category: 'food', notes: 'Groceries at Indomaret', spent_by: 'Sari Wulandari', transaction_date: hoursAgo(5), created_at: hoursAgo(5) },
+  { id: 'tx-4', wallet_id: 'wallet-2', user_id: mockUserId, amount: 25_000, type: 'expense', category: 'transport', notes: 'Gojek to office', spent_by: 'Andi Pratama', transaction_date: hoursAgo(3), created_at: hoursAgo(3) },
+  { id: 'tx-5', wallet_id: 'wallet-4', user_id: mockUserId, amount: 150_000, type: 'expense', category: 'entertainment', notes: 'Netflix + Spotify', spent_by: 'Andi Pratama', transaction_date: hoursAgo(8), created_at: hoursAgo(8) },
+  { id: 'tx-6', wallet_id: 'wallet-1', user_id: mockPartnerId, amount: 1_200_000, type: 'expense', category: 'bills', notes: 'Electricity & water bill', spent_by: 'Sari Wulandari', transaction_date: daysAgo(1), created_at: daysAgo(1) },
+  { id: 'tx-7', wallet_id: 'wallet-2', user_id: mockUserId, amount: 320_000, type: 'expense', category: 'shopping', notes: 'New shoes', spent_by: 'Andi Pratama', transaction_date: daysAgo(3), created_at: daysAgo(3) },
+  { id: 'tx-8', wallet_id: 'wallet-3', user_id: mockPartnerId, amount: 65_000, type: 'expense', category: 'food', notes: 'Lunch with friends', spent_by: 'Sari Wulandari', transaction_date: daysAgo(4), created_at: daysAgo(4) },
+  { id: 'tx-9', wallet_id: 'wallet-1', user_id: mockUserId, amount: 200_000, type: 'expense', category: 'health', notes: 'Vitamins & supplements', spent_by: 'Andi Pratama', transaction_date: daysAgo(5), created_at: daysAgo(5) },
+  { id: 'tx-10', wallet_id: 'wallet-4', user_id: mockPartnerId, amount: 50_000, type: 'expense', category: 'food', notes: 'Coffee at Starbucks', spent_by: 'Sari Wulandari', transaction_date: daysAgo(6), created_at: daysAgo(6) },
+  { id: 'tx-11', wallet_id: 'wallet-1', user_id: mockUserId, amount: 500_000, type: 'expense', category: 'bills', notes: 'Internet bill', spent_by: 'Andi Pratama', transaction_date: daysAgo(7), created_at: daysAgo(7) },
+  { id: 'tx-12', wallet_id: 'wallet-3', user_id: mockPartnerId, amount: 180_000, type: 'expense', category: 'shopping', notes: 'Skincare', spent_by: 'Sari Wulandari', transaction_date: daysAgo(8), created_at: daysAgo(8) },
 ];
 
 export const mockBudgets: Budget[] = [

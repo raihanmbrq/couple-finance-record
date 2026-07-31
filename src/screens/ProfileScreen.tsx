@@ -3,13 +3,12 @@ import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Sheet } from '@/components/ui/Sheet';
-import { QRCodeSVG } from 'qrcode.react';
-import { User, Mail, Users, LogOut, Copy, Check, QrCode, ChevronRight, Wallet, Receipt, PiggyBank, Sparkles } from 'lucide-react';
+import { EditProfileSheet } from '@/components/EditProfileSheet';
+import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil } from 'lucide-react';
 
 export function ProfileScreen() {
   const { profile, household, wallets, transactions, budgets, isDemo, signOut } = useApp();
-  const [showQR, setShowQR] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -39,6 +38,13 @@ export function ProfileScreen() {
               {profile?.email ?? '—'}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowEdit(true)}
+            className="p-2 rounded-xl bg-cream-100 text-stone-600"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Household Status */}
@@ -60,14 +66,14 @@ export function ProfileScreen() {
         </div>
       </Card>
 
-      {/* Invite Code (couple mode only) */}
+      {/* Shared Space Code (couple mode only) */}
       {isCouple && household?.invite_code && (
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-3">
-            <QrCode className="w-5 h-5 text-teal-700" />
-            <h3 className="font-display font-bold text-stone-800">Invite Code</h3>
+            <Users className="w-5 h-5 text-teal-700" />
+            <h3 className="font-display font-bold text-stone-800">Shared Space Invite</h3>
           </div>
-          <p className="text-sm text-stone-500 mb-4">Share this code with your partner to connect.</p>
+          <p className="text-sm text-stone-500 mb-4">Share this code with your partner to join the same circle.</p>
           <div className="flex items-center gap-3">
             <div className="flex-1 px-4 py-3 rounded-xl bg-cream-100 border border-stone-200">
               <p className="font-display font-extrabold text-2xl tracking-widest text-stone-800 text-center">
@@ -79,12 +85,6 @@ export function ProfileScreen() {
               className="p-3 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors"
             >
               {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={() => setShowQR(true)}
-              className="p-3 rounded-xl bg-stone-100 text-stone-600 border border-stone-200 hover:bg-stone-200 transition-colors"
-            >
-              <QrCode className="w-5 h-5" />
             </button>
           </div>
         </Card>
@@ -134,18 +134,7 @@ export function ProfileScreen() {
         Sign Out
       </Button>
 
-      {/* QR Sheet */}
-      <Sheet open={showQR} onClose={() => setShowQR(false)} title="QR Invite Code">
-        <div className="flex flex-col items-center gap-4 py-4">
-          <div className="bg-white p-5 rounded-2xl border border-stone-200">
-            <QRCodeSVG value={household?.invite_code ?? ''} size={200} level="M" fgColor="#0F766E" />
-          </div>
-          <p className="font-display font-extrabold text-2xl tracking-widest text-stone-800">
-            {household?.invite_code}
-          </p>
-          <p className="text-sm text-stone-500 text-center">Ask your partner to scan this or enter the code manually.</p>
-        </div>
-      </Sheet>
+      <EditProfileSheet open={showEdit} onClose={() => setShowEdit(false)} />
     </div>
   );
 }

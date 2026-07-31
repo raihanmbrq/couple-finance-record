@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
-import { CATEGORIES, type TransactionType, type WalletType } from '@/lib/types';
+import { CATEGORIES, type TransactionType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
@@ -22,6 +22,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [walletId, setWalletId] = useState('');
   const [category, setCategory] = useState('food');
   const [notes, setNotes] = useState('');
+  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAddWallet, setShowAddWallet] = useState(false);
@@ -43,6 +44,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
     setAmount('');
     setCategory('food');
     setNotes('');
+    setTransactionDate(new Date().toISOString().slice(0, 10));
     setError('');
   };
 
@@ -66,6 +68,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         category,
         notes: notes.trim() || null,
         spent_by: profile?.full_name ?? 'Me',
+        transaction_date: `${transactionDate}T12:00:00.000Z`,
       });
       reset();
       onClose();
@@ -170,6 +173,13 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
             })}
           </div>
         </div>
+
+        <Input
+          label="Date"
+          type="date"
+          value={transactionDate}
+          onChange={(e) => setTransactionDate(e.target.value)}
+        />
 
         {/* Note */}
         <Input

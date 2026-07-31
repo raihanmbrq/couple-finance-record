@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { getCategory, CATEGORIES } from '@/lib/types';
-import { formatIDR, formatRelative } from '@/lib/format';
+import { formatDate, formatIDR, formatRelative } from '@/lib/format';
 import { Plus, Search, Filter, TrendingUp, TrendingDown, Receipt, X } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 
@@ -39,6 +39,17 @@ export function TransactionsScreen() {
   }, [transactions, filterWallet, filterCategory, search]);
 
   const hasActiveFilters = filterWallet !== 'all' || filterCategory !== 'all' || search !== '';
+
+  const grouped = useMemo(() => {
+    const groups = new Map<string, typeof filtered>();
+    for (const tx of filtered) {
+      const key = new Date(tx.transaction_date || tx.created_at).toISOString().slice(0, 10);
+      const list = groups.get(key) ?? [];
+      list.push(tx);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [filtered]);
 
   const clearFilters = () => {
     setFilterWallet('all');
@@ -155,34 +166,52 @@ export function TransactionsScreen() {
           </Button>}
         />
       ) : (
-        <Card className="divide-y divide-stone-100">
-          {filtered.map((tx) => {
-            const cat = getCategory(tx.category);
-            const Icon = getIcon(cat?.icon ?? 'CircleDot');
-            const wallet = walletMap.get(tx.wallet_id);
-            const isIncome = tx.type === 'income';
+        <div className="space-y-4">
+          {grouped.map(([dayKey, items]) => {
+            const date = new Date(dayKey);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const label = date.toDateString() === today.toDateString()
+              ? 'Today'
+              : date.toDateString() === yesterday.toDateString()
+                ? 'Yesterday'
+                : formatDate(date);
             return (
-              <div key={tx.id} className="flex items-center gap-3 p-3.5">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  isIncome ? 'bg-green-50' : 'bg-cream-100'
-                }`}>
-                  <Icon className={`w-5 h-5 ${isIncome ? 'text-green-600' : 'text-stone-500'}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-stone-800 truncate">{tx.notes || cat?.label || tx.category}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-stone-400">{formatRelative(tx.created_at)}</span>
-                    {wallet && <span className="text-xs text-stone-400">· {wallet.name}</span>}
-                  </div>
-                  <Badge color="stone" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
-                </div>
-                <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
-                  {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
-                </p>
+              <div key={dayKey} className="space-y-2">
+                <p className="px-1 text-xs font-semibold text-stone-500 uppercase tracking-wide">{label}</p>
+                <Card className="divide-y divide-stone-100">
+                  {items.map((tx) => {
+                    const cat = getCategory(tx.category);
+                    const Icon = getIcon(cat?.icon ?? 'CircleDot');
+                    const wallet = walletMap.get(tx.wallet_id);
+                    const isIncome = tx.type === 'income';
+                    return (
+                      <div key={tx.id} className="flex items-center gap-3 p-3.5">
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          isIncome ? 'bg-green-50' : 'bg-cream-100'
+                        }`}>
+                          <Icon className={`w-5 h-5 ${isIncome ? 'text-green-600' : 'text-stone-500'}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-stone-800 truncate">{tx.notes || cat?.label || tx.category}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs text-stone-400">{formatRelative(tx.created_at)}</span>
+                            {wallet && <span className="text-xs text-stone-400">· {wallet.name}</span>}
+                          </div>
+                          <Badge color="stone" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
+                        </div>
+                        <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
+                          {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </Card>
               </div>
             );
           })}
-        </Card>
+        </div>
       )}
 
       <AddTransactionSheet open={showAdd} onClose={() => setShowAdd(false)} />

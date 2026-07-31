@@ -22,6 +22,7 @@ interface AppState {
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => Promise<void>;
   // Onboarding
   setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
@@ -29,6 +30,7 @@ interface AppState {
   // Wallets
   addWallet: (name: string, type: Wallet['type'], balance: number) => Promise<Wallet>;
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
+  deleteWallet: (id: string) => Promise<void>;
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -86,7 +88,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      // Load profile
+      const { data: sessionData } = await supabase.auth.getSession();
+      const metaFullName = sessionData.session?.user?.user_metadata?.full_name as string | undefined;
+
       const { data: prof } = await supabase
         .from('profiles')
         .select('*')
@@ -95,11 +99,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       let currentProfile: Profile;
       if (!prof) {
-        // No profile row in DB yet — insert one as the user is authenticated.
         const newProfile: Profile = {
           id: userId,
           email,
-          full_name: email.split('@')[0] ?? 'User',
+          full_name: metaFullName?.trim() || email.split('@')[0] || 'User',
           role: 'single',
           avatar_url: null,
           household_id: null,
@@ -128,50 +131,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (!householdData) {
-        // Only automatically create a personal household for brand-new users.
-        // This avoids creating a new household repeatedly on reload if the
-        // user's profile somehow lacks `household_id` temporarily.
-        const justRegistered = typeof window !== 'undefined' && localStorage.getItem('duitbersama_just_registered') === 'true';
-        if (!justRegistered) {
-          // Don't auto-create here; leave household null and empty collections.
-          setHousehold(null);
-          setWallets([]);
-          setTransactions([]);
-          setBudgets([]);
-          return;
-        }
-
-        // Automatically create a personal household for first-time users.
-        const inviteCode = generateInviteCode();
-        const newHousehold: Household = {
-          id: crypto.randomUUID(),
-          name: 'My Personal Finance',
-          invite_code: inviteCode,
-          mode: 'single',
-          partner_name: null,
-          created_at: new Date().toISOString(),
-        };
-
-        const { error: hhError } = await supabase.from('households').insert({
-          id: newHousehold.id,
-          name: newHousehold.name,
-          invite_code: newHousehold.invite_code,
-          mode: newHousehold.mode,
-          partner_name: newHousehold.partner_name,
-        });
-        if (hhError) throw hhError;
-
-        const { error: profileError } = await supabase.from('profiles').update({
-          household_id: newHousehold.id,
-          role: 'single',
-        }).eq('id', currentProfile.id);
-        if (profileError) throw profileError;
-
-        // Clear the registration flag so we don't re-create on future reloads
-        try { localStorage.removeItem('duitbersama_just_registered'); } catch {}
-
-        setHousehold(newHousehold);
-        setProfile({ ...currentProfile, household_id: newHousehold.id, role: 'single' });
+        setHousehold(null);
         setWallets([]);
         setTransactions([]);
         setBudgets([]);
@@ -181,21 +141,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setHousehold(householdData);
       householdId = householdData.id;
 
-      // Load wallets
       const { data: w } = await supabase
         .from('wallets')
         .select('*')
         .eq('household_id', householdId);
-      setWallets((w as Wallet[]) ?? []);
+      const walletRows = (w as Wallet[]) ?? [];
+      setWallets(walletRows);
 
-      // Load transactions
-      const { data: tx } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setTransactions((tx as Transaction[]) ?? []);
+      const walletIds = walletRows.map((wallet) => wallet.id);
+      let txRows: Transaction[] = [];
+      if (walletIds.length > 0) {
+        const { data: tx } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('wallet_id', walletIds)
+          .order('transaction_date', { ascending: false });
+        txRows = (tx as Transaction[]) ?? [];
+      }
+      setTransactions(txRows);
 
-      // Load budgets
       const { data: bg } = await supabase
         .from('budgets')
         .select('*')
@@ -243,35 +207,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
       if (signUpError) throw signUpError;
 
       const user = data.user;
-      const session = data.session;
-
-      // Insert profile record even when email confirmation is required.
-      if (user) {
-        await supabase.from('profiles').insert({
-          id: user.id,
-          email,
-          full_name: fullName,
-          role: 'single',
-        });
+      if (!user) {
+        throw new Error('Sign up did not return a user record.');
       }
 
-      // Mark that this is a fresh registration so household creation can
-      // run once after the user completes email confirmation and signs in.
-      try { localStorage.setItem('duitbersama_just_registered', 'true'); } catch {}
-
-      if (session && user) {
-        setAppMode('live');
-        setIsDemo(false);
-        await loadLiveData(user.id, email);
-      } else {
-        // No session returned (common when email confirmation is required).
-        setError('Registration successful — please confirm your email before signing in. Check your inbox.');
-        return;
+      let finalSession = data.session;
+      if (!finalSession) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        finalSession = signInData.session;
       }
+
+      if (!finalSession) {
+        throw new Error('Registration completed, but the app could not start an authenticated session.');
+      }
+
+      const profilePayload: Profile = {
+        id: user.id,
+        email,
+        full_name: fullName.trim() || email.split('@')[0] || 'User',
+        role: 'single',
+        avatar_url: null,
+        household_id: null,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: profileUpsertError } = await supabase
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' });
+
+      if (profileUpsertError) throw profileUpsertError;
+
+      setAppMode('live');
+      setIsDemo(false);
+      await loadLiveData(user.id, email);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
       throw err;
@@ -281,8 +262,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [loadLiveData]);
 
   const signInWithGoogle = useCallback(async () => {
-    setError('Google sign-in is not configured yet. Use email/password or try the demo mode.');
+    setError('Google sign-in is not available in this build. Use email/password or try the demo mode.');
   }, []);
+
+  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
+    if (!profile) return;
+    if (mode === 'live') {
+      const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
+      if (error) throw error;
+    }
+    setProfile(prev => prev ? { ...prev, ...updates } : prev);
+  }, [mode, profile]);
 
   const signOut = useCallback(async () => {
     if (mode === 'live') {
@@ -425,6 +415,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newWallet: Wallet = {
       id: crypto.randomUUID(),
       household_id: hh.id,
+      user_id: profile?.id,
       name,
       type,
       balance,
@@ -432,8 +423,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       created_at: new Date().toISOString(),
     };
 
-    if (mode === 'live') {
+    if (mode === 'live' && profile) {
       const { data, error } = await supabase.from('wallets').insert({
+        user_id: profile.id,
         household_id: hh.id,
         name,
         type,
@@ -457,36 +449,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWallets(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w));
   }, [mode]);
 
+  const deleteWallet = useCallback(async (id: string) => {
+    const walletTransactions = transactions.filter((tx) => tx.wallet_id === id);
+    if (walletTransactions.length > 0) {
+      throw new Error('This wallet has linked transactions. Delete those transactions first.');
+    }
+
+    if (mode === 'live') {
+      const { error } = await supabase.from('wallets').delete().eq('id', id);
+      if (error) throw error;
+    }
+    setWallets(prev => prev.filter(w => w.id !== id));
+  }, [mode, transactions]);
+
   const addTransaction = useCallback(async (tx: Omit<Transaction, 'id' | 'created_at'>) => {
     const newTx: Transaction = {
       ...tx,
       id: crypto.randomUUID(),
+      transaction_date: tx.transaction_date || new Date().toISOString(),
       created_at: new Date().toISOString(),
     };
 
+    const targetWallet = wallets.find(w => w.id === tx.wallet_id);
+    const nextWalletBalance = targetWallet
+      ? targetWallet.balance + (tx.type === 'income' ? tx.amount : -tx.amount)
+      : tx.amount;
+
     if (mode === 'live') {
-      const { error } = await supabase.from('transactions').insert({
-        wallet_id: tx.wallet_id,
+      const { error } = await supabase.from('transactions').insert({        user_id: profile?.id,        wallet_id: tx.wallet_id,
         amount: tx.amount,
         type: tx.type,
         category: tx.category,
         notes: tx.notes,
         spent_by: tx.spent_by,
+        transaction_date: tx.transaction_date,
       });
       if (error) throw error;
+
+      if (targetWallet) {
+        const { error: walletError } = await supabase.from('wallets').update({ balance: nextWalletBalance }).eq('id', tx.wallet_id);
+        if (walletError) throw walletError;
+      }
     }
 
     setTransactions(prev => [newTx, ...prev]);
-
-    // Update wallet balance
     setWallets(prev => prev.map(w => {
       if (w.id === tx.wallet_id) {
-        const delta = tx.type === 'income' ? tx.amount : -tx.amount;
-        return { ...w, balance: w.balance + delta };
+        return { ...w, balance: nextWalletBalance };
       }
       return w;
     }));
-  }, [mode]);
+  }, [mode, wallets]);
 
   const deleteTransaction = useCallback(async (id: string) => {
     const tx = transactions.find(t => t.id === id);
@@ -495,19 +508,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (mode === 'live') {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) throw error;
+
+      const targetWallet = wallets.find(w => w.id === tx.wallet_id);
+      if (targetWallet) {
+        const nextBalance = targetWallet.balance + (tx.type === 'income' ? -tx.amount : tx.amount);
+        const { error: walletError } = await supabase.from('wallets').update({ balance: nextBalance }).eq('id', tx.wallet_id);
+        if (walletError) throw walletError;
+
+        setWallets(prev => prev.map(w => w.id === tx.wallet_id ? { ...w, balance: nextBalance } : w));
+      }
     }
 
     setTransactions(prev => prev.filter(t => t.id !== id));
-
-    // Reverse wallet balance
-    setWallets(prev => prev.map(w => {
-      if (w.id === tx.wallet_id) {
-        const delta = tx.type === 'income' ? -tx.amount : tx.amount;
-        return { ...w, balance: w.balance + delta };
-      }
-      return w;
-    }));
-  }, [mode, transactions]);
+  }, [mode, transactions, wallets]);
 
   const setBudget = useCallback(async (category: string, limitAmount: number) => {
     if (!household) return;
@@ -519,6 +532,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
       } else {
         const { data, error } = await supabase.from('budgets').insert({
+          user_id: profile?.id,
           household_id: household.id,
           category,
           limit_amount: limitAmount,
@@ -563,11 +577,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signUp,
     signInWithGoogle,
     signOut,
+    updateProfile,
     setMode,
     createHousehold,
     joinHousehold,
     addWallet,
     updateWallet,
+    deleteWallet,
     addTransaction,
     deleteTransaction,
     setBudget,

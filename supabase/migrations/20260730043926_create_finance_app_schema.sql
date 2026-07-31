@@ -26,6 +26,7 @@ Supports single-user mode and couple/household mode with shared wallets, transac
 
 3. **wallets** — fund sources belonging to a household
    - `id` (uuid, PK)
+   - `user_id` (uuid, FK -> profiles)
    - `household_id` (uuid, FK -> households)
    - `name` (text)
    - `type` (text: 'joint' | 'cash' | 'bank' | 'ewallet')
@@ -35,16 +36,19 @@ Supports single-user mode and couple/household mode with shared wallets, transac
 
 4. **transactions** — income/expense entries
    - `id` (uuid, PK)
+   - `user_id` (uuid, FK -> profiles)
    - `wallet_id` (uuid, FK -> wallets)
    - `amount` (bigint — rupiah, no decimals)
    - `type` (text: 'income' | 'expense')
    - `category` (text)
    - `notes` (text, nullable)
    - `spent_by` (text — the name of the user who logged/spent it)
+   - `transaction_date` (timestamptz)
    - `created_at` (timestamptz)
 
 5. **budgets** — monthly category spending limits
    - `id` (uuid, PK)
+   - `user_id` (uuid, FK -> profiles)
    - `household_id` (uuid, FK -> households)
    - `category` (text)
    - `limit_amount` (bigint — rupiah)
@@ -95,6 +99,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- wallets table (depends on households)
 CREATE TABLE IF NOT EXISTS public.wallets (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   household_id uuid NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
   name text NOT NULL,
   type text NOT NULL DEFAULT 'cash' CHECK (type IN ('joint', 'cash', 'bank', 'ewallet')),
@@ -106,18 +111,21 @@ CREATE TABLE IF NOT EXISTS public.wallets (
 -- transactions table (depends on wallets)
 CREATE TABLE IF NOT EXISTS public.transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   wallet_id uuid NOT NULL REFERENCES public.wallets(id) ON DELETE CASCADE,
   amount bigint NOT NULL DEFAULT 0,
   type text NOT NULL CHECK (type IN ('income', 'expense')),
   category text NOT NULL DEFAULT 'other',
   notes text,
   spent_by text NOT NULL DEFAULT '',
+  transaction_date timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz DEFAULT now()
 );
 
 -- budgets table (depends on households)
 CREATE TABLE IF NOT EXISTS public.budgets (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   household_id uuid NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
   category text NOT NULL,
   limit_amount bigint NOT NULL DEFAULT 0,
@@ -138,9 +146,13 @@ $$;
 
 -- ==================== INDEXES ====================
 CREATE INDEX IF NOT EXISTS idx_wallets_household ON public.wallets(household_id);
+CREATE INDEX IF NOT EXISTS idx_wallets_user ON public.wallets(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_wallet ON public.transactions(wallet_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_created ON public.transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(transaction_date DESC);
 CREATE INDEX IF NOT EXISTS idx_budgets_household ON public.budgets(household_id);
+CREATE INDEX IF NOT EXISTS idx_budgets_user ON public.budgets(user_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_household ON public.profiles(household_id);
 
 -- ==================== ENABLE RLS ====================
@@ -150,6 +162,13 @@ ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.households TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.wallets TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.transactions TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.budgets TO authenticated;
+
 -- ==================== PROFILES POLICIES ====================
 DROP POLICY IF EXISTS "select_own_profile" ON public.profiles;
 CREATE POLICY "select_own_profile" ON public.profiles
@@ -158,6 +177,37 @@ CREATE POLICY "select_own_profile" ON public.profiles
 DROP POLICY IF EXISTS "insert_own_profile" ON public.profiles;
 CREATE POLICY "insert_own_profile" ON public.profiles
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+
+CREATE OR REPLACE FUNCTION public.handle_new_user_profile()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, role, avatar_url, household_id, created_at)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1), ''),
+    'single',
+    NULL,
+    NULL,
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET email = EXCLUDED.email,
+      full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+      avatar_url = EXCLUDED.avatar_url;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user_profile();
 
 DROP POLICY IF EXISTS "update_own_profile" ON public.profiles;
 CREATE POLICY "update_own_profile" ON public.profiles
