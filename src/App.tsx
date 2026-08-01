@@ -9,10 +9,12 @@ import { HomeScreen } from '@/screens/HomeScreen';
 import { TransactionsScreen } from '@/screens/TransactionsScreen';
 import { BudgetScreen } from '@/screens/BudgetScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
+import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 
 function AppContent() {
   const { profile } = useApp();
   const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const [showAddTx, setShowAddTx] = useState(false);
 
   const isAuthenticated = Boolean(profile);
 
@@ -26,13 +28,25 @@ function AppContent() {
   }
 
   return (
-    <AppShell showNav activeTab={activeTab} onTabChange={setActiveTab}>
-      <TopBar />
-      {activeTab === 'home' && <HomeScreen />}
-      {activeTab === 'transactions' && <TransactionsScreen />}
-      {activeTab === 'budget' && <BudgetScreen />}
-      {activeTab === 'profile' && <ProfileScreen />}
-    </AppShell>
+    <>
+      <AppShell 
+        showNav 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onAddClick={() => setShowAddTx(true)}
+      >
+        <TopBar />
+        {activeTab === 'home' && <HomeScreen />}
+        {activeTab === 'transactions' && <TransactionsScreen />}
+        {activeTab === 'budget' && <BudgetScreen />}
+        {activeTab === 'profile' && <ProfileScreen />}
+      </AppShell>
+
+      <AddTransactionSheet 
+        open={showAddTx} 
+        onClose={() => setShowAddTx(false)} 
+      />
+    </>
   );
 }
 
