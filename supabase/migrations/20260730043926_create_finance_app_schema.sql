@@ -2,7 +2,7 @@
 # Create Couple Finance App Schema
 
 ## Overview
-Sets up the full database schema for the "Duit Bersama" couple & personal financial recap app.
+Sets up the full database schema for the "PairFlow" couple & personal financial recap app.
 Supports single-user mode and couple/household mode with shared wallets, transactions, and budgets.
 
 ## New Tables

@@ -89,18 +89,18 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         <div className="flex gap-2">
           <button
             onClick={() => setType('expense')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-              type === 'expense' ? 'bg-red-50 text-red-600 border-2 border-red-200' : 'bg-cream-50 text-stone-400 border-2 border-transparent'
-            }`}
+             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
+               type === 'expense' ? 'bg-expense/20 text-expense border-2 border-expense' : 'bg-secondary text-text-secondary border-2 border-transparent'
+             }`}
           >
             <ArrowDownCircle className="w-5 h-5" />
             Expense
           </button>
           <button
             onClick={() => setType('income')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-              type === 'income' ? 'bg-green-50 text-green-600 border-2 border-green-200' : 'bg-cream-50 text-stone-400 border-2 border-transparent'
-            }`}
+             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
+               type === 'income' ? 'bg-income/20 text-income border-2 border-income' : 'bg-secondary text-text-secondary border-2 border-transparent'
+             }`}
           >
             <ArrowUpCircle className="w-5 h-5" />
             Income
@@ -121,12 +121,12 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         {/* Wallet Selection */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-stone-600">Wallet</label>
-            <button
-              type="button"
-              onClick={() => setShowAddWallet(true)}
-              className="text-sm font-semibold text-teal-700 hover:text-teal-800"
-            >
+             <label className="block text-sm font-medium text-text-secondary">Wallet</label>
+             <button
+               type="button"
+               onClick={() => setShowAddWallet(true)}
+               className="text-sm font-semibold text-primary hover:text-primary-hover"
+             >
               + Add wallet
             </button>
           </div>
@@ -136,46 +136,46 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                 key={w.id}
                 type="button"
                 onClick={() => setWalletId(w.id)}
-                className={`p-3 rounded-xl text-left transition-all border-2 ${
-                  walletId === w.id ? 'border-teal-500 bg-teal-50' : 'border-stone-200 bg-cream-50'
-                }`}
-              >
-                <p className="font-semibold text-sm text-stone-800 truncate">{w.name}</p>
-                <p className="text-xs text-stone-400">{w.type}</p>
-              </button>
+                 className={`p-3 rounded-xl text-left transition-all border-2 ${
+                   walletId === w.id ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
+                 }`}
+               >
+                 <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
+                 <p className="text-xs text-text-secondary">{w.type}</p>
+               </button>
             ))}
           </div>
-          {wallets.length === 0 && (
-            <p className="text-sm text-stone-500 mt-2">No wallets yet. Add one to start tracking transactions.</p>
-          )}
+           {wallets.length === 0 && (
+             <p className="text-sm text-text-secondary mt-2">No wallets yet. Add one to start tracking transactions.</p>
+           )}
         </div>
 
         {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-stone-600 mb-2">Category</label>
-          <div className="grid grid-cols-4 gap-2">
-            {CATEGORIES.map((cat) => {
-              const Icon = getIcon(cat.icon);
-              const isActive = category === cat.key;
-              return (
-                <button
-                  key={cat.key}
-                  onClick={() => setCategory(cat.key)}
-                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
-                    isActive ? 'border-teal-500 bg-teal-50' : 'border-transparent bg-cream-50'
-                  }`}
-                >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-teal-100' : 'bg-cream-100'}`}>
-                    <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-teal-700' : 'text-stone-500'}`} />
-                  </div>
-                  <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-teal-700' : 'text-stone-500'}`}>
-                    {cat.label.split(' ')[0]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+         <div>
+           <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
+           <div className="grid grid-cols-4 gap-2">
+             {CATEGORIES.map((cat) => {
+               const Icon = getIcon(cat.icon);
+               const isActive = category === cat.key;
+               return (
+                 <button
+                   key={cat.key}
+                   onClick={() => setCategory(cat.key)}
+                   className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
+                     isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
+                   }`}
+                 >
+                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                     <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
+                   </div>
+                   <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
+                     {cat.label.split(' ')[0]}
+                   </span>
+                 </button>
+               );
+             })}
+           </div>
+         </div>
 
         <Input
           label="Date"
@@ -192,13 +192,13 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
           onChange={(e) => setNotes(e.target.value)}
         />
 
-        {/* Spent By */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-stone-500">Logged by:</span>
-          <Badge color="teal">{profile?.full_name ?? 'Me'}</Badge>
-        </div>
-
-        {error && <p className="text-sm text-red-500">{error}</p>}
+         {/* Spent By */}
+         <div className="flex items-center gap-2">
+           <span className="text-sm text-text-secondary">Logged by:</span>
+           <Badge color="primary">{profile?.full_name ?? 'Me'}</Badge>
+         </div>
+ 
+         {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth onClick={handleSubmit} disabled={loading}>
           {loading ? 'Saving...' : 'Save Transaction'}

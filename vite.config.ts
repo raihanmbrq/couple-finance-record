@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/favicon-32.png', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Duit Bersama — Couple Finance Recap',
-        short_name: 'Duit Bersama',
+        name: 'PairFlow — Harmonize Your Cashflow, Together',
+        short_name: 'PairFlow',
         description: 'Track household & personal finances together. Budgets, wallets, and recaps for couples and singles.',
         theme_color: '#0F766E',
         background_color: '#FAFAF9',

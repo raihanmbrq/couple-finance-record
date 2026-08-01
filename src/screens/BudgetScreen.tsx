@@ -74,40 +74,40 @@ export function BudgetScreen() {
 
   return (
     <div className="px-5 py-5 space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display font-extrabold text-2xl text-stone-800">Budget</h1>
-        <button
-          onClick={openAdd}
-          disabled={availableCategories.length === 0}
-          className="w-10 h-10 rounded-full bg-teal-700 text-white flex items-center justify-center shadow-card hover:bg-teal-800 active:scale-95 transition-all disabled:opacity-40"
-        >
-          <Plus className="w-5 h-5" strokeWidth={2.5} />
-        </button>
-      </div>
+       <div className="flex items-center justify-between">
+         <h1 className="font-display font-extrabold text-2xl text-text-primary">Budget</h1>
+         <button
+           onClick={openAdd}
+           disabled={availableCategories.length === 0}
+           className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-card hover:bg-primary-hover active:scale-95 transition-all disabled:opacity-40"
+         >
+           <Plus className="w-5 h-5" strokeWidth={2.5} />
+         </button>
+       </div>
 
-      {/* Monthly Recap Summary */}
-      <Card elevated className="bg-gradient-to-br from-stone-800 to-stone-900 border-0 text-white p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Target className="w-5 h-5 text-amber-400" />
-          <span className="text-stone-300 text-sm font-medium">Monthly Recap</span>
-        </div>
-        <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
-          <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-            <p className={`text-xs text-stone-400 ${isLargeBudget ? '' : 'mb-1'}`}>Budgeted</p>
-            <p className="font-display font-bold text-xs">{formatIDR(totalBudget)}</p>
-          </div>
-          <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-            <p className={`text-xs text-stone-400 ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
-            <p className="font-display font-bold text-xs text-red-300">{formatIDR(totalSpent)}</p>
-          </div>
-          <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-            <p className={`text-xs text-stone-400 ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
-            <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-              {formatIDR(totalRemaining)}
-            </p>
-          </div>
-        </div>
-      </Card>
+       {/* Monthly Recap Summary */}
+       <Card elevated className="bg-gradient-to-br from-text-primary to-text-primary/90 border-0 text-white p-5">
+         <div className="flex items-center gap-2 mb-3">
+           <Target className="w-5 h-5 text-warning" />
+           <span className="text-text-secondary-dark text-sm font-medium">Monthly Recap</span>
+         </div>
+         <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
+           <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
+             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Budgeted</p>
+             <p className="font-display font-bold text-xs">{formatIDR(totalBudget)}</p>
+           </div>
+           <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
+             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
+             <p className="font-display font-bold text-xs text-expense-dark">{formatIDR(totalSpent)}</p>
+           </div>
+           <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
+             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
+             <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-income-dark' : 'text-expense-dark'}`}>
+               {formatIDR(totalRemaining)}
+             </p>
+           </div>
+         </div>
+       </Card>
 
       {/* Budget List */}
       {budgets.length === 0 ? (
@@ -131,44 +131,44 @@ export function BudgetScreen() {
 
             return (
               <Card key={budget.id} className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-cream-100 flex items-center justify-center">
-                      <Icon className="w-4.5 h-4.5 text-stone-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm text-stone-800">{cat?.label ?? budget.category}</p>
-                      <p className="text-xs text-stone-400">
-                        {formatIDR(spent)} of {formatIDR(budget.limit_amount)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEdit(budget.category, budget.limit_amount)}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={async () => { await deleteBudget(budget.id); showToast('Budget berhasil dihapus'); }}
-                      className="p-1.5 rounded-lg text-stone-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                 <div className="flex items-center justify-between mb-3">
+                   <div className="flex items-center gap-2.5">
+                     <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
+                       <Icon className="w-4.5 h-4.5 text-text-secondary" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-sm text-text-primary">{cat?.label ?? budget.category}</p>
+                       <p className="text-xs text-text-secondary">
+                         {formatIDR(spent)} of {formatIDR(budget.limit_amount)}
+                       </p>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-1">
+                     <button
+                       onClick={() => openEdit(budget.category, budget.limit_amount)}
+                       className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
+                     >
+                       Edit
+                     </button>
+                     <button
+                       onClick={async () => { await deleteBudget(budget.id); showToast('Budget berhasil dihapus'); }}
+                       className="p-1.5 rounded-lg text-text-secondary hover:bg-expense/10 hover:text-expense transition-colors"
+                     >
+                       <Trash2 className="w-4 h-4" />
+                     </button>
+                   </div>
+                 </div>
 
                 <ProgressBar value={spent} max={budget.limit_amount} />
 
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-medium text-stone-500">
-                    {pct.toFixed(0)}% used
-                  </span>
-                  <span className={`text-xs font-bold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {remaining >= 0 ? `${formatIDR(remaining)} left` : `${formatIDR(-remaining)} over`}
-                  </span>
-                </div>
+                 <div className="flex items-center justify-between mt-2">
+                   <span className="text-xs font-medium text-text-secondary">
+                     {pct.toFixed(0)}% used
+                   </span>
+                   <span className={`text-xs font-bold ${remaining >= 0 ? 'text-income' : 'text-expense'}`}>
+                     {remaining >= 0 ? `${formatIDR(remaining)} left` : `${formatIDR(-remaining)} over`}
+                   </span>
+                 </div>
               </Card>
             );
           })}
@@ -178,36 +178,36 @@ export function BudgetScreen() {
       {/* Add/Edit Budget Sheet */}
       <Sheet open={showAdd} onClose={() => setShowAdd(false)} title={editCategory ? 'Edit Budget' : 'Set Budget'}>
         <div className="space-y-5">
-          {!editCategory ? (
-            <div>
-              <label className="block text-sm font-medium text-stone-600 mb-2">Category</label>
-              <div className="grid grid-cols-2 gap-2">
-                {availableCategories.map((cat) => {
-                  const Icon = getIcon(cat.icon);
-                  return (
-                    <button
-                      key={cat.key}
-                      onClick={() => setEditCategory(cat.key)}
-                      className="flex items-center gap-2.5 p-3 rounded-xl bg-cream-50 border border-stone-200 hover:border-teal-300 transition-all text-left"
-                    >
-                      <Icon className="w-5 h-5 text-stone-500" />
-                      <span className="text-sm font-semibold text-stone-700">{cat.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-teal-50">
-                {(() => {
-                  const cat = getCategory(editCategory);
-                  const Icon = getIcon(cat?.icon ?? 'CircleDot');
-                  return <Icon className="w-5 h-5 text-teal-700" />;
-                })()}
-                <span className="font-semibold text-teal-700">{getCategory(editCategory)?.label ?? editCategory}</span>
-              </div>
-              <Input
+           {!editCategory ? (
+             <div>
+               <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
+               <div className="grid grid-cols-2 gap-2">
+                 {availableCategories.map((cat) => {
+                   const Icon = getIcon(cat.icon);
+                   return (
+                     <button
+                       key={cat.key}
+                       onClick={() => setEditCategory(cat.key)}
+                       className="flex items-center gap-2.5 p-3 rounded-xl bg-secondary border border-secondary hover:border-primary/50 transition-all text-left"
+                     >
+                       <Icon className="w-5 h-5 text-text-secondary" />
+                       <span className="text-sm font-semibold text-text-primary">{cat.label}</span>
+                     </button>
+                   );
+                 })}
+               </div>
+             </div>
+           ) : (
+             <div className="space-y-4">
+               <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10">
+                 {(() => {
+                   const cat = getCategory(editCategory);
+                   const Icon = getIcon(cat?.icon ?? 'CircleDot');
+                   return <Icon className="w-5 h-5 text-primary" />;
+                 })()}
+                 <span className="font-semibold text-primary">{getCategory(editCategory)?.label ?? editCategory}</span>
+               </div>
+               <Input
                 label="Monthly Limit"
                 prefix="Rp"
                 placeholder="3.000.000"

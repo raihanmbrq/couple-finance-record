@@ -11,8 +11,8 @@ import { WalletActionSheet } from '@/components/WalletActionSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 
 const walletTypeConfig: Record<WalletType, { icon: typeof WalletIcon; color: string; bg: string }> = {
-  joint: { icon: PiggyBank, color: 'text-teal-600', bg: 'bg-teal-50' },
-  cash: { icon: Banknote, color: 'text-amber-600', bg: 'bg-amber-50' },
+  joint: { icon: PiggyBank, color: 'text-primary', bg: 'bg-primary/10' },
+  cash: { icon: Banknote, color: 'text-yellow-600', bg: 'bg-yellow-50' },
   bank: { icon: Landmark, color: 'text-blue-600', bg: 'bg-blue-50' },
   ewallet: { icon: Smartphone, color: 'text-purple-600', bg: 'bg-purple-50' },
 };
@@ -88,24 +88,24 @@ export function HomeScreen() {
   return (
     <div className="px-5 py-5 space-y-5">
       {/* Total Balance Hero */}
-      <Card elevated className="bg-gradient-to-br from-teal-700 to-teal-800 border-0 text-white p-5">
+      <Card elevated className="bg-total-balance border-0 text-white p-5">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-teal-100 text-sm font-medium">Total Balance</span>
+          <span className="text-text-secondary-dark text-sm font-medium">Total Balance</span>
           {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">DEMO</span>}
         </div>
         <p className="font-display font-extrabold text-3xl mb-4">{formatIDR(totalBalance)}</p>
         <div className="flex gap-3">
           <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <ArrowUpRight className="w-4 h-4 text-green-300 shrink-0" />
-              <span className="text-xs text-teal-100 truncate">Income</span>
+              <ArrowUpRight className="w-4 h-4 text-income-dark shrink-0" />
+              <span className="text-xs text-text-secondary-dark truncate">Income</span>
             </div>
             <p className={`font-bold truncate ${incomeStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{incomeStr}</p>
           </div>
           <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <ArrowDownRight className="w-4 h-4 text-red-300 shrink-0" />
-              <span className="text-xs text-teal-100 truncate">Expense</span>
+              <ArrowDownRight className="w-4 h-4 text-expense-dark shrink-0" />
+              <span className="text-xs text-text-secondary-dark truncate">Expense</span>
             </div>
             <p className={`font-bold truncate ${expenseStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{expenseStr}</p>
           </div>
@@ -115,10 +115,10 @@ export function HomeScreen() {
       {/* Wallets */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-bold text-stone-800">My Wallets</h3>
+          <h3 className="font-display font-bold text-text-primary">My Wallets</h3>
           <button
             onClick={() => setShowAddWallet(true)}
-            className="text-sm font-semibold text-teal-700 flex items-center gap-1"
+            className="text-sm font-semibold text-primary flex items-center gap-1"
           >
             <Plus className="w-4 h-4" />
             Add
@@ -139,8 +139,8 @@ export function HomeScreen() {
                   <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
                     <Icon className={`w-5 h-5 ${cfg.color}`} />
                   </div>
-                  <p className="text-xs text-stone-500 font-medium mb-0.5 truncate">{wallet.name}</p>
-                  <p className="font-display font-bold text-stone-800 truncate text-xs">
+                  <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
+                  <p className="font-display font-bold text-text-primary truncate text-xs">
                     {formatIDRShort(wallet.balance)}
                   </p>
                 </Card>
@@ -153,11 +153,11 @@ export function HomeScreen() {
       {/* Expense Breakdown */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-bold text-stone-800">Expense Breakdown</h3>
+          <h3 className="font-display font-bold text-text-primary">Expense Breakdown</h3>
           <div className="flex items-center gap-2">
             {timeFilter === '1 Bulan Penuh' && (
-              <div className="relative w-8 h-8 flex items-center justify-center bg-cream-50 border border-stone-200 rounded-lg hover:border-teal-500 transition-colors">
-                <Calendar className="w-4 h-4 text-stone-500" />
+              <div className="relative w-8 h-8 flex items-center justify-center bg-secondary border border-secondary rounded-lg hover:border-primary/50 transition-colors">
+                <Calendar className="w-4 h-4 text-text-secondary" />
                 <input
                   type="month"
                   value={selectedMonth}
@@ -170,48 +170,48 @@ export function HomeScreen() {
               <select
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value as any)}
-                className="appearance-none bg-cream-50 border border-stone-200 text-stone-600 text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                className="appearance-none bg-secondary border border-secondary text-text-secondary text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
               >
                 <option value="1 Bulan Penuh">{monthName}</option>
                 <option value="Last 30 Days">Last 30 Days</option>
                 <option value="Last 7 Days">Last 7 Days</option>
                 <option value="Todays">Todays</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-stone-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-text-secondary absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
         </div>
         <Card className="p-1">
           {breakdownData.length === 0 ? (
-            <p className="text-sm text-stone-400 text-center py-6">No expenses for this period</p>
+            <p className="text-sm text-text-secondary text-center py-6">No expenses for this period</p>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-secondary">
               {breakdownData.map((item) => {
                 const catInfo = getCategory(item.category);
                 const Icon = getIcon(catInfo?.icon || 'CircleDot');
                 
                 return (
                   <div key={item.category} className="flex items-center gap-3 p-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-5 h-5 text-teal-600" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-end mb-1.5">
-                        <p className="font-semibold text-sm text-stone-800 truncate pr-2">
+                        <p className="font-semibold text-sm text-text-primary truncate pr-2">
                           {catInfo?.label || item.category}
                         </p>
-                        <p className="font-bold text-sm text-stone-800">
+                        <p className="font-bold text-sm text-text-primary">
                           {formatIDRShort(item.amount)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-teal-500 rounded-full" 
+                            className="h-full bg-primary rounded-full" 
                             style={{ width: `${item.percentage}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-semibold text-stone-500 w-8 text-right">
+                        <span className="text-[10px] font-semibold text-text-secondary w-8 text-right">
                           {item.percentage.toFixed(0)}%
                         </span>
                       </div>
@@ -226,10 +226,10 @@ export function HomeScreen() {
 
       {/* Recent Activity */}
       <div>
-        <h3 className="font-display font-bold text-stone-800 mb-3">Recent Activity</h3>
-        <Card className="divide-y divide-stone-100">
+        <h3 className="font-display font-bold text-text-primary mb-3">Recent Activity</h3>
+        <Card className="divide-y divide-secondary">
           {recentTx.length === 0 ? (
-            <p className="text-sm text-stone-400 text-center py-6">No transactions yet</p>
+            <p className="text-sm text-text-secondary text-center py-6">No transactions yet</p>
           ) : (
             recentTx.map((tx) => {
               const cat = getCategory(tx.category);
@@ -239,22 +239,22 @@ export function HomeScreen() {
                   key={tx.id}
                   type="button"
                   onClick={() => setEditingTransaction(tx)}
-                  className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-cream-50 transition-colors"
+                  className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-secondary transition-colors"
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-green-50' : 'bg-cream-100'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-income/10' : 'bg-secondary'}`}>
                     {isIncome ? (
-                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      <TrendingUp className="w-5 h-5 text-income" />
                     ) : (
-                      <TrendingDown className="w-5 h-5 text-stone-500" />
+                      <TrendingDown className="w-5 h-5 text-text-secondary" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="font-semibold text-sm text-stone-800 truncate mb-0.5">{tx.notes || cat?.label || tx.category}</p>
-                    <p className="text-[11px] text-stone-500 truncate">{tx.spent_by}</p>
-                    <p className="text-[10px] text-stone-400 truncate">{formatRelative(tx.created_at)}</p>
+                    <p className="font-semibold text-sm text-text-primary truncate mb-0.5">{tx.notes || cat?.label || tx.category}</p>
+                    <p className="text-[11px] text-text-secondary truncate">{tx.spent_by}</p>
+                    <p className="text-[10px] text-text-secondary/70 truncate">{formatRelative(tx.created_at)}</p>
                   </div>
                   <div className="shrink-0 flex items-center">
-                    <p className={`font-bold ${formatIDRShort(tx.amount).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
+                    <p className={`font-bold ${formatIDRShort(tx.amount).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-income' : 'text-text-primary'}`}>
                       {isIncome ? '+' : '-'}{formatIDRShort(tx.amount)}
                     </p>
                   </div>

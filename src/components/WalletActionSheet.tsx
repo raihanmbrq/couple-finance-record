@@ -99,23 +99,23 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
           onChange={(e) => setName(e.target.value)}
         />
 
-        <div>
-          <label className="block text-sm font-medium text-stone-600 mb-2">Icon / Color</label>
-          <div className="grid grid-cols-2 gap-2">
-            {walletTypes.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setType(key)}
-                className={`flex items-center gap-2.5 p-3 rounded-xl transition-all border-2 ${
-                  type === key ? 'border-teal-500 bg-teal-50' : 'border-stone-200 bg-cream-50'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${type === key ? 'text-teal-700' : 'text-stone-400'}`} />
-                <span className={`text-sm font-semibold ${type === key ? 'text-teal-700' : 'text-stone-500'}`}>{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+         <div>
+           <label className="block text-sm font-medium text-text-secondary mb-2">Icon / Color</label>
+           <div className="grid grid-cols-2 gap-2">
+             {walletTypes.map(({ key, label, icon: Icon }) => (
+               <button
+                 key={key}
+                 onClick={() => setType(key)}
+                 className={`flex items-center gap-2.5 p-3 rounded-xl transition-all border-2 ${
+                   type === key ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
+                 }`}
+               >
+                 <Icon className={`w-5 h-5 ${type === key ? 'text-primary' : 'text-text-secondary'}`} />
+                 <span className={`text-sm font-semibold ${type === key ? 'text-primary' : 'text-text-primary'}`}>{label}</span>
+               </button>
+             ))}
+           </div>
+         </div>
 
         <Input
           label="Balance"
@@ -126,7 +126,7 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
           onChange={(e) => setBalance(e.target.value)}
         />
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-expense">{error}</p>}
 
         <div className="flex gap-2">
           <Button fullWidth variant="secondary" onClick={handleSave} disabled={loading}>
