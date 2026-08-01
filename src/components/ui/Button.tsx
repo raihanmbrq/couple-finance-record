@@ -9,12 +9,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
-const variantClasses: Record<Variant, string> = {
-  primary: 'btn-primary',
-  secondary: 'btn-secondary',
-  ghost: 'btn-ghost',
-  danger: 'px-5 py-3 rounded-xl bg-red-50 text-red-600 font-semibold border border-red-200 hover:bg-red-100 active:bg-red-200 transition-colors duration-150',
-};
+ const variantClasses: Record<Variant, string> = {
+   primary: 'btn-primary',
+   secondary: 'btn-secondary',
+   ghost: 'btn-ghost',
+   danger: 'px-5 py-3 rounded-xl bg-expense/10 text-expense font-semibold border border-expense/20 hover:bg-expense/20 transition-colors duration-150',
+ };
 
 const sizeClasses: Record<Size, string> = {
   sm: 'text-sm px-3 py-2',

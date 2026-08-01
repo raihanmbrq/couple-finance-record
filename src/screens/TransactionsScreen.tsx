@@ -64,12 +64,6 @@ export function TransactionsScreen() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="font-display font-extrabold text-2xl text-stone-800">Transactions</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="w-10 h-10 rounded-full bg-teal-700 text-white flex items-center justify-center shadow-card hover:bg-teal-800 active:scale-95 transition-all"
-        >
-          <Plus className="w-5 h-5" strokeWidth={2.5} />
-        </button>
       </div>
 
       {/* Search */}
@@ -161,11 +155,7 @@ export function TransactionsScreen() {
         <EmptyState
           icon={<Receipt className="w-7 h-7" />}
           title="No transactions found"
-          description={hasActiveFilters ? "Try adjusting your filters" : "Add your first transaction to get started"}
-          action={<Button size="sm" onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 inline mr-1" />
-            Add Transaction
-          </Button>}
+          description={hasActiveFilters ? "Try adjusting your filters" : "No transactions have been added yet"}
         />
       ) : (
         <div className="space-y-4">
@@ -206,7 +196,7 @@ export function TransactionsScreen() {
                             <span className="text-xs text-stone-400">{formatRelative(tx.created_at)}</span>
                             {wallet && <span className="text-xs text-stone-400">· {wallet.name}</span>}
                           </div>
-                          <Badge color="stone" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
+                          <Badge color="secondary" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
                         </div>
                         <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
                           {isIncome ? '+' : '-'}{formatIDR(tx.amount)}

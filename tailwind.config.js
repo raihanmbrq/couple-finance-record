@@ -3,57 +3,19 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      colors: {
-        // Warm neutral base
-        cream: {
-          50: '#FBFAF8',
-          100: '#F5F3EF',
-          200: '#EAE5DC',
-          300: '#D8D0C2',
-          400: '#B8AE9B',
-        },
-        // Warm gray
-        stone: {
-          50: '#FAFAF9',
-          100: '#F5F5F4',
-          200: '#E7E5E4',
-          300: '#D6D3D1',
-          400: '#A8A29E',
-          500: '#78716C',
-          600: '#57534E',
-          700: '#44403C',
-          800: '#292524',
-          900: '#1C1917',
-        },
-        // Primary — teal
-        teal: {
-          50: '#F0FDFA',
-          100: '#CCFBF1',
-          200: '#99F6E4',
-          300: '#5EEAD4',
-          400: '#2DD4BF',
-          500: '#14B8A6',
-          600: '#0D9488',
-          700: '#0F766E',
-          800: '#115E54',
-          900: '#134E4A',
-        },
-        // Accent — amber
-        amber: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          200: '#FDE68A',
-          300: '#FCD34D',
-          400: '#FBBF24',
-          500: '#F59E0B',
-          600: '#D97706',
-          700: '#B45309',
-        },
-        // Semantic
-        success: '#16A34A',
-        warning: '#F59E0B',
-        danger: '#DC2626',
-      },
+       colors: {
+         'primary': '#7DD3FC',
+         'primary-hover': '#38BDF8',
+         'secondary': '#BAE6FD',
+         'background': '#F8FAFC',
+         'surface': '#FFFFFF',
+         'text-primary': '#334155',
+         'text-secondary': '#64748B',
+         'income': '#86EFAC',
+         'expense': '#FCA5A5',
+         'warning': '#FDE68A',
+         'total-balance': '#1E90FF',
+       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
@@ -89,5 +51,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 };

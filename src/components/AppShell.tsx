@@ -35,23 +35,23 @@ function NavButton({
       onClick={() => onChange(item.key)}
       className="flex-1 flex flex-col items-center gap-1 py-1.5 transition-all duration-150"
     >
-      <Icon
-        className={`w-6 h-6 transition-colors duration-150 ${isActive ? 'text-teal-700' : 'text-stone-400'}`}
-        strokeWidth={isActive ? 2.5 : 2}
-      />
-      <span className={`text-[10px] font-semibold transition-colors duration-150 ${isActive ? 'text-teal-700' : 'text-stone-400'}`}>
-        {item.label}
-      </span>
+       <Icon
+         className={`w-6 h-6 transition-colors duration-150 ${isActive ? 'text-primary' : 'text-text-secondary'}`}
+         strokeWidth={isActive ? 2.5 : 2}
+       />
+       <span className={`text-[10px] font-semibold transition-colors duration-150 ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
+         {item.label}
+       </span>
     </button>
   );
 }
 
-export function BottomNav({ active, onChange, onAddClick }: BottomNavProps) {
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-stone-200/60 safe-bottom">
-      <div className="max-w-md mx-auto relative flex items-center justify-between px-2 py-2 h-16">
-        
-        {/* Left Tabs */}
+ export function BottomNav({ active, onChange, onAddClick }: BottomNavProps) {
+   return (
+     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-lg border-t border-secondary safe-bottom">
+       <div className="max-w-md mx-auto relative flex items-center justify-between px-2 py-2 h-16">
+         
+         {/* Left Tabs */}
         <div className="flex-1 flex justify-around items-center">
           {leftTabs.map((item) => (
             <NavButton key={item.key} item={item} active={active} onChange={onChange} />
@@ -59,13 +59,13 @@ export function BottomNav({ active, onChange, onAddClick }: BottomNavProps) {
         </div>
 
         {/* Center FAB */}
-        <div className="flex-shrink-0 w-16 flex justify-center -mt-8 relative z-50">
-          <button
-            onClick={onAddClick}
-            className="w-14 h-14 rounded-full bg-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-600/30 border-4 border-white hover:bg-teal-700 hover:scale-105 active:scale-95 transition-all"
-          >
-            <Plus className="w-7 h-7" strokeWidth={2.5} />
-          </button>
+         <div className="flex-shrink-0 w-16 flex justify-center -mt-8 relative z-50">
+           <button
+             onClick={onAddClick}
+             className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30 border-4 border-surface hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all"
+           >
+             <Plus className="w-7 h-7" strokeWidth={2.5} />
+           </button>
         </div>
 
         {/* Right Tabs */}
@@ -88,12 +88,12 @@ interface AppShellProps {
   onAddClick?: () => void;
 }
 
-export function AppShell({ children, showNav, activeTab, onTabChange, onAddClick }: AppShellProps) {
-  return (
-    <div className="min-h-screen bg-cream-100 flex justify-center">
-      <div className="w-full max-w-md min-h-screen bg-cream-50 relative flex flex-col">
-        {/* pb-24 to accommodate floating center button */}
-        <main className={`flex-1 ${showNav ? 'pb-24' : ''}`}>{children}</main>
+ export function AppShell({ children, showNav, activeTab, onTabChange, onAddClick }: AppShellProps) {
+   return (
+     <div className="min-h-screen bg-background flex justify-center">
+       <div className="w-full max-w-md min-h-screen bg-surface relative flex flex-col">
+         {/* pb-24 to accommodate floating center button */}
+         <main className={`flex-1 ${showNav ? 'pb-24' : ''}`}>{children}</main>
         {showNav && <BottomNav active={activeTab} onChange={onTabChange} onAddClick={onAddClick || (() => {})} />}
       </div>
     </div>

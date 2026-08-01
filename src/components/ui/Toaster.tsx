@@ -10,13 +10,13 @@ export function Toaster() {
     <div className="fixed bottom-24 left-0 right-0 z-[100] flex flex-col items-center gap-2 px-4 pointer-events-none">
       {toasts.map(toast => (
         <div
-          key={toast.id}
-          className={`flex items-center gap-3 w-full max-w-sm px-4 py-3 rounded-2xl shadow-lg pointer-events-auto
-            ${toast.type === 'success'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-red-600 text-white'
-            }`}
-        >
+           key={toast.id}
+           className={`flex items-center gap-3 w-full max-w-sm px-4 py-3 rounded-2xl shadow-lg pointer-events-auto
+             ${toast.type === 'success'
+               ? 'bg-income text-white'
+               : 'bg-expense text-white'
+             }`}
+         >
           {toast.type === 'success'
             ? <CheckCircle2 className="w-5 h-5 shrink-0" />
             : <XCircle className="w-5 h-5 shrink-0" />
