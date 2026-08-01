@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CATEGORIES, type Transaction, type TransactionType } from '@/lib/types';
-import { formatIDRInput, parseIDRInput } from '@/lib/format';
+import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle, Trash2 } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
@@ -33,6 +33,11 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
 
   const selectedWallet = useMemo(() => wallets.find(w => w.id === walletId), [wallets, walletId]);
 
+  const formatWalletType = (type: string) => {
+    if (type === 'ewallet') return 'E-Wallet';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   useEffect(() => {
     if (!open || !transaction) return;
     setType(transaction.type);
@@ -56,7 +61,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
     try {
       await deleteTransaction(transaction.id);
       onClose();
-      showToast('Transaksi berhasil dihapus');
+      showToast('Transaksi berhasil dihapus', 'error');
     } catch {
       setError('Failed to delete transaction');
     } finally {
@@ -158,12 +163,12 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
                 }`}
               >
                 <p className="font-semibold text-sm text-stone-800 truncate">{w.name}</p>
-                <p className="text-xs text-stone-400">{w.type}</p>
+                <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
               </button>
             ))}
           </div>
           {selectedWallet && (
-            <p className="text-xs text-stone-500 mt-2">Current wallet balance: {selectedWallet.balance}</p>
+            <p className="text-xs text-stone-500 mt-2">Current wallet balance: {formatIDR(selectedWallet.balance)}</p>
           )}
         </fieldset>
 
@@ -210,7 +215,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
 
         <div className="flex items-center gap-2">
           <span className="text-sm text-stone-500">Logged by:</span>
-          <Badge color="teal">{profile?.full_name ?? transaction?.spent_by ?? 'Unknown user'}</Badge>
+          <Badge color="primary">{profile?.full_name ?? transaction?.spent_by ?? 'Unknown user'}</Badge>
         </div>
 
         {error && <p className="text-sm text-red-500">{error}</p>}
