@@ -34,6 +34,7 @@ export function GoalsSection() {
   const [category, setCategory] = useState<Goal['asset_category']>('Tabungan Biasa');
   const [returnRate, setReturnRate] = useState('5');
   const [saving, setSaving] = useState(false);
+  const [deleteGoalTarget, setDeleteGoalTarget] = useState<Goal | null>(null);
 
   // Deposit
   const [depositGoal, setDepositGoal] = useState<Goal | null>(null);
@@ -103,11 +104,12 @@ export function GoalsSection() {
     }
   };
 
-  const handleDelete = async (goal: Goal) => {
-    if (!window.confirm(`Hapus goal "${goal.title}"?`)) return;
+  const handleDelete = async () => {
+    if (!deleteGoalTarget) return;
     try {
-      await deleteGoal(goal.id);
-      showToast('Goal berhasil dihapus');
+      await deleteGoal(deleteGoalTarget.id);
+      setDeleteGoalTarget(null);
+      showToast('Goal berhasil dihapus', 'error');
     } catch {
       showToast('Gagal menghapus goal');
     }
@@ -189,7 +191,7 @@ export function GoalsSection() {
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(goal)}
+                      onClick={() => setDeleteGoalTarget(goal)}
                       className="p-1.5 rounded-lg text-text-secondary hover:bg-expense/10 hover:text-expense transition-colors"
                       aria-label="Delete goal"
                     >
@@ -343,6 +345,38 @@ export function GoalsSection() {
           </Button>
         </div>
       </Sheet>
+
+      {deleteGoalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="font-display font-bold text-lg text-text-primary">Hapus Goal?</h3>
+              <p className="text-sm text-text-secondary">
+                Goal "{deleteGoalTarget.title}" akan dihapus.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteGoalTarget(null)}
+                className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-all"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

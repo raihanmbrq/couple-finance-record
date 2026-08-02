@@ -6,7 +6,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { CATEGORIES, getCategory } from '@/lib/types';
+import { CATEGORIES, getCategory, type Budget } from '@/lib/types';
 import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
 import { Plus, PiggyBank, Trash2, Target } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
@@ -19,6 +19,7 @@ export function BudgetScreen() {
   const [showAdd, setShowAdd] = useState(false);
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
+  const [deleteBudgetTarget, setDeleteBudgetTarget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Calculate spent per category this month
@@ -69,6 +70,18 @@ export function BudgetScreen() {
     setEditCategory(null);
     setEditAmount('');
     setShowAdd(true);
+  };
+
+  const handleDeleteBudget = async () => {
+    if (!deleteBudgetTarget) return;
+    setLoading(true);
+    try {
+      await deleteBudget(deleteBudgetTarget.id);
+      setDeleteBudgetTarget(null);
+      showToast('Budget berhasil dihapus', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const availableCategories = CATEGORIES.filter(c => !budgets.some(b => b.category === c.key) && c.key !== 'salary');
@@ -151,7 +164,7 @@ export function BudgetScreen() {
                        Edit
                      </button>
                      <button
-                       onClick={async () => { await deleteBudget(budget.id); showToast('Budget berhasil dihapus'); }}
+                       onClick={() => setDeleteBudgetTarget(budget)}
                        className="p-1.5 rounded-lg text-text-secondary hover:bg-expense/10 hover:text-expense transition-colors"
                      >
                        <Trash2 className="w-4 h-4" />
@@ -228,7 +241,41 @@ export function BudgetScreen() {
             </Button>
           )}
         </div>
-      </Sheet>
-    </div>
+       </Sheet>
+
+      {deleteBudgetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="font-display font-bold text-lg text-text-primary">Hapus Budget?</h3>
+              <p className="text-sm text-text-secondary">
+                Budget {getCategory(deleteBudgetTarget.category)?.label ?? deleteBudgetTarget.category} akan dihapus.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteBudgetTarget(null)}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteBudget}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-all disabled:opacity-50"
+              >
+                {loading ? 'Menghapus...' : 'Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+     </div>
   );
 }
