@@ -30,6 +30,11 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [error, setError] = useState('');
   const [showAddWallet, setShowAddWallet] = useState(false);
 
+  const formatWalletType = (type: string) => {
+    if (type === 'ewallet') return 'E-Wallet';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   useEffect(() => {
     if (open && wallets.length > 0 && !walletId) {
       setWalletId(wallets[0].id);
@@ -179,7 +184,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                  }`}
                >
                  <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
-                 <p className="text-xs text-text-secondary">{w.type}</p>
+                 <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
                </button>
             ))}
           </div>
