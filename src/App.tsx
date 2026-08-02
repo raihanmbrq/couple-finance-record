@@ -10,18 +10,33 @@ import { TransactionsScreen } from '@/screens/TransactionsScreen';
 import { BudgetScreen } from '@/screens/BudgetScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
+import { PairFlowLoader } from './components/ui/PairFlowLoader';
 
 function AppContent() {
-  const { profile } = useApp();
-  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const { profile, loading } = useApp();
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    return (localStorage.getItem('activeTab') as TabKey) || 'home';
+  });
   const [showAddTx, setShowAddTx] = useState(false);
 
   const isAuthenticated = Boolean(profile);
+
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
 
   // Reset tab when leaving app
   useEffect(() => {
     if (!isAuthenticated) setActiveTab('home');
   }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-cream-50">
+        <PairFlowLoader />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginScreen />;

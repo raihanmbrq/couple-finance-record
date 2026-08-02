@@ -31,11 +31,22 @@ export default {
         float: '0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.08)',
       },
       animation: {
+        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'slide-up': 'slideUp 0.25s ease-out',
         'fade-in': 'fadeIn 0.2s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
       },
       keyframes: {
+        pulse: {
+          '0%, 100%': {
+            transform: 'scale(0.8)',
+            opacity: '0.5',
+          },
+          '50%': {
+            transform: 'scale(1.2)',
+            opacity: '1',
+          },
+        },
         slideUp: {
           '0%': { transform: 'translateY(100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },

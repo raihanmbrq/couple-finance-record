@@ -58,22 +58,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
-  // Restore demo session from localStorage
+  // Restore demo session from localStorage or check live session
   useEffect(() => {
+    if (sessionChecked) return;
+
     const saved = localStorage.getItem('duitbersama_session');
     if (saved === 'demo') {
       enterDemo();
+      setLoading(false);
+      setSessionChecked(true);
       return;
     }
-    // Check for live Supabase session
+    
     checkLiveSession();
-  }, []);
+  }, [sessionChecked]);
 
   const checkLiveSession = useCallback(async () => {
+    setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -82,6 +88,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch {
       // No live session — stay in default state
+    } finally {
+      setLoading(false);
+      setSessionChecked(true);
     }
   }, []);
 
