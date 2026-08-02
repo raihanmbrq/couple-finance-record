@@ -11,6 +11,7 @@ import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
 import { Plus, PiggyBank, Trash2, Target } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
+import { GoalsSection } from '@/components/GoalsSection';
 
 export function BudgetScreen() {
   const { budgets, transactions, setBudget, deleteBudget } = useApp();
@@ -75,7 +76,7 @@ export function BudgetScreen() {
   return (
     <div className="px-5 py-5 space-y-5">
        <div className="flex items-center justify-between">
-         <h1 className="font-display font-extrabold text-2xl text-text-primary">Budget</h1>
+         <h1 className="font-display font-extrabold text-2xl text-text-primary">Set Budgets</h1>
          <button
            onClick={openAdd}
            disabled={availableCategories.length === 0}
@@ -93,7 +94,7 @@ export function BudgetScreen() {
          </div>
          <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Budgeted</p>
+             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Budget</p>
              <p className="font-display font-bold text-xs">{formatIDR(totalBudget)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
@@ -107,8 +108,7 @@ export function BudgetScreen() {
              </p>
            </div>
          </div>
-       </Card>
-
+        </Card>
       {/* Budget List */}
       {budgets.length === 0 ? (
         <EmptyState
@@ -174,6 +174,8 @@ export function BudgetScreen() {
           })}
         </div>
       )}
+
+      <GoalsSection />
 
       {/* Add/Edit Budget Sheet */}
       <Sheet open={showAdd} onClose={() => setShowAdd(false)} title={editCategory ? 'Edit Budget' : 'Set Budget'}>

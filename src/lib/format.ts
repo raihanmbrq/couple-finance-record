@@ -37,6 +37,15 @@ export function formatDate(date: string | Date): string {
   }).format(d);
 }
 
+export function formatDateShort(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d);
+}
+
 export function formatTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('id-ID', {

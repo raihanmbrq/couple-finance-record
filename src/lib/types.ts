@@ -56,6 +56,42 @@ export interface Budget {
   created_at: string;
 }
 
+export type AssetCategory = 'Tabungan Biasa' | 'Reksadana' | 'Saham' | 'Deposito' | 'Emas' | 'Lainnya';
+
+export type GoalInput = {
+  id?: string;
+  title: string;
+  target_amount: number;
+  current_amount?: number;
+  target_date: string;
+  asset_category: AssetCategory;
+  expected_return_rate: number;
+  monthly_contribution: number;
+};
+
+export const ASSET_CATEGORIES: { key: AssetCategory; label: string; isInvestment: boolean }[] = [
+  { key: 'Tabungan Biasa', label: 'Tabungan Biasa', isInvestment: false },
+  { key: 'Reksadana', label: 'Reksadana', isInvestment: true },
+  { key: 'Saham', label: 'Saham', isInvestment: true },
+  { key: 'Deposito', label: 'Deposito', isInvestment: true },
+  { key: 'Emas', label: 'Emas', isInvestment: true },
+  { key: 'Lainnya', label: 'Lainnya', isInvestment: false },
+];
+
+export interface Goal {
+  id: string;
+  household_id: string;
+  user_id?: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  target_date: string;
+  asset_category: AssetCategory;
+  expected_return_rate: number | null;
+  monthly_contribution: number;
+  created_at: string;
+}
+
 export interface Category {
   key: string;
   label: string;
@@ -74,6 +110,7 @@ export const CATEGORIES: Category[] = [
   { key: 'salary', label: 'Salary', icon: 'Banknote', color: 'green' },
   { key: 'other', label: 'Other', icon: 'CircleDot', color: 'stone' },
   { key: 'transfer', label: 'Transfer', icon: 'ArrowRightLeft', color: 'stone' },
+  { key: 'goals', label: 'Goals', icon: 'PiggyBank', color: 'primary' },
 ];
 
 export function getCategory(key: string): Category | undefined {

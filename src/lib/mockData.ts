@@ -1,4 +1,4 @@
-import type { Profile, Household, Wallet, Transaction, Budget } from '@/lib/types';
+import type { Profile, Household, Wallet, Transaction, Budget, Goal } from '@/lib/types';
 
 // Deterministic IDs for mock data
 const mockHouseholdId = 'hh-mock-001';
@@ -84,6 +84,35 @@ export const mockTransactions: Transaction[] = [
   { id: 'tx-10', wallet_id: 'wallet-4', user_id: mockPartnerId, amount: 50_000, type: 'expense', category: 'food', notes: 'Coffee at Starbucks', spent_by: 'Sari Wulandari', transaction_date: daysAgo(6), created_at: daysAgo(6) },
   { id: 'tx-11', wallet_id: 'wallet-1', user_id: mockUserId, amount: 500_000, type: 'expense', category: 'bills', notes: 'Internet bill', spent_by: 'Andi Pratama', transaction_date: daysAgo(7), created_at: daysAgo(7) },
   { id: 'tx-12', wallet_id: 'wallet-3', user_id: mockPartnerId, amount: 180_000, type: 'expense', category: 'shopping', notes: 'Skincare', spent_by: 'Sari Wulandari', transaction_date: daysAgo(8), created_at: daysAgo(8) },
+];
+
+export const mockGoals: Goal[] = [
+  {
+    id: 'goal-1',
+    household_id: mockHouseholdId,
+    user_id: mockUserId,
+    title: 'Beli Mobil Honda HR-V',
+    target_amount: 150_000_000,
+    current_amount: 45_000_000,
+    target_date: '2028-08-02T23:59:59Z',
+    asset_category: 'Reksadana',
+    expected_return_rate: 5,
+    monthly_contribution: 2_000_000,
+    created_at: daysAgo(180),
+  },
+  {
+    id: 'goal-2',
+    household_id: mockHouseholdId,
+    user_id: mockUserId,
+    title: 'Dana Darurat 6 Bulan',
+    target_amount: 30_000_000,
+    current_amount: 12_000_000,
+    target_date: '2026-12-31T23:59:59Z',
+    asset_category: 'Tabungan Biasa',
+    expected_return_rate: 0,
+    monthly_contribution: 850_000,
+    created_at: daysAgo(90),
+  },
 ];
 
 export const mockBudgets: Budget[] = [

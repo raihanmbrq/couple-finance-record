@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Profile, Household, Wallet, Transaction, Budget } from '@/lib/types';
+import type { Profile, Household, Wallet, Transaction, Budget, Goal, GoalInput } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import {
-  mockProfile, mockHousehold, mockWallets, mockTransactions, mockBudgets,
+  mockProfile, mockHousehold, mockWallets, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
 } from '@/lib/mockData';
 
@@ -15,6 +15,7 @@ interface AppState {
   wallets: Wallet[];
   transactions: Transaction[];
   budgets: Budget[];
+  goals: Goal[];
   loading: boolean;
   error: string | null;
   // Auth
@@ -38,6 +39,10 @@ interface AppState {
   // Budgets
   setBudget: (category: string, limitAmount: number) => Promise<void>;
   deleteBudget: (id: string) => Promise<void>;
+  // Goals
+  saveGoal: (input: GoalInput) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
+  depositToGoal: (goalId: string, walletId: string, amount: number) => Promise<void>;
   // Demo
   enterDemo: () => void;
   isDemo: boolean;
@@ -58,6 +63,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
@@ -145,6 +151,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setWallets([]);
         setTransactions([]);
         setBudgets([]);
+        setGoals([]);
         return;
       }
 
@@ -175,6 +182,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('household_id', householdId);
       setBudgets((bg as Budget[]) ?? []);
+
+      const { data: gl } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('household_id', householdId);
+      setGoals((gl as Goal[]) ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -190,6 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWallets(mockWallets);
     setTransactions(mockTransactions);
     setBudgets(mockBudgets);
+    setGoals(mockGoals);
     localStorage.setItem('duitbersama_session', 'demo');
   }, []);
 
@@ -321,6 +335,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWallets([]);
     setTransactions([]);
     setBudgets([]);
+    setGoals([]);
   }, [mode]);
 
   const setMode = useCallback(async (_mode: 'single' | 'couple', _partnerName?: string) => {
@@ -355,6 +370,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setHousehold(newHousehold);
       setProfile({ ...profile, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' });
       setWallets([]);
+      setGoals([]);
       return newHousehold.invite_code;
     }
 
@@ -362,6 +378,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHousehold(newHousehold);
     setProfile(prev => prev ? { ...prev, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' } : prev);
     setWallets([]);
+    setGoals([]);
     return code;
   }, [mode, profile]);
 
@@ -513,6 +530,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [mode, profile, wallets]);
 
+  const goalTitleFromDeposit = (tx: Transaction) => {
+    const prefix = 'Deposit ke Goal: ';
+    if (tx.category !== 'goals' || !tx.notes?.startsWith(prefix)) return null;
+    return tx.notes.slice(prefix.length);
+  };
+
   const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
     const currentTx = transactions.find((tx) => tx.id === id);
     if (!currentTx) return;
@@ -579,6 +602,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    const previousGoalTitle = goalTitleFromDeposit(currentTx);
+    const nextGoalTitle = goalTitleFromDeposit(updatedTransaction);
+    setGoals(prev => prev.map((goal) => {
+      if (goal.title === previousGoalTitle && goal.title === nextGoalTitle) {
+        return { ...goal, current_amount: goal.current_amount - previousAmount + nextAmount };
+      }
+      if (goal.title === previousGoalTitle) {
+        return { ...goal, current_amount: Math.max(0, goal.current_amount - previousAmount) };
+      }
+      if (goal.title === nextGoalTitle) {
+        return { ...goal, current_amount: goal.current_amount + nextAmount };
+      }
+      return goal;
+    }));
     setTransactions(prev => prev.map((tx) => tx.id === id ? updatedTransaction : tx));
     setWallets(prev => prev.map((w) => {
       if (w.id === previousWalletId && previousWalletId === walletId) {
@@ -598,6 +635,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
 
+    const goalTitle = goalTitleFromDeposit(tx);
+
     if (mode === 'live') {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) throw error;
@@ -612,6 +651,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    if (goalTitle) {
+      setGoals(prev => prev.map((goal) => goal.title === goalTitle
+        ? { ...goal, current_amount: Math.max(0, goal.current_amount - tx.amount) }
+        : goal));
+    }
     setTransactions(prev => prev.filter(t => t.id !== id));
   }, [mode, transactions, wallets]);
 
@@ -657,6 +701,106 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBudgets(prev => prev.filter(b => b.id !== id));
   }, [mode]);
 
+  const saveGoal = useCallback(async (input: GoalInput) => {
+    if (!household) return;
+    if (mode === 'live') {
+      if (input.id) {
+        const { id, ...updates } = input;
+        const { error } = await supabase.from('goals').update(updates).eq('id', id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('goals').insert({
+          household_id: household.id,
+          user_id: profile?.id,
+          title: input.title,
+          target_amount: input.target_amount,
+          current_amount: input.current_amount ?? 0,
+          target_date: input.target_date,
+          asset_category: input.asset_category,
+          expected_return_rate: input.expected_return_rate,
+          monthly_contribution: input.monthly_contribution,
+        }).select().single();
+        if (error) throw error;
+        setGoals(prev => [...prev, data as Goal]);
+        return;
+      }
+    }
+    if (input.id) {
+      setGoals(prev => prev.map(g => g.id === input.id ? { ...g, ...input } : g));
+    } else {
+      setGoals(prev => [...prev, {
+        id: crypto.randomUUID(),
+        household_id: household.id,
+        user_id: profile?.id,
+        title: input.title,
+        target_amount: input.target_amount,
+        current_amount: input.current_amount ?? 0,
+        target_date: input.target_date,
+        asset_category: input.asset_category,
+        expected_return_rate: input.expected_return_rate,
+        monthly_contribution: input.monthly_contribution,
+        created_at: new Date().toISOString(),
+      }]);
+    }
+  }, [household, mode, profile]);
+
+  const deleteGoal = useCallback(async (id: string) => {
+    if (mode === 'live') {
+      const { error } = await supabase.from('goals').delete().eq('id', id);
+      if (error) throw error;
+    }
+    setGoals(prev => prev.filter(g => g.id !== id));
+  }, [mode]);
+
+  const depositToGoal = useCallback(async (goalId: string, walletId: string, amount: number) => {
+    const goal = goals.find(g => g.id === goalId);
+    const wallet = wallets.find(w => w.id === walletId);
+    if (!goal || !wallet) return;
+    if (amount <= 0) throw new Error('Jumlah deposit harus lebih dari 0.');
+    if (wallet.balance < amount) throw new Error('Saldo wallet tidak mencukupi.');
+
+    const now = new Date().toISOString();
+    const nextBalance = wallet.balance - amount;
+    const nextCurrent = goal.current_amount + amount;
+    const newTx: Transaction = {
+      id: crypto.randomUUID(),
+      user_id: profile?.id,
+      wallet_id: walletId,
+      amount,
+      type: 'expense',
+      category: 'goals',
+      notes: `Deposit ke Goal: ${goal.title}`,
+      spent_by: profile?.full_name ?? 'Me',
+      transaction_date: now,
+      created_at: now,
+    };
+
+    if (mode === 'live') {
+      const { error: txErr } = await supabase.from('transactions').insert({
+        id: newTx.id,
+        user_id: newTx.user_id,
+        wallet_id: newTx.wallet_id,
+        amount: newTx.amount,
+        type: newTx.type,
+        category: newTx.category,
+        notes: newTx.notes,
+        spent_by: newTx.spent_by,
+        transaction_date: newTx.transaction_date,
+      });
+      if (txErr) throw txErr;
+
+      const { error: wErr } = await supabase.from('wallets').update({ balance: nextBalance }).eq('id', walletId);
+      if (wErr) throw wErr;
+
+      const { error: gErr } = await supabase.from('goals').update({ current_amount: nextCurrent }).eq('id', goalId);
+      if (gErr) throw gErr;
+    }
+
+    setTransactions(prev => [newTx, ...prev]);
+    setWallets(prev => prev.map(w => w.id === walletId ? { ...w, balance: nextBalance } : w));
+    setGoals(prev => prev.map(g => g.id === goalId ? { ...g, current_amount: nextCurrent } : g));
+  }, [goals, mode, profile, wallets]);
+
   const value: AppState = {
     mode,
     profile,
@@ -664,6 +808,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     wallets,
     transactions,
     budgets,
+    goals,
     loading,
     error,
     signIn,
@@ -682,6 +827,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteTransaction,
     setBudget,
     deleteBudget,
+    saveGoal,
+    deleteGoal,
+    depositToGoal,
     enterDemo,
     isDemo,
   };
