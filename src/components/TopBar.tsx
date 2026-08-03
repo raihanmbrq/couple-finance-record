@@ -2,11 +2,11 @@ import { useApp } from '@/context/AppContext';
 import { Wallet, Users, User } from 'lucide-react';
 
 export function TopBar() {
-  const { profile, household, isDemo } = useApp();
+  const { household, householdMembers, isDemo } = useApp();
 
-  const isCouple = household?.mode === 'couple';
-  const statusText = isCouple
-    ? `Connected with ${household?.partner_name ?? 'Partner'}`
+  const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
+  const statusText = isCircle
+    ? `Circle Mode — ${household?.name ?? 'Household'}`
     : 'Single Mode';
 
    return (
@@ -27,7 +27,7 @@ export function TopBar() {
  
          {/* Household Status */}
          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-secondary">
-           {isCouple ? (
+            {isCircle ? (
              <Users className="w-4 h-4 text-primary" />
            ) : (
              <User className="w-4 h-4 text-text-secondary" />

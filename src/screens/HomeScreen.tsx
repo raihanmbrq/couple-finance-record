@@ -1,10 +1,9 @@
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { formatIDR, formatIDRShort, formatRelative } from '@/lib/format';
-import { getCategory, type Wallet, type WalletType } from '@/lib/types';
-import { TrendingUp, TrendingDown, Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownRight, Landmark, Smartphone, Banknote, PiggyBank, ChevronDown, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { getCategory, type Wallet, type WalletType, type HouseholdMember } from '@/lib/types';
+import { TrendingUp, TrendingDown, Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownRight, Landmark, Smartphone, Banknote, PiggyBank, ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { getIcon } from '@/lib/icons';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { WalletActionSheet } from '@/components/WalletActionSheet';
@@ -17,8 +16,46 @@ const walletTypeConfig: Record<WalletType, { icon: typeof WalletIcon; color: str
   ewallet: { icon: Smartphone, color: 'text-purple-600', bg: 'bg-purple-50' },
 };
 
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+function SliderArrow({ position, disabled, onClick }: { position: 'left' | 'right'; disabled: boolean; onClick: () => void }) {
+  const Icon = position === 'left' ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      type="button"
+      aria-label={position === 'left' ? 'Lihat slide sebelumnya' : 'Lihat slide berikutnya'}
+      disabled={disabled}
+      onClick={onClick}
+      className={`hidden sm:flex absolute top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-white border border-secondary shadow-card text-text-primary disabled:opacity-40 disabled:pointer-events-none ${position === 'left' ? '-left-3' : '-right-3'}`}
+    >
+      <Icon className="w-4 h-4" />
+    </button>
+  );
+}
+
+function SliderDots({ count, active, onSelect }: { count: number; active: number; onSelect: (i: number) => void }) {
+  if (count <= 1) return null;
+  return (
+    <div className="flex justify-center gap-1.5 pt-3">
+      {Array.from({ length: count }, (_, i) => (
+        <button
+          key={i}
+          type="button"
+          aria-label={`Ke slide ${i + 1}`}
+          onClick={() => onSelect(i)}
+          className={`h-2 rounded-full transition-all duration-300 ${i === active ? 'w-5 bg-primary' : 'w-2 bg-secondary'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function HomeScreen() {
-  const { wallets, transactions, profile, isDemo } = useApp();
+  const { wallets, transactions, profile, isDemo, householdMembers } = useApp();
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
@@ -31,23 +68,108 @@ export function HomeScreen() {
     return `${y}-${m}`;
   });
 
+  const [balanceIdx, setBalanceIdx] = useState(0);
+  const [walletIdx, setWalletIdx] = useState(0);
+  const balanceRef = useRef<HTMLDivElement>(null);
+  const walletRef = useRef<HTMLDivElement>(null);
+
   const selectedMonthDate = new Date(`${selectedMonth}-01T00:00:00`);
   const monthName = selectedMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
+
+  const memberBalances = householdMembers.map((m) => ({
+    member: m,
+    balance: wallets.filter((w) => w.user_id === m.user_id).reduce((s, w) => s + w.balance, 0),
+  })).filter((x) => x.balance > 0 || x.member.user_id === profile?.id);
+
+  const memberWalletGroups = householdMembers.map((m) => ({
+    member: m,
+    wallets: wallets.filter((w) => w.user_id === m.user_id),
+  })).filter((g) => g.wallets.length > 0 || g.member.user_id === profile?.id);
+
+  const sortedMemberWalletGroups = [...memberWalletGroups].sort((a, b) =>
+    a.member.user_id === profile?.id ? -1 : b.member.user_id === profile?.id ? 1 : 0
+  );
+
+  const memberName = (m: HouseholdMember) => m.profile?.full_name || m.profile?.email?.split('@')[0] || 'Member';
 
   // This month's income/expense
   const monthTx = transactions.filter(t => {
     const d = new Date(t.created_at);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
-  const monthIncome = monthTx.filter(t => t.type === 'income' && t.category !== 'transfer').reduce((s, t) => s + t.amount, 0);
-  const monthExpense = monthTx.filter(t => t.type === 'expense' && t.category !== 'transfer').reduce((s, t) => s + t.amount, 0);
+  const monthIncomeFor = (uid: string) =>
+    monthTx.filter(t => t.type === 'income' && t.category !== 'transfer' && t.user_id === uid).reduce((s, t) => s + t.amount, 0);
+  const monthExpenseFor = (uid: string) =>
+    monthTx.filter(t => t.type === 'expense' && t.category !== 'transfer' && t.user_id === uid).reduce((s, t) => s + t.amount, 0);
+  const allIncome = monthTx.filter(t => t.type === 'income' && t.category !== 'transfer').reduce((s, t) => s + t.amount, 0);
+  const allExpense = monthTx.filter(t => t.type === 'expense' && t.category !== 'transfer').reduce((s, t) => s + t.amount, 0);
+
+  const sortedMemberBalances = [...memberBalances].sort((a, b) =>
+    a.member.user_id === profile?.id ? -1 : b.member.user_id === profile?.id ? 1 : 0
+  );
+
+  const balanceSlides =
+    sortedMemberBalances.length > 0
+      ? sortedMemberBalances.map(({ member, balance }) => {
+          const isMe = member.user_id === profile?.id;
+          const incomeStr = formatIDRShort(monthIncomeFor(member.user_id));
+          const expenseStr = formatIDRShort(monthExpenseFor(member.user_id));
+          return {
+            key: member.user_id,
+            label: isMe ? 'My Total Balance' : memberName(member),
+            balance,
+            incomeStr,
+            expenseStr,
+          };
+        })
+      : [{
+          key: profile?.id ?? 'me',
+          label: 'My Total Balance',
+          balance: totalBalance,
+          incomeStr: formatIDRShort(allIncome),
+          expenseStr: formatIDRShort(allExpense),
+        }];
+
+  const myWalletChunks = chunk(wallets, 4);
+  const walletSlides =
+    sortedMemberWalletGroups.length > 0
+      ? sortedMemberWalletGroups.flatMap(({ member, wallets: memberWallets }) => {
+          const baseLabel = member.user_id === profile?.id ? 'Dompet Saya' : `Dompet ${memberName(member)}`;
+          if (memberWallets.length === 0) {
+            return [{ key: member.user_id, label: baseLabel, wallets: memberWallets, empty: true }];
+          }
+          const chunks = chunk(memberWallets, 4);
+          return chunks.map((cw, i) => ({
+            key: `${member.user_id}-${i}`,
+            label: chunks.length > 1 ? `${baseLabel} (${i + 1}/${chunks.length})` : baseLabel,
+            wallets: cw,
+            empty: false,
+          }));
+        })
+      : myWalletChunks.map((cw, i) => ({
+          key: `me-${i}`,
+          label: myWalletChunks.length > 1 ? `Dompet Saya (${i + 1}/${myWalletChunks.length})` : 'Dompet Saya',
+          wallets: cw,
+          empty: false,
+        }));
+
+  const scrollBalanceTo = (idx: number) => {
+    const el = balanceRef.current;
+    if (!el) return;
+    const bounded = Math.min(Math.max(0, idx), balanceSlides.length - 1);
+    el.scrollTo({ left: bounded * el.clientWidth, behavior: 'smooth' });
+  };
+
+  const scrollWalletTo = (idx: number) => {
+    const el = walletRef.current;
+    if (!el) return;
+    const bounded = Math.min(Math.max(0, idx), walletSlides.length - 1);
+    el.scrollTo({ left: bounded * el.clientWidth, behavior: 'smooth' });
+  };
 
   const recentTx = transactions.slice(0, 5);
-
-  const incomeStr = formatIDRShort(monthIncome);
-  const expenseStr = formatIDRShort(monthExpense);
 
   const filteredBreakdownTx = transactions.filter(t => {
     if (t.type !== 'expense') return false;
@@ -87,32 +209,57 @@ export function HomeScreen() {
 
   return (
     <div className="px-5 py-5 space-y-5">
-      {/* Total Balance Hero */}
-      <Card elevated className="bg-total-balance border-0 text-white p-5">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-text-secondary-dark text-sm font-medium">Total Balance</span>
-          {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">DEMO</span>}
-        </div>
-        <p className="font-display font-extrabold text-3xl mb-4">{formatIDR(totalBalance)}</p>
-        <div className="flex gap-3">
-          <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <ArrowUpRight className="w-4 h-4 text-income-dark shrink-0" />
-              <span className="text-xs text-text-secondary-dark truncate">Income</span>
-            </div>
-            <p className={`font-bold truncate ${incomeStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{incomeStr}</p>
+      {/* Total Balance Hero Slider */}
+      {balanceSlides.length > 0 && (
+        <div className="relative">
+          <div
+            ref={balanceRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const idx = Math.round(el.scrollLeft / el.clientWidth);
+              setBalanceIdx(Math.min(Math.max(0, idx), balanceSlides.length - 1));
+            }}
+            className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+          >
+            {balanceSlides.map((slide) => (
+              <div key={slide.key} className="w-full shrink-0 snap-start">
+                <Card elevated className="bg-total-balance border-0 text-white p-5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-text-secondary-dark text-sm font-medium">{slide.label}</span>
+                    {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">DEMO</span>}
+                  </div>
+                  <p className="font-display font-extrabold text-3xl mb-4">{formatIDR(slide.balance)}</p>
+                  <div className="flex gap-3">
+                    <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <ArrowUpRight className="w-4 h-4 text-income-dark shrink-0" />
+                        <span className="text-xs text-text-secondary-dark truncate">Income</span>
+                      </div>
+                      <p className={`font-bold truncate ${slide.incomeStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{slide.incomeStr}</p>
+                    </div>
+                    <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <ArrowDownRight className="w-4 h-4 text-expense-dark shrink-0" />
+                        <span className="text-xs text-text-secondary-dark truncate">Expense</span>
+                      </div>
+                      <p className={`font-bold truncate ${slide.expenseStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{slide.expenseStr}</p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            ))}
           </div>
-          <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <ArrowDownRight className="w-4 h-4 text-expense-dark shrink-0" />
-              <span className="text-xs text-text-secondary-dark truncate">Expense</span>
-            </div>
-            <p className={`font-bold truncate ${expenseStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{expenseStr}</p>
-          </div>
+          {balanceSlides.length > 1 && (
+            <>
+              <SliderArrow position="left" disabled={balanceIdx === 0} onClick={() => scrollBalanceTo(balanceIdx - 1)} />
+              <SliderArrow position="right" disabled={balanceIdx === balanceSlides.length - 1} onClick={() => scrollBalanceTo(balanceIdx + 1)} />
+              <SliderDots count={balanceSlides.length} active={balanceIdx} onSelect={scrollBalanceTo} />
+            </>
+          )}
         </div>
-      </Card>
+      )}
 
-      {/* Wallets */}
+      {/* Wallets Slider */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display font-bold text-text-primary">My Wallets</h3>
@@ -124,30 +271,64 @@ export function HomeScreen() {
             Add
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {wallets.map((wallet) => {
-            const cfg = walletTypeConfig[wallet.type];
-            const Icon = cfg.icon;
-            return (
-              <button
-                key={wallet.id}
-                type="button"
-                onClick={() => setActiveWallet(wallet)}
-                className="text-left min-w-0"
-              >
-                <Card className="p-4 overflow-hidden">
-                  <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
-                    <Icon className={`w-5 h-5 ${cfg.color}`} />
-                  </div>
-                  <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
-                  <p className="font-display font-bold text-text-primary truncate text-xs">
-                    {formatIDRShort(wallet.balance)}
-                  </p>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
+        {walletSlides.length === 0 ? (
+          <p className="text-sm text-text-secondary">No wallets yet</p>
+        ) : (
+          <div className="relative">
+            <div
+              ref={walletRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const idx = Math.round(el.scrollLeft / el.clientWidth);
+                setWalletIdx(Math.min(Math.max(0, idx), walletSlides.length - 1));
+              }}
+              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+            >
+              {walletSlides.map((slide) => (
+                <div key={slide.key} className="w-full shrink-0 snap-start">
+                  <Card className="p-4">
+                    <p className="text-xs font-semibold text-text-secondary mb-3">{slide.label}</p>
+                    {slide.empty ? (
+                      <p className="text-sm text-text-secondary py-2">No wallets yet</p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        {slide.wallets.map((wallet) => {
+                          const cfg = walletTypeConfig[wallet.type];
+                          const Icon = cfg.icon;
+                          return (
+                            <button
+                              key={wallet.id}
+                              type="button"
+                              onClick={() => setActiveWallet(wallet)}
+                              className="text-left min-w-0"
+                            >
+                              <Card className="p-4 overflow-hidden">
+                                <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
+                                  <Icon className={`w-5 h-5 ${cfg.color}`} />
+                                </div>
+                                <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
+                                <p className="font-display font-bold text-text-primary truncate text-xs">
+                                  {formatIDRShort(wallet.balance)}
+                                </p>
+                              </Card>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Card>
+                </div>
+              ))}
+            </div>
+            {walletSlides.length > 1 && (
+              <>
+                <SliderArrow position="left" disabled={walletIdx === 0} onClick={() => scrollWalletTo(walletIdx - 1)} />
+                <SliderArrow position="right" disabled={walletIdx === walletSlides.length - 1} onClick={() => scrollWalletTo(walletIdx + 1)} />
+                <SliderDots count={walletSlides.length} active={walletIdx} onSelect={scrollWalletTo} />
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Expense Breakdown */}

@@ -6,15 +6,18 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { EditProfileSheet } from '@/components/EditProfileSheet';
 import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 export function ProfileScreen() {
-  const { profile, household, wallets, transactions, budgets, isDemo, signOut, joinHousehold } = useApp();
+  const { profile, household, householdMembers, wallets, transactions, budgets, isDemo, signOut, joinHousehold, leaveHousehold } = useApp();
   const [showEdit, setShowEdit] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [joining, setJoining] = useState(false);
+  const { showToast } = useToast();
+  const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
 
   const handleCopy = () => {
     if (household?.invite_code) {
@@ -35,14 +38,29 @@ export function ProfileScreen() {
     try {
       await joinHousehold(inviteCode.trim());
       setInviteCode('');
+      showToast('Berhasil bergabung ke circle.');
     } catch (err) {
-      setJoinError(err instanceof Error ? err.message : 'Failed to join household');
+      const message = err instanceof Error ? err.message : 'Permintaan gagal. Periksa koneksi Anda.';
+      const normalizedMessage = message.includes('Circle ini sudah mencapai batas maksimal 10 anggota')
+        ? 'Circle ini sudah mencapai batas maksimal 10 anggota.'
+        : message.includes('Kode undangan tidak ditemukan')
+          ? 'Kode undangan tidak ditemukan. Periksa kembali 6 digit kode Anda.'
+          : 'Permintaan gagal. Periksa koneksi Anda.';
+      setJoinError(normalizedMessage);
+      showToast(normalizedMessage, 'error');
     } finally {
       setJoining(false);
     }
   };
 
-  const isCouple = household?.mode === 'couple';
+  const handleLeave = async () => {
+    try {
+      await leaveHousehold();
+      showToast('Anda keluar dari circle.');
+    } catch {
+      showToast('Permintaan gagal. Periksa koneksi Anda.', 'error');
+    }
+  };
 
   return (
     <div className="px-5 py-5 space-y-5">
@@ -73,16 +91,16 @@ export function ProfileScreen() {
         {/* Household Status */}
         <div className="mt-4 pt-4 border-t border-stone-100">
           <div className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isCouple ? 'bg-amber-50' : 'bg-teal-50'}`}>
-              {isCouple ? <Users className="w-5 h-5 text-amber-600" /> : <User className="w-5 h-5 text-teal-600" />}
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isCircle ? 'bg-amber-50' : 'bg-teal-50'}`}>
+              {isCircle ? <Users className="w-5 h-5 text-amber-600" /> : <User className="w-5 h-5 text-teal-600" />}
             </div>
             <div className="flex-1">
               <p className="text-xs text-stone-400">Mode</p>
               <p className="font-semibold text-sm text-stone-800">
-                {isCouple ? `Couple — ${household?.name}` : 'Single Mode'}
+                {isCircle ? `Circle Mode — ${household?.name}` : 'Single Mode'}
               </p>
             </div>
-            {isCouple && (
+            {isCircle && (
               <Badge color="primary">Connected</Badge>
             )}
           </div>
@@ -120,20 +138,54 @@ export function ProfileScreen() {
             </div>
           )}
 
-          <div className="space-y-3 pt-2 border-t border-stone-100">
-            <Input
-              label="Join with invitation code"
-              placeholder="6-Invitation Code"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              maxLength={6}
-              className="text-center text-xl font-bold tracking-widest"
-            />
-            {joinError && <p className="text-sm text-expense">{joinError}</p>}
-            <Button fullWidth onClick={handleJoin} disabled={joining}>
-              {joining ? 'Joining...' : 'Join Circle'}
-            </Button>
+          {!isCircle && (
+            <div className="space-y-3 pt-2 border-t border-stone-100">
+              <Input
+                label="Join with invitation code"
+                placeholder="6-Invitation Code"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                className="text-center text-xl font-bold tracking-widest"
+              />
+              {joinError && <p className="text-sm text-expense">{joinError}</p>}
+              <Button fullWidth onClick={handleJoin} disabled={joining}>
+                {joining ? 'Joining...' : 'Join Circle'}
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {householdMembers.length > 0 && (
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-stone-800">Circle Members</h3>
+            <Badge color="primary">{householdMembers.length}/10</Badge>
           </div>
+          <div className="space-y-3">
+            {householdMembers.map((member) => {
+              const memberProfile = member.profile;
+              const displayName = memberProfile?.full_name || memberProfile?.email || 'Member';
+              return (
+                <div key={member.user_id} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cream-100 flex items-center justify-center font-bold text-stone-700">
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-stone-800 truncate">{displayName}</p>
+                    <p className="text-xs text-stone-500 truncate">{memberProfile?.email ?? '—'}</p>
+                  </div>
+                  <Badge>{member.role}</Badge>
+                </div>
+              );
+            })}
+          </div>
+          {isCircle && (
+            <Button variant="danger" fullWidth onClick={handleLeave}>
+              Leave Circle
+            </Button>
+          )}
         </Card>
       )}
 

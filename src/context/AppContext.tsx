@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Profile, Household, Wallet, Transaction, Budget, Goal, GoalInput } from '@/lib/types';
+import type { Profile, Household, HouseholdMember, Wallet, Transaction, Budget, Goal, GoalInput } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import {
-  mockProfile, mockHousehold, mockWallets, mockTransactions, mockBudgets, mockGoals,
+  mockProfile, mockPartner, mockHousehold, mockWallets, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
 } from '@/lib/mockData';
 
@@ -12,6 +12,7 @@ interface AppState {
   mode: AppMode;
   profile: Profile | null;
   household: Household | null;
+  householdMembers: HouseholdMember[];
   wallets: Wallet[];
   transactions: Transaction[];
   budgets: Budget[];
@@ -28,6 +29,7 @@ interface AppState {
   setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
   joinHousehold: (inviteCode: string) => Promise<void>;
+  leaveHousehold: () => Promise<void>;
   // Wallets
   addWallet: (name: string, type: Wallet['type'], balance: number) => Promise<Wallet>;
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
@@ -60,6 +62,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [mode, setAppMode] = useState<AppMode>('demo');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [household, setHousehold] = useState<Household | null>(null);
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -115,20 +118,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       let currentProfile: Profile;
       if (!prof) {
-        const newProfile: Profile = {
+        const newProfile = {
           id: userId,
           email,
           full_name: metaFullName?.trim() || email.split('@')[0] || 'User',
           role: 'single',
           avatar_url: null,
-          household_id: null,
           created_at: new Date().toISOString(),
         };
         const { error: insertErr } = await supabase.from('profiles').insert(newProfile);
         if (insertErr) {
           throw insertErr;
         }
-        currentProfile = newProfile;
+        const { data: insertedProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        currentProfile = insertedProfile as Profile;
       } else {
         currentProfile = prof as Profile;
       }
@@ -150,6 +157,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setHousehold(null);
         setWallets([]);
         setTransactions([]);
+        setHouseholdMembers([]);
         setBudgets([]);
         setGoals([]);
         return;
@@ -157,6 +165,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       setHousehold(householdData);
       householdId = householdData.id;
+
+      const { data: memberProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('household_id', householdId);
+      const members = ((memberProfiles as Profile[]) ?? []).map((memberProfile) => ({
+        id: memberProfile.id,
+        user_id: memberProfile.id,
+        household_id: householdId,
+        role: memberProfile.id === currentProfile.id ? 'owner' : 'member',
+        created_at: memberProfile.created_at,
+        profile: memberProfile,
+      })) satisfies HouseholdMember[];
+      setHouseholdMembers(members);
 
       const { data: w } = await supabase
         .from('wallets')
@@ -200,6 +222,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsDemo(true);
     setProfile(mockProfile);
     setHousehold(mockHousehold);
+    setHouseholdMembers([
+      {
+        id: mockProfile.id,
+        user_id: mockProfile.id,
+        household_id: mockHousehold.id,
+        role: 'owner',
+        created_at: mockProfile.created_at,
+        profile: mockProfile,
+      },
+      {
+        id: mockPartner.id,
+        user_id: mockPartner.id,
+        household_id: mockHousehold.id,
+        role: 'member',
+        created_at: mockPartner.created_at,
+        profile: mockPartner,
+      },
+    ]);
     setWallets(mockWallets);
     setTransactions(mockTransactions);
     setBudgets(mockBudgets);
@@ -258,13 +298,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         throw new Error('Registration completed, but the app could not start an authenticated session.');
       }
 
-      const profilePayload: Profile = {
+      const profilePayload = {
         id: user.id,
         email,
         full_name: fullName.trim() || email.split('@')[0] || 'User',
         role: 'single',
         avatar_url: null,
-        household_id: null,
         created_at: new Date().toISOString(),
       };
 
@@ -332,6 +371,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsDemo(false);
     setProfile(null);
     setHousehold(null);
+    setHouseholdMembers([]);
     setWallets([]);
     setTransactions([]);
     setBudgets([]);
@@ -369,6 +409,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       setHousehold(newHousehold);
       setProfile({ ...profile, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' });
+      setHouseholdMembers([{
+        id: profile.id,
+        user_id: profile.id,
+        household_id: newHousehold.id,
+        role: 'owner',
+        created_at: profile.created_at,
+        profile,
+      }]);
       setWallets([]);
       setGoals([]);
       return newHousehold.invite_code;
@@ -384,21 +432,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const joinHousehold = useCallback(async (inviteCode: string) => {
     if (mode === 'live' && profile) {
-      const { data: hh, error } = await supabase
-        .from('households')
-        .select('*')
-        .eq('invite_code', inviteCode.toUpperCase())
-        .maybeSingle();
-      if (error || !hh) throw new Error('Invalid invite code. Please check and try again.');
-      await supabase.from('profiles').update({ household_id: hh.id, role: 'istri' }).eq('id', profile.id);
+      const { data: hh, error } = await supabase.rpc('join_household_by_code', { code: inviteCode });
+      if (error) throw error;
       setHousehold(hh as Household);
-      setProfile({ ...profile, household_id: hh.id, role: 'istri' });
+      await loadLiveData(profile.id, profile.email);
       return;
     }
     // Demo: simulate joining
     setHousehold({ ...mockHousehold, invite_code: inviteCode.toUpperCase() });
     setProfile(prev => prev ? { ...prev, household_id: mockHousehold.id, role: 'istri' } : prev);
-  }, [mode, profile]);
+  }, [loadLiveData, mode, profile]);
+
+  const leaveHousehold = useCallback(async () => {
+    if (!profile) return;
+
+    if (mode === 'live') {
+      const { error } = await supabase.rpc('leave_current_household');
+      if (error) throw error;
+      await loadLiveData(profile.id, profile.email);
+      return;
+    }
+
+    setHousehold(null);
+    setHouseholdMembers([]);
+    setWallets([]);
+    setTransactions([]);
+    setBudgets([]);
+    setGoals([]);
+    setProfile({ ...profile, household_id: null, role: 'single' });
+  }, [loadLiveData, mode, profile]);
 
   const addWallet = useCallback(async (name: string, type: Wallet['type'], balance: number) => {
     let hh = household;
@@ -805,6 +867,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     mode,
     profile,
     household,
+    householdMembers,
     wallets,
     transactions,
     budgets,
@@ -819,6 +882,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMode,
     createHousehold,
     joinHousehold,
+    leaveHousehold,
     addWallet,
     updateWallet,
     deleteWallet,

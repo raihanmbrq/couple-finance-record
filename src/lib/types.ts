@@ -1,4 +1,4 @@
-export type UserRole = 'suami' | 'istri' | 'single' | 'partner';
+export type UserRole = 'suami' | 'istri' | 'single' | 'partner' | 'owner' | 'member';
 
 export interface Profile {
   id: string;
@@ -17,6 +17,15 @@ export interface Household {
   mode: 'single' | 'couple';
   partner_name?: string | null;
   created_at: string;
+}
+
+export interface HouseholdMember {
+  id: string;
+  user_id: string;
+  household_id: string;
+  role: 'owner' | 'member';
+  created_at: string;
+  profile?: Profile;
 }
 
 export type WalletType = 'joint' | 'cash' | 'bank' | 'ewallet';
