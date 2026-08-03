@@ -193,6 +193,34 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
            )}
         </div>
 
+        {/* Category */}
+         <div>
+           <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
+           <div className="grid grid-cols-4 gap-2">
+             {CATEGORIES.map((cat) => {
+               const Icon = getIcon(cat.icon);
+               const isActive = category === cat.key;
+               return (
+                 <button
+                   key={cat.key}
+                   onClick={() => setCategory(cat.key)}
+                   className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
+                     isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
+                   }`}
+                 >
+                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                     <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
+                   </div>
+                   <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
+                     {cat.label.split(' ')[0]}
+                   </span>
+                 </button>
+               );
+             })}
+           </div>
+         </div>
+
+
         {/* Target Wallet (For Transfers) */}
         {category === 'transfer' && (
           <div>
@@ -220,40 +248,13 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                     }`}
                   >
                     <p className="font-semibold text-sm text-stone-800 truncate">{w.name}</p>
-                    <p className="text-xs text-stone-400">{w.type}</p>
+                    <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
                   </button>
                 ))}
               </div>
             )}
           </div>
         )}
-
-        {/* Category */}
-         <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
-           <div className="grid grid-cols-4 gap-2">
-             {CATEGORIES.map((cat) => {
-               const Icon = getIcon(cat.icon);
-               const isActive = category === cat.key;
-               return (
-                 <button
-                   key={cat.key}
-                   onClick={() => setCategory(cat.key)}
-                   className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
-                     isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
-                   }`}
-                 >
-                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
-                     <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
-                   </div>
-                   <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
-                     {cat.label.split(' ')[0]}
-                   </span>
-                 </button>
-               );
-             })}
-           </div>
-         </div>
 
         <Input
           label="Date"

@@ -113,7 +113,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
             type="button"
             onClick={() => setType('expense')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-              type === 'expense' ? 'bg-red-50 text-red-600 border-2 border-red-200' : 'bg-cream-50 text-stone-400 border-2 border-transparent'
+              type === 'expense' ? 'bg-expense/20 text-expense border-2 border-expense' : 'bg-secondary text-text-secondary border-2 border-transparent'
             }`}
           >
             <ArrowDownCircle className="w-5 h-5" />
@@ -123,7 +123,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
             type="button"
             onClick={() => setType('income')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-              type === 'income' ? 'bg-green-50 text-green-600 border-2 border-green-200' : 'bg-cream-50 text-stone-400 border-2 border-transparent'
+              type === 'income' ? 'bg-income/20 text-income border-2 border-income' : 'bg-secondary text-text-secondary border-2 border-transparent'
             }`}
           >
             <ArrowUpCircle className="w-5 h-5" />
@@ -143,11 +143,11 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
 
         <fieldset className="space-y-2">
           <div className="flex items-center justify-between mb-2">
-            <legend className="block text-sm font-medium text-stone-600">Wallet</legend>
+            <legend className="block text-sm font-medium text-text-secondary">Wallet</legend>
             <button
               type="button"
               onClick={() => setShowAddWallet(true)}
-              className="text-sm font-semibold text-teal-700 hover:text-teal-800"
+              className="text-sm font-semibold text-primary hover:text-primary-hover"
             >
               + Add wallet
             </button>
@@ -159,21 +159,21 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
                 type="button"
                 onClick={() => setWalletId(w.id)}
                 className={`p-3 rounded-xl text-left transition-all border-2 ${
-                  walletId === w.id ? 'border-teal-500 bg-teal-50' : 'border-stone-200 bg-cream-50'
+                  walletId === w.id ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
                 }`}
               >
-                <p className="font-semibold text-sm text-stone-800 truncate">{w.name}</p>
+                <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
                 <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
               </button>
             ))}
           </div>
           {selectedWallet && (
-            <p className="text-xs text-stone-500 mt-2">Current wallet balance: {formatIDR(selectedWallet.balance)}</p>
+            <p className="text-xs text-text-secondary mt-2">Current wallet balance: {formatIDR(selectedWallet.balance)}</p>
           )}
         </fieldset>
 
         <fieldset className="space-y-2">
-          <legend className="block text-sm font-medium text-stone-600 mb-2">Category</legend>
+          <legend className="block text-sm font-medium text-text-secondary mb-2">Category</legend>
           <div className="grid grid-cols-4 gap-2">
             {CATEGORIES.map((cat) => {
               const Icon = getIcon(cat.icon);
@@ -184,13 +184,13 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
                   type="button"
                   onClick={() => setCategory(cat.key)}
                   className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
-                    isActive ? 'border-teal-500 bg-teal-50' : 'border-transparent bg-cream-50'
+                    isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-teal-100' : 'bg-cream-100'}`}>
-                    <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-teal-700' : 'text-stone-500'}`} />
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                    <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
                   </div>
-                  <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-teal-700' : 'text-stone-500'}`}>
+                  <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
                     {cat.label.split(' ')[0]}
                   </span>
                 </button>
@@ -214,11 +214,11 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
         />
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-stone-500">Logged by:</span>
+          <span className="text-sm text-text-secondary">Logged by:</span>
           <Badge color="primary">{profile?.full_name ?? transaction?.spent_by ?? 'Unknown user'}</Badge>
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth onClick={handleSubmit} disabled={loading}>
           {loading ? 'Updating...' : 'Update Transaction'}
@@ -227,7 +227,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
           type="button"
           onClick={() => setShowDeleteConfirm(true)}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-red-600 bg-red-50 border-2 border-red-200 hover:bg-red-100 transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-expense bg-expense/10 border-2 border-expense/20 hover:bg-expense/20 transition-all disabled:opacity-50"
         >
           <Trash2 className="w-4 h-4" />
           Delete Transaction
@@ -235,19 +235,19 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
 
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-            <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <Trash2 className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-expense" />
                 </div>
-                <h2 className="text-lg font-bold text-stone-800">Hapus Transaksi?</h2>
-                <p className="text-sm text-stone-500">Tindakan ini tidak dapat dibatalkan.</p>
+                <h2 className="text-lg font-bold text-text-primary">Hapus Transaksi?</h2>
+                <p className="text-sm text-text-secondary">Tindakan ini tidak dapat dibatalkan.</p>
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-3 rounded-xl font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 transition-all"
+                  className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all"
                 >
                   Cancel
                 </button>
@@ -255,7 +255,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
                   type="button"
                   onClick={() => { setShowDeleteConfirm(false); handleDelete(); }}
                   disabled={loading}
-                  className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+                  className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all disabled:opacity-50"
                 >
                   {loading ? 'Deleting...' : 'Delete'}
                 </button>
