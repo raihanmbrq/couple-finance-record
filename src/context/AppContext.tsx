@@ -154,6 +154,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (!householdData) {
+        // No household yet (legacy user or deleted household): guarantee one.
+        const { data: ensured, error: ensureErr } = await supabase
+          .rpc('ensure_personal_household');
+        if (ensureErr) throw ensureErr;
+        householdData = ensured as Household;
+        householdId = householdData.id;
+      }
+
+      if (!householdData) {
         setHousehold(null);
         setWallets([]);
         setTransactions([]);
@@ -166,18 +175,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setHousehold(householdData);
       householdId = householdData.id;
 
-      const { data: memberProfiles } = await supabase
-        .from('profiles')
-        .select('*')
+      const { data: memberRows } = await supabase
+        .from('household_members')
+        .select('id, user_id, household_id, role, created_at, profile:profiles(*)')
         .eq('household_id', householdId);
-      const members = ((memberProfiles as Profile[]) ?? []).map((memberProfile) => ({
-        id: memberProfile.id,
-        user_id: memberProfile.id,
-        household_id: householdId,
-        role: memberProfile.id === currentProfile.id ? 'owner' : 'member',
-        created_at: memberProfile.created_at,
-        profile: memberProfile,
-      })) satisfies HouseholdMember[];
+      const members = (memberRows as unknown as HouseholdMember[]) ?? [];
       setHouseholdMembers(members);
 
       const { data: w } = await supabase
@@ -396,30 +398,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     if (mode === 'live' && profile) {
-      const householdInsert = await supabase.from('households').insert({
-        id: newHousehold.id,
-        name: newHousehold.name,
-        invite_code: code,
-        mode: hhMode,
-        partner_name: partnerName ?? null,
+      const { data: hh, error } = await supabase.rpc('create_household', {
+        p_name: hhMode === 'couple'
+          ? `${profile.full_name ?? 'Me'}${partnerName ? ` & ${partnerName}` : ''}`
+          : 'My Personal Finance',
+        p_partner: partnerName ?? null,
+        p_mode: hhMode,
       });
-      if (householdInsert.error) throw householdInsert.error;
-
-      await supabase.from('profiles').update({ household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' }).eq('id', profile.id);
-
-      setHousehold(newHousehold);
-      setProfile({ ...profile, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' });
-      setHouseholdMembers([{
-        id: profile.id,
-        user_id: profile.id,
-        household_id: newHousehold.id,
-        role: 'owner',
-        created_at: profile.created_at,
-        profile,
-      }]);
-      setWallets([]);
-      setGoals([]);
-      return newHousehold.invite_code;
+      if (error) throw error;
+      await loadLiveData(profile.id, profile.email);
+      return (hh as Household).invite_code;
     }
 
     // Demo mode

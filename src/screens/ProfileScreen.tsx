@@ -176,7 +176,7 @@ export function ProfileScreen() {
                     <p className="font-semibold text-sm text-stone-800 truncate">{displayName}</p>
                     <p className="text-xs text-stone-500 truncate">{memberProfile?.email ?? '—'}</p>
                   </div>
-                  <Badge>{member.role}</Badge>
+                  {/*{ <Badge>{member.role}</Badge> }  hide role badge for now */}
                 </div>
               );
             })}
