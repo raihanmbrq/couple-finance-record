@@ -52,6 +52,14 @@ interface AppState {
 
 const AppContext = createContext<AppState | null>(null);
 
+const sortByDateDesc = (a: Transaction, b: Transaction) => {
+  const dateDiff =
+    new Date(b.transaction_date ?? b.created_at).getTime() -
+    new Date(a.transaction_date ?? a.created_at).getTime();
+  if (dateDiff !== 0) return dateDiff;
+  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+};
+
 export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used within AppProvider');
@@ -199,7 +207,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .order('transaction_date', { ascending: false });
         txRows = (tx as Transaction[]) ?? [];
       }
-      setTransactions(txRows);
+      setTransactions(txRows.sort(sortByDateDesc));
 
       const { data: bg } = await supabase
         .from('budgets')
@@ -243,7 +251,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
     ]);
     setWallets(mockWallets);
-    setTransactions(mockTransactions);
+    setTransactions([...mockTransactions].sort(sortByDateDesc));
     setBudgets(mockBudgets);
     setGoals(mockGoals);
     localStorage.setItem('duitbersama_session', 'demo');
@@ -571,7 +579,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setTransactions(prev => [newTx, ...prev]);
+    setTransactions(prev => [newTx, ...prev].sort(sortByDateDesc));
     setWallets(prev => prev.map(w => {
       if (w.id === tx.wallet_id) {
         return { ...w, balance: nextWalletBalance };
@@ -666,7 +674,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return goal;
     }));
-    setTransactions(prev => prev.map((tx) => tx.id === id ? updatedTransaction : tx));
+    setTransactions(prev => prev.map((tx) => tx.id === id ? updatedTransaction : tx).sort(sortByDateDesc));
     setWallets(prev => prev.map((w) => {
       if (w.id === previousWalletId && previousWalletId === walletId) {
         return { ...w, balance: w.balance - previousEffect + nextEffect };
@@ -846,7 +854,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (gErr) throw gErr;
     }
 
-    setTransactions(prev => [newTx, ...prev]);
+    setTransactions(prev => [newTx, ...prev].sort(sortByDateDesc));
     setWallets(prev => prev.map(w => w.id === walletId ? { ...w, balance: nextBalance } : w));
     setGoals(prev => prev.map(g => g.id === goalId ? { ...g, current_amount: nextCurrent } : g));
   }, [goals, mode, profile, wallets]);
