@@ -1,5 +1,5 @@
 import { useApp } from '@/context/AppContext';
-import { Wallet, Users, User } from 'lucide-react';
+import { Users, User } from 'lucide-react';
 
 export function TopBar() {
   const { household, householdMembers, isDemo } = useApp();
@@ -15,7 +15,7 @@ export function TopBar() {
          {/* Logo */}
          <div className="flex items-center gap-2.5">
            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-             <Wallet className="w-5 h-5 text-white" strokeWidth={2.5} />
+             <img src="/icons/icon-512.png" alt="PairFlow logo" className="w-5 h-5 object-contain" />
            </div>
            <div>
              <h2 className="font-display font-bold text-base text-text-primary leading-tight">PairFlow</h2>
