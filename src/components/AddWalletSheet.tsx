@@ -61,7 +61,7 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
         />
 
          <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Tipe Wallet</label>
+           <label className="block text-sm font-medium text-text-secondary mb-2">Wallet Type</label>
            <div className="grid grid-cols-2 gap-2">
              {walletTypes.map((t) => {
                const Icon = walletTypeIcon(t.icon);
@@ -83,7 +83,7 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
                className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
                <Plus className="w-4 h-4" />
-               <span className="text-sm font-semibold">+ Tambah Tipe Kustom</span>
+               <span className="text-sm font-semibold">Wallet Type</span>
              </button>
            </div>
          </div>

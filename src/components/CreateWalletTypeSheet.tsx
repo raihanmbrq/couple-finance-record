@@ -15,7 +15,7 @@ interface CreateWalletTypeSheetProps {
   onCreated: (id: string) => void;
 }
 
-const ICON_OPTIONS = [
+export const ICON_OPTIONS = [
   { name: 'Banknote', icon: Banknote },
   { name: 'Wallet', icon: Wallet },
   { name: 'CreditCard', icon: CreditCard },

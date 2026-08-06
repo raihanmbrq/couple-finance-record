@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/context/ToastContext';
 import { WALLET_ICON_MAP } from '@/lib/walletIcons';
-import { Pencil, Trash2, Check, X } from 'lucide-react';
+import { ICON_OPTIONS } from '@/components/CreateWalletTypeSheet';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface WalletTypeSettingsSheetProps {
   open: boolean;
@@ -17,13 +18,21 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
   const { showToast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editIcon, setEditIcon] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const customTypes = walletTypes.filter((t) => !t.is_system);
 
-  const startEdit = (id: string, name: string) => {
+  const startEdit = (id: string, name: string, icon: string) => {
     setEditingId(id);
     setEditName(name);
+    setEditIcon(icon);
+    setError('');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
     setError('');
   };
 
@@ -33,13 +42,18 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
       return;
     }
     setError('');
+    setSaving(true);
     try {
-      await updateWalletType(id, { name: editName.trim() });
+      const updates: { name: string; icon?: string } = { name: editName.trim() };
+      if (editIcon) updates.icon = editIcon;
+      await updateWalletType(id, updates);
       setEditingId(null);
       showToast('Tipe wallet berhasil diperbarui');
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       setError(msg || 'Gagal memperbarui tipe wallet');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -67,55 +81,69 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
           return (
             <div
               key={t.id}
-              className="flex items-center gap-3 p-3 rounded-xl border border-secondary bg-secondary"
+              className="p-3 rounded-xl border border-secondary bg-secondary space-y-3"
             >
-              <Icon className="w-5 h-5 text-primary shrink-0" />
               {editingId === t.id ? (
-                <>
+                <div className="space-y-5">
                   <Input
+                    label="Nama Tipe Wallet"
+                    placeholder="misal Dana Darurat, Voucher"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Nama tipe"
                   />
-                  <button
-                    onClick={() => saveEdit(t.id)}
-                    className="p-2 rounded-lg text-primary hover:bg-primary/10"
-                    aria-label="Simpan"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="p-2 rounded-lg text-text-secondary hover:bg-secondary-hover"
-                    aria-label="Batal"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Pilih Ikon</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {ICON_OPTIONS.map(({ name: iconName, icon: IconOption }) => (
+                        <button
+                          key={iconName}
+                          type="button"
+                          onClick={() => setEditIcon(iconName)}
+                          className={`flex items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                            editIcon === iconName ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
+                          }`}
+                        >
+                          <IconOption className={`w-5 h-5 ${editIcon === iconName ? 'text-primary' : 'text-text-secondary'}`} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {error && <p className="text-sm text-expense">{error}</p>}
+
+                  <Button fullWidth onClick={() => saveEdit(t.id)} disabled={saving}>
+                    {saving ? 'Menyimpan...' : 'Simpan Tipe Wallet'}
+                  </Button>
+                  <Button fullWidth variant="secondary" onClick={cancelEdit}>
+                    Batal
+                  </Button>
+                </div>
               ) : (
                 <>
-                  <span className="flex-1 text-sm font-medium text-text-primary">{t.name}</span>
-                  <button
-                    onClick={() => startEdit(t.id, t.name)}
-                    className="p-2 rounded-lg text-text-secondary hover:bg-secondary-hover"
-                    aria-label="Ubah"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(t.id)}
-                    className="p-2 rounded-lg text-expense hover:bg-expense/10"
-                    aria-label="Hapus"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5 text-white shrink-0" />
+                    <span className="flex-1 text-sm font-medium text-text-primary">{t.name}</span>
+                    <button
+                      onClick={() => startEdit(t.id, t.name, t.icon)}
+                      className="p-2 rounded-lg text-text-secondary hover:bg-secondary-hover"
+                      aria-label="Ubah"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      className="p-2 rounded-lg text-expense hover:bg-expense/10"
+                      aria-label="Hapus"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </>
               )}
             </div>
           );
         })}
-
-        {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth variant="secondary" onClick={onClose}>
           Tutup

@@ -56,6 +56,9 @@ interface AppState {
 
 const AppContext = createContext<AppState | null>(null);
 
+const slugify = (s: string) =>
+  s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
 const sortByDateDesc = (a: Transaction, b: Transaction) => {
   const dateDiff =
     new Date(b.transaction_date ?? b.created_at).getTime() -
@@ -284,6 +287,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
+      localStorage.removeItem('duitbersama_session');
       setAppMode('live');
       setIsDemo(false);
       const { data: { session } } = await supabase.auth.getSession();
@@ -344,6 +348,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (profileUpsertError) throw profileUpsertError;
 
+      localStorage.removeItem('duitbersama_session');
       setAppMode('live');
       setIsDemo(false);
       await loadLiveData(user.id, email);
@@ -381,7 +386,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       for (const key of Object.keys(localStorage)) {
         const k = String(key);
-        if (k.includes('supabase') || k.includes('gotrue') || k.startsWith('sb:') || k.includes('@supabase')) {
+        if (k.includes('supabase') || k.includes('gotrue') || k.startsWith('sb-') || k.includes('@supabase')) {
           localStorage.removeItem(k);
         }
       }
@@ -407,6 +412,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTransactions([]);
     setBudgets([]);
     setGoals([]);
+    setWalletTypes([]);
   }, [mode]);
 
   const setMode = useCallback(async (_mode: 'single' | 'couple', _partnerName?: string) => {
@@ -570,8 +576,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addCustomWalletType = useCallback(async (name: string, icon: string): Promise<WalletTypeRow> => {
     const createdAt = new Date().toISOString();
+    const baseId = slugify(name) || 'custom';
+    let id = baseId;
+    let n = 2;
+    while (walletTypes.some(t => t.id === id)) {
+      id = `${baseId}_${n++}`;
+    }
     const local = {
-      id: crypto.randomUUID(),
+      id,
       name,
       icon,
       user_id: profile?.id,
@@ -582,6 +594,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (mode === 'live' && profile && household) {
       const { data, error } = await supabase.from('wallet_types').insert({
+        id,
         name,
         icon,
         user_id: profile.id,
@@ -596,7 +609,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setWalletTypes(prev => [...prev, local]);
     return local;
-  }, [household, mode, profile]);
+  }, [household, mode, profile, walletTypes]);
 
   const updateWalletType = useCallback(async (id: string, updates: Partial<WalletTypeRow>) => {
     if (mode === 'live') {
