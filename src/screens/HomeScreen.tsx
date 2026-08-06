@@ -1,20 +1,14 @@
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { formatIDR, formatIDRShort, formatRelative } from '@/lib/format';
-import { getCategory, type Wallet, type WalletType, type HouseholdMember } from '@/lib/types';
-import { TrendingUp, TrendingDown, Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownRight, Landmark, Smartphone, Banknote, PiggyBank, ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
+import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { getIcon } from '@/lib/icons';
+import { walletTypeIcon } from '@/lib/walletIcons';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { WalletActionSheet } from '@/components/WalletActionSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
-
-const walletTypeConfig: Record<WalletType, { icon: typeof WalletIcon; color: string; bg: string }> = {
-  joint: { icon: PiggyBank, color: 'text-primary', bg: 'bg-primary/10' },
-  cash: { icon: Banknote, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-  bank: { icon: Landmark, color: 'text-blue-600', bg: 'bg-blue-50' },
-  ewallet: { icon: Smartphone, color: 'text-purple-600', bg: 'bg-purple-50' },
-};
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -55,7 +49,7 @@ function SliderDots({ count, active, onSelect }: { count: number; active: number
 }
 
 export function HomeScreen() {
-  const { wallets, transactions, profile, isDemo, householdMembers } = useApp();
+  const { wallets, transactions, profile, isDemo, householdMembers, walletTypes } = useApp();
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
@@ -293,8 +287,8 @@ export function HomeScreen() {
                     ) : (
                       <div className="grid grid-cols-2 gap-3">
                         {slide.wallets.map((wallet) => {
-                          const cfg = walletTypeConfig[wallet.type];
-                          const Icon = cfg.icon;
+                          const typeRow = walletTypes.find((t) => t.id === wallet.type);
+                          const Icon = walletTypeIcon(typeRow?.icon);
                           return (
                             <button
                               key={wallet.id}
@@ -303,8 +297,8 @@ export function HomeScreen() {
                               className="text-left min-w-0"
                             >
                               <Card className="p-4 overflow-hidden">
-                                <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center mb-3`}>
-                                  <Icon className={`w-5 h-5 ${cfg.color}`} />
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                                  <Icon className="w-5 h-5 text-primary" />
                                 </div>
                                 <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
                                 <p className="font-display font-bold text-text-primary truncate text-xs">

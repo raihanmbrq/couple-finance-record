@@ -3,10 +3,12 @@ import { useApp } from '@/context/AppContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { type Wallet, type WalletType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
-import { PiggyBank, Banknote, Landmark, Smartphone } from 'lucide-react';
+import { walletTypeIcon } from '@/lib/walletIcons';
+import { type Wallet } from '@/lib/types';
+import { Plus } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { CreateWalletTypeSheet } from '@/components/CreateWalletTypeSheet';
 
 interface WalletActionSheetProps {
   wallet: Wallet | null;
@@ -14,22 +16,16 @@ interface WalletActionSheetProps {
   onClose: () => void;
 }
 
-const walletTypes: { key: WalletType; label: string; icon: typeof PiggyBank }[] = [
-  { key: 'joint', label: 'Joint', icon: PiggyBank },
-  { key: 'cash', label: 'Cash', icon: Banknote },
-  { key: 'bank', label: 'Bank', icon: Landmark },
-  { key: 'ewallet', label: 'E-Wallet', icon: Smartphone },
-];
-
 export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetProps) {
-  const { updateWallet, deleteWallet } = useApp();
+  const { walletTypes, updateWallet, deleteWallet } = useApp();
   const { showToast } = useToast();
   const [name, setName] = useState('');
-  const [type, setType] = useState<WalletType>('cash');
+  const [type, setType] = useState('');
   const [balance, setBalance] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showCreateType, setShowCreateType] = useState(false);
 
   useEffect(() => {
     if (wallet) {
@@ -100,20 +96,30 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
         />
 
          <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Icon / Color</label>
+           <label className="block text-sm font-medium text-text-secondary mb-2">Tipe Wallet</label>
            <div className="grid grid-cols-2 gap-2">
-             {walletTypes.map(({ key, label, icon: Icon }) => (
-               <button
-                 key={key}
-                 onClick={() => setType(key)}
-                 className={`flex items-center gap-2.5 p-3 rounded-xl transition-all border-2 ${
-                   type === key ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
-                 }`}
-               >
-                 <Icon className={`w-5 h-5 ${type === key ? 'text-primary' : 'text-text-secondary'}`} />
-                 <span className={`text-sm font-semibold ${type === key ? 'text-primary' : 'text-text-primary'}`}>{label}</span>
-               </button>
-             ))}
+             {walletTypes.map((t) => {
+               const Icon = walletTypeIcon(t.icon);
+               return (
+                 <button
+                   key={t.id}
+                   onClick={() => setType(t.id)}
+                   className={`flex items-center gap-2.5 p-3 rounded-xl transition-all border-2 ${
+                     type === t.id ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
+                   }`}
+                 >
+                   <Icon className={`w-5 h-5 ${type === t.id ? 'text-primary' : 'text-text-secondary'}`} />
+                   <span className={`text-sm font-semibold ${type === t.id ? 'text-primary' : 'text-text-primary'}`}>{t.name}</span>
+                 </button>
+               );
+             })}
+             <button
+               onClick={() => setShowCreateType(true)}
+               className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
+             >
+               <Plus className="w-4 h-4" />
+               <span className="text-sm font-semibold">+ Tambah Tipe Kustom</span>
+             </button>
            </div>
          </div>
 
@@ -138,6 +144,12 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
           {confirmDelete ? 'Confirm Delete Wallet' : 'Delete Wallet'}
         </Button>
       </div>
+
+      <CreateWalletTypeSheet
+        open={showCreateType}
+        onClose={() => setShowCreateType(false)}
+        onCreated={(id) => setType(id)}
+      />
     </Sheet>
   );
 }

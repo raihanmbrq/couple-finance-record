@@ -4,43 +4,42 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
-import { type WalletType } from '@/lib/types';
-import { PiggyBank, Banknote, Landmark, Smartphone } from 'lucide-react';
+import { walletTypeIcon } from '@/lib/walletIcons';
+import { Plus } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { CreateWalletTypeSheet } from '@/components/CreateWalletTypeSheet';
 
 interface AddWalletSheetProps {
   open: boolean;
   onClose: () => void;
 }
 
-const walletTypes: { key: WalletType; label: string; icon: typeof PiggyBank }[] = [
-  { key: 'joint', label: 'Joint Account', icon: PiggyBank },
-  { key: 'cash', label: 'Cash', icon: Banknote },
-  { key: 'bank', label: 'Bank', icon: Landmark },
-  { key: 'ewallet', label: 'E-Wallet', icon: Smartphone },
-];
-
 export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
-  const { addWallet } = useApp();
+  const { walletTypes, addWallet } = useApp();
   const { showToast } = useToast();
   const [name, setName] = useState('');
-  const [type, setType] = useState<WalletType>('cash');
+  const [type, setType] = useState('');
   const [balance, setBalance] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showCreateType, setShowCreateType] = useState(false);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
       setError('Please enter a wallet name');
       return;
     }
+    if (!type) {
+      setError('Please select a wallet type');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const inserted = await addWallet(name.trim(), type, parseIDRInput(balance));
+      await addWallet(name.trim(), type, parseIDRInput(balance));
       setName('');
       setBalance('');
-      setType('cash');
+      setType('');
       onClose();
       showToast('Wallet berhasil ditambahkan');
     } catch (err) {
@@ -62,20 +61,30 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
         />
 
          <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Type</label>
+           <label className="block text-sm font-medium text-text-secondary mb-2">Tipe Wallet</label>
            <div className="grid grid-cols-2 gap-2">
-             {walletTypes.map(({ key, label, icon: Icon }) => (
-               <button
-                 key={key}
-                 onClick={() => setType(key)}
-                 className={`flex items-center gap-2.5 p-3 rounded-xl transition-all border-2 ${
-                   type === key ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
-                 }`}
-               >
-                 <Icon className={`w-5 h-5 ${type === key ? 'text-primary' : 'text-text-secondary'}`} />
-                 <span className={`text-sm font-semibold ${type === key ? 'text-primary' : 'text-text-primary'}`}>{label}</span>
-               </button>
-             ))}
+             {walletTypes.map((t) => {
+               const Icon = walletTypeIcon(t.icon);
+               return (
+                 <button
+                   key={t.id}
+                   onClick={() => setType(t.id)}
+                   className={`flex items-center gap-2.5 p-3 rounded-xl transition-all border-2 ${
+                     type === t.id ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
+                   }`}
+                 >
+                   <Icon className={`w-5 h-5 ${type === t.id ? 'text-primary' : 'text-text-secondary'}`} />
+                   <span className={`text-sm font-semibold ${type === t.id ? 'text-primary' : 'text-text-primary'}`}>{t.name}</span>
+                 </button>
+               );
+             })}
+             <button
+               onClick={() => setShowCreateType(true)}
+               className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
+             >
+               <Plus className="w-4 h-4" />
+               <span className="text-sm font-semibold">+ Tambah Tipe Kustom</span>
+             </button>
            </div>
          </div>
 
@@ -94,6 +103,12 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
           {loading ? 'Adding...' : 'Add Wallet'}
         </Button>
       </div>
+
+      <CreateWalletTypeSheet
+        open={showCreateType}
+        onClose={() => setShowCreateType(false)}
+        onCreated={(id) => setType(id)}
+      />
     </Sheet>
   );
 }

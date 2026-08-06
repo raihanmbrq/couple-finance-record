@@ -28,7 +28,14 @@ export const mockHousehold: Household = {
   created_at: daysAgo(30),
 };
 
-export const mockWallets: Wallet[] = [
+export const mockWalletTypes = [
+  { id: 'joint', name: 'Joint', icon: 'PiggyBank', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'cash', name: 'Cash', icon: 'Banknote', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'bank', name: 'Bank', icon: 'Landmark', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'ewallet', name: 'E-Wallet', icon: 'Smartphone', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+];
+
+export const mockWalletsData: Wallet[] = [
   {
     id: 'wallet-1',
     household_id: mockHouseholdId,
@@ -133,6 +140,9 @@ export const mockPartner: Profile = {
   household_id: mockHouseholdId,
   created_at: daysAgo(30),
 };
+
+// Friendly copies: `type` is a plain string matching live DB rows.
+export const mockWallets: Wallet[] = mockWalletsData.map((w) => ({ ...w }));
 
 export function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

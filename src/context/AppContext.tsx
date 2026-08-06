@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Profile, Household, HouseholdMember, Wallet, Transaction, Budget, Goal, GoalInput } from '@/lib/types';
+import type { Profile, Household, HouseholdMember, Wallet, WalletTypeRow, Transaction, Budget, Goal, GoalInput } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import {
-  mockProfile, mockPartner, mockHousehold, mockWallets, mockTransactions, mockBudgets, mockGoals,
+  mockProfile, mockPartner, mockHousehold, mockWallets, mockWalletTypes, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
 } from '@/lib/mockData';
 
@@ -17,6 +17,7 @@ interface AppState {
   transactions: Transaction[];
   budgets: Budget[];
   goals: Goal[];
+  walletTypes: WalletTypeRow[];
   loading: boolean;
   error: string | null;
   // Auth
@@ -34,6 +35,9 @@ interface AppState {
   addWallet: (name: string, type: Wallet['type'], balance: number) => Promise<Wallet>;
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
   deleteWallet: (id: string) => Promise<void>;
+  addCustomWalletType: (name: string, icon: string) => Promise<WalletTypeRow>;
+  updateWalletType: (id: string, updates: Partial<WalletTypeRow>) => Promise<void>;
+  deleteWalletType: (id: string) => Promise<void>;
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
@@ -75,6 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [walletTypes, setWalletTypes] = useState<WalletTypeRow[]>([]);
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
@@ -190,6 +195,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const members = (memberRows as unknown as HouseholdMember[]) ?? [];
       setHouseholdMembers(members);
 
+      const { data: wt } = await supabase
+        .from('wallet_types')
+        .select('*')
+        .eq('household_id', householdId)
+        .or(`is_system.eq.true`);
+      setWalletTypes((wt as WalletTypeRow[]) ?? []);
+      const { data: systemWt } = await supabase
+        .from('wallet_types')
+        .select('*')
+        .eq('is_system', true)
+        .is('household_id', null);
+      const systemRows = (systemWt as WalletTypeRow[]) ?? [];
+      const customRows = (wt as WalletTypeRow[]) ?? [];
+      setWalletTypes([...systemRows, ...customRows.filter((r) => r.is_system === false)]);
+
       const { data: w } = await supabase
         .from('wallets')
         .select('*')
@@ -254,6 +274,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTransactions([...mockTransactions].sort(sortByDateDesc));
     setBudgets(mockBudgets);
     setGoals(mockGoals);
+    setWalletTypes(mockWalletTypes);
     localStorage.setItem('duitbersama_session', 'demo');
   }, []);
 
@@ -546,6 +567,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     setWallets(prev => prev.filter(w => w.id !== id));
   }, [mode, transactions]);
+
+  const addCustomWalletType = useCallback(async (name: string, icon: string): Promise<WalletTypeRow> => {
+    const createdAt = new Date().toISOString();
+    const local = {
+      id: crypto.randomUUID(),
+      name,
+      icon,
+      user_id: profile?.id,
+      household_id: household?.id,
+      is_system: false,
+      created_at: createdAt,
+    };
+
+    if (mode === 'live' && profile && household) {
+      const { data, error } = await supabase.from('wallet_types').insert({
+        name,
+        icon,
+        user_id: profile.id,
+        household_id: household.id,
+        is_system: false,
+      }).select().single();
+      if (error) throw error;
+      const inserted = (data as WalletTypeRow) ?? local;
+      setWalletTypes(prev => [...prev, inserted]);
+      return inserted;
+    }
+
+    setWalletTypes(prev => [...prev, local]);
+    return local;
+  }, [household, mode, profile]);
+
+  const updateWalletType = useCallback(async (id: string, updates: Partial<WalletTypeRow>) => {
+    if (mode === 'live') {
+      const { error } = await supabase.from('wallet_types').update(updates).eq('id', id);
+      if (error) throw error;
+    }
+    setWalletTypes(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  }, [mode]);
+
+  const deleteWalletType = useCallback(async (id: string) => {
+    const inUse = wallets.some(w => w.type === id);
+    if (inUse) {
+      throw new Error('Tipe wallet ini masih dipakai oleh wallet. Pindahkan wallet tersebut ke tipe lain terlebih dahulu.');
+    }
+    if (mode === 'live') {
+      const { error } = await supabase.from('wallet_types').delete().eq('id', id);
+      if (error) throw error;
+    }
+    setWalletTypes(prev => prev.filter(t => t.id !== id));
+  }, [mode, wallets]);
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, 'id' | 'created_at'>) => {
     const newTx: Transaction = {
@@ -868,6 +939,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transactions,
     budgets,
     goals,
+    walletTypes,
     loading,
     error,
     signIn,
@@ -882,6 +954,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addWallet,
     updateWallet,
     deleteWallet,
+    addCustomWalletType,
+    updateWalletType,
+    deleteWalletType,
     addTransaction,
     updateTransaction,
     deleteTransaction,

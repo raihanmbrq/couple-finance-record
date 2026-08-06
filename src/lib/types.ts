@@ -30,12 +30,22 @@ export interface HouseholdMember {
 
 export type WalletType = 'joint' | 'cash' | 'bank' | 'ewallet';
 
+export interface WalletTypeRow {
+  id: string;
+  name: string;
+  icon: string;
+  user_id?: string | null;
+  household_id?: string | null;
+  is_system: boolean;
+  created_at: string;
+}
+
 export interface Wallet {
   id: string;
   household_id: string;
   user_id?: string;
   name: string;
-  type: WalletType;
+  type: string;
   balance: number;
   owner_role?: UserRole | null;
   created_at: string;

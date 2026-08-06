@@ -17,7 +17,12 @@ interface AddTransactionSheetProps {
 }
 
 export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps) {
-  const { wallets, profile, addTransaction } = useApp();
+  const { wallets, profile, addTransaction, walletTypes } = useApp();
+  const formatWalletType = (type: string) => {
+    const row = walletTypes.find((t) => t.id === type);
+    if (row) return row.name;
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
   const { showToast } = useToast();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
@@ -29,11 +34,6 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAddWallet, setShowAddWallet] = useState(false);
-
-  const formatWalletType = (type: string) => {
-    if (type === 'ewallet') return 'E-Wallet';
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  };
 
   useEffect(() => {
     if (open && wallets.length > 0 && !walletId) {

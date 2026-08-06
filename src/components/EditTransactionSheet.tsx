@@ -18,7 +18,7 @@ interface EditTransactionSheetProps {
 }
 
 export function EditTransactionSheet({ open, transaction, onClose }: EditTransactionSheetProps) {
-  const { wallets, profile, updateTransaction, deleteTransaction } = useApp();
+  const { wallets, profile, updateTransaction, deleteTransaction, walletTypes } = useApp();
   const { showToast } = useToast();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
@@ -34,7 +34,8 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
   const selectedWallet = useMemo(() => wallets.find(w => w.id === walletId), [wallets, walletId]);
 
   const formatWalletType = (type: string) => {
-    if (type === 'ewallet') return 'E-Wallet';
+    const row = walletTypes.find((t) => t.id === type);
+    if (row) return row.name;
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 

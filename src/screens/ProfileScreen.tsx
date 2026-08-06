@@ -5,12 +5,14 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { EditProfileSheet } from '@/components/EditProfileSheet';
-import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil } from 'lucide-react';
+import { WalletTypeSettingsSheet } from '@/components/WalletTypeSettingsSheet';
+import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 export function ProfileScreen() {
   const { profile, household, householdMembers, wallets, transactions, budgets, isDemo, signOut, joinHousehold, leaveHousehold } = useApp();
   const [showEdit, setShowEdit] = useState(false);
+  const [showWalletTypes, setShowWalletTypes] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -227,6 +229,23 @@ export function ProfileScreen() {
         </Card>
       )}
 
+      {/* Wallet Type Settings */}
+      <Card className="p-4">
+        <button
+          type="button"
+          onClick={() => setShowWalletTypes(true)}
+          className="w-full flex items-center gap-3 text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+            <Settings2 className="w-5 h-5 text-teal-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm text-stone-800">Kelola Tipe Wallet</p>
+            <p className="text-xs text-stone-500">Tambah, ubah, atau hapus tipe wallet kustom</p>
+          </div>
+        </button>
+      </Card>
+
       {/* Sign Out */}
       <Button variant="danger" fullWidth onClick={signOut}>
         <LogOut className="w-5 h-5 inline mr-2" />
@@ -234,6 +253,7 @@ export function ProfileScreen() {
       </Button>
 
       <EditProfileSheet open={showEdit} onClose={() => setShowEdit(false)} />
+      <WalletTypeSettingsSheet open={showWalletTypes} onClose={() => setShowWalletTypes(false)} />
     </div>
   );
 }
