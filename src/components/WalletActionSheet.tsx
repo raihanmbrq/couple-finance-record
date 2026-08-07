@@ -118,7 +118,7 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
                className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
                <Plus className="w-4 h-4" />
-               <span className="text-sm font-semibold">+ Tambah Tipe Kustom</span>
+               <span className="text-sm font-semibold">Wallet Type</span>
              </button>
            </div>
          </div>

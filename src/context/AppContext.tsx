@@ -201,17 +201,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { data: wt } = await supabase
         .from('wallet_types')
         .select('*')
-        .eq('household_id', householdId)
-        .or(`is_system.eq.true`);
-      setWalletTypes((wt as WalletTypeRow[]) ?? []);
-      const { data: systemWt } = await supabase
-        .from('wallet_types')
-        .select('*')
-        .eq('is_system', true)
-        .is('household_id', null);
-      const systemRows = (systemWt as WalletTypeRow[]) ?? [];
-      const customRows = (wt as WalletTypeRow[]) ?? [];
-      setWalletTypes([...systemRows, ...customRows.filter((r) => r.is_system === false)]);
+        .or(`household_id.eq.${householdId},is_system.eq.true`);
+      const rows = (wt as WalletTypeRow[]) ?? [];
+      const systemRows = rows.filter((r) => r.is_system);
+      const customRows = rows.filter((r) => !r.is_system);
+      setWalletTypes([...systemRows, ...customRows]);
 
       const { data: w } = await supabase
         .from('wallets')
