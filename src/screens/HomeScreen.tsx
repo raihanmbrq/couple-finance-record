@@ -48,6 +48,21 @@ function SliderDots({ count, active, onSelect }: { count: number; active: number
   );
 }
 
+function AddWalletCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="h-full flex flex-col items-start justify-center p-4 rounded-2xl border-2 border-dashed border-primary/40 text-primary hover:border-primary hover:bg-primary/5 transition-all text-left"
+    >
+      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+        <Plus className="w-5 h-5 text-primary" />
+      </div>
+      <p className="text-xs font-semibold">+ Tambah Wallet</p>
+    </button>
+  );
+}
+
 export function HomeScreen() {
   const { wallets, transactions, profile, isDemo, householdMembers, walletTypes } = useApp();
   const [showAddWallet, setShowAddWallet] = useState(false);
@@ -131,8 +146,9 @@ export function HomeScreen() {
     sortedMemberWalletGroups.length > 0
       ? sortedMemberWalletGroups.flatMap(({ member, wallets: memberWallets }) => {
           const baseLabel = member.user_id === profile?.id ? 'Dompet Saya' : `Dompet ${memberName(member)}`;
+          const isMe = member.user_id === profile?.id;
           if (memberWallets.length === 0) {
-            return [{ key: member.user_id, label: baseLabel, wallets: memberWallets, empty: true }];
+            return [{ key: member.user_id, label: baseLabel, wallets: memberWallets, empty: true, showAddCard: isMe }];
           }
           const chunks = chunk(memberWallets, 4);
           return chunks.map((cw, i) => ({
@@ -140,14 +156,18 @@ export function HomeScreen() {
             label: chunks.length > 1 ? `${baseLabel} (${i + 1}/${chunks.length})` : baseLabel,
             wallets: cw,
             empty: false,
+            showAddCard: isMe && i === chunks.length - 1,
           }));
         })
-      : myWalletChunks.map((cw, i) => ({
-          key: `me-${i}`,
-          label: myWalletChunks.length > 1 ? `Dompet Saya (${i + 1}/${myWalletChunks.length})` : 'Dompet Saya',
-          wallets: cw,
-          empty: false,
-        }));
+      : myWalletChunks.length > 0
+        ? myWalletChunks.map((cw, i) => ({
+            key: `me-${i}`,
+            label: myWalletChunks.length > 1 ? `Dompet Saya (${i + 1}/${myWalletChunks.length})` : 'Dompet Saya',
+            wallets: cw,
+            empty: false,
+            showAddCard: i === myWalletChunks.length - 1,
+          }))
+        : [{ key: 'me-empty', label: 'Dompet Saya', wallets: [], empty: true, showAddCard: true }];
 
   const scrollBalanceTo = (idx: number) => {
     const el = balanceRef.current;
@@ -255,74 +275,66 @@ export function HomeScreen() {
 
       {/* Wallets Slider */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3">
           <h3 className="font-display font-bold text-text-primary">My Wallets</h3>
-          <button
-            onClick={() => setShowAddWallet(true)}
-            className="text-sm font-semibold text-primary flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </button>
         </div>
-        {walletSlides.length === 0 ? (
-          <p className="text-sm text-text-secondary">No wallets yet</p>
-        ) : (
-          <div className="relative">
-            <div
-              ref={walletRef}
-              onScroll={(e) => {
-                const el = e.currentTarget;
-                const idx = Math.round(el.scrollLeft / el.clientWidth);
-                setWalletIdx(Math.min(Math.max(0, idx), walletSlides.length - 1));
-              }}
-              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
-            >
-              {walletSlides.map((slide) => (
-                <div key={slide.key} className="w-full shrink-0 snap-start">
-                  <Card className="p-4">
-                    <p className="text-xs font-semibold text-text-secondary mb-3">{slide.label}</p>
-                    {slide.empty ? (
-                      <p className="text-sm text-text-secondary py-2">No wallets yet</p>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-3">
-                        {slide.wallets.map((wallet) => {
-                          const typeRow = walletTypes.find((t) => t.id === wallet.type);
-                          const Icon = walletTypeIcon(typeRow?.icon);
-                          return (
-                            <button
-                              key={wallet.id}
-                              type="button"
-                              onClick={() => setActiveWallet(wallet)}
-                              className="text-left min-w-0"
-                            >
-                              <Card className="p-4 overflow-hidden">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                                  <Icon className="w-5 h-5 text-primary" />
-                                </div>
-                                <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
-                                <p className="font-display font-bold text-text-primary truncate text-xs">
-                                  {formatIDRShort(wallet.balance)}
-                                </p>
-                              </Card>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </Card>
-                </div>
-              ))}
-            </div>
-            {walletSlides.length > 1 && (
-              <>
-                <SliderArrow position="left" disabled={walletIdx === 0} onClick={() => scrollWalletTo(walletIdx - 1)} />
-                <SliderArrow position="right" disabled={walletIdx === walletSlides.length - 1} onClick={() => scrollWalletTo(walletIdx + 1)} />
-                <SliderDots count={walletSlides.length} active={walletIdx} onSelect={scrollWalletTo} />
-              </>
-            )}
+        <div className="relative">
+          <div
+            ref={walletRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const idx = Math.round(el.scrollLeft / el.clientWidth);
+              setWalletIdx(Math.min(Math.max(0, idx), walletSlides.length - 1));
+            }}
+            className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+          >
+            {walletSlides.map((slide) => (
+              <div key={slide.key} className="w-full shrink-0 snap-start">
+                <Card className="p-4">
+                  <p className="text-xs font-semibold text-text-secondary mb-3">{slide.label}</p>
+                  {slide.empty ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <AddWalletCard onClick={() => setShowAddWallet(true)} />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {slide.wallets.map((wallet) => {
+                        const typeRow = walletTypes.find((t) => t.id === wallet.type);
+                        const Icon = walletTypeIcon(typeRow?.icon);
+                        return (
+                          <button
+                            key={wallet.id}
+                            type="button"
+                            onClick={() => setActiveWallet(wallet)}
+                            className="text-left min-w-0"
+                          >
+                            <Card className="p-4 overflow-hidden">
+                              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                                <Icon className="w-5 h-5 text-primary" />
+                              </div>
+                              <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
+                              <p className="font-display font-bold text-text-primary truncate text-xs">
+                                {formatIDRShort(wallet.balance)}
+                              </p>
+                            </Card>
+                          </button>
+                        );
+                      })}
+                      {slide.showAddCard && <AddWalletCard onClick={() => setShowAddWallet(true)} />}
+                    </div>
+                  )}
+                </Card>
+              </div>
+            ))}
           </div>
-        )}
+          {walletSlides.length > 1 && (
+            <>
+              <SliderArrow position="left" disabled={walletIdx === 0} onClick={() => scrollWalletTo(walletIdx - 1)} />
+              <SliderArrow position="right" disabled={walletIdx === walletSlides.length - 1} onClick={() => scrollWalletTo(walletIdx + 1)} />
+              <SliderDots count={walletSlides.length} active={walletIdx} onSelect={scrollWalletTo} />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Expense Breakdown */}
@@ -344,7 +356,7 @@ export function HomeScreen() {
             <div className="relative">
               <select
                 value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value as any)}
+                onChange={(e) => setTimeFilter(e.target.value as typeof timeFilter)}
                 className="appearance-none bg-secondary border border-secondary text-text-secondary text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
               >
                 <option value="1 Bulan Penuh">{monthName}</option>

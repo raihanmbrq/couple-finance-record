@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CATEGORIES, type TransactionType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
 
@@ -163,16 +163,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
 
         {/* Wallet Selection */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-             <label className="block text-sm font-medium text-text-secondary">Wallet</label>
-             <button
-               type="button"
-               onClick={() => setShowAddWallet(true)}
-               className="text-sm font-semibold text-primary hover:text-primary-hover"
-             >
-              + Add wallet
-            </button>
-          </div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Wallet</label>
           <div className="grid grid-cols-2 gap-2">
             {wallets.map((w) => (
               <button
@@ -187,10 +178,18 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                  <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
                </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setShowAddWallet(true)}
+              className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm font-semibold">Wallet</span>
+            </button>
           </div>
-           {wallets.length === 0 && (
-             <p className="text-sm text-text-secondary mt-2">No wallets yet. Add one to start tracking transactions.</p>
-           )}
+          {wallets.length === 0 && (
+            <p className="text-sm text-text-secondary mt-2">No wallets yet. Add one to start tracking transactions.</p>
+          )}
         </div>
 
         {/* Category */}
@@ -224,16 +223,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         {/* Target Wallet (For Transfers) */}
         {category === 'transfer' && (
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-stone-600">Target Wallet</label>
-              <button
-                type="button"
-                onClick={() => setShowAddWallet(true)}
-                className="text-sm font-semibold text-teal-700 hover:text-teal-800"
-              >
-                + Add wallet
-              </button>
-            </div>
+            <label className="block text-sm font-medium text-stone-600 mb-2">Target Wallet</label>
             {wallets.length < 2 ? (
               <p className="text-sm text-stone-500 mt-2">You need at least another wallet to make a transfer.</p>
             ) : (
@@ -251,6 +241,14 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                     <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setShowAddWallet(true)}
+                  className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-teal-500/40 text-teal-700 hover:border-teal-500 hover:bg-teal-50 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="text-sm font-semibold">Wallet</span>
+                </button>
               </div>
             )}
           </div>

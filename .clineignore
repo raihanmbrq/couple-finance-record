@@ -1,0 +1,20 @@
+# Folder dependensi (Sangat berat, wajib diblokir)
+node_modules/
+bower_components/
+
+# Folder hasil build / compile
+dist/
+build/
+.next/
+.nuxt/
+out/
+
+# Folder bawaan git dan IDE
+.git/
+.vscode/
+.idea/
+
+# File log dan cache
+*.log
+.eslintcache
+.npm/
