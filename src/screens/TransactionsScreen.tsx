@@ -6,13 +6,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
-import { getCategory, CATEGORIES } from '@/lib/types';
+import { getCategory } from '@/lib/types';
 import { formatDate, formatIDR, formatRelative } from '@/lib/format';
 import { Plus, Search, Filter, TrendingUp, TrendingDown, Receipt, X } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 
 export function TransactionsScreen() {
-  const { transactions, wallets } = useApp();
+  const { transactions, wallets, categories } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
   const [filterWallet, setFilterWallet] = useState('all');
@@ -123,15 +123,15 @@ export function TransactionsScreen() {
               >
                 All
               </button>
-              {CATEGORIES.map(c => (
+              {categories.map(c => (
                 <button
-                  key={c.key}
-                  onClick={() => setFilterCategory(c.key)}
+                  key={c.id}
+                  onClick={() => setFilterCategory(c.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    filterCategory === c.key ? 'bg-teal-700 text-white' : 'bg-cream-100 text-stone-500'
+                    filterCategory === c.id ? 'bg-teal-700 text-white' : 'bg-cream-100 text-stone-500'
                   }`}
                 >
-                  {c.label.split(' ')[0]}
+                  {c.name.split(' ')[0]}
                 </button>
               ))}
             </div>
@@ -175,7 +175,8 @@ export function TransactionsScreen() {
                 <Card className="divide-y divide-stone-100">
                   {items.map((tx) => {
                     const cat = getCategory(tx.category);
-                    const Icon = getIcon(cat?.icon ?? 'CircleDot');
+                    const dynCat = categories.find((c) => c.id === tx.category);
+                    const Icon = getIcon(dynCat?.icon ?? cat?.icon ?? 'CircleDot');
                     const wallet = walletMap.get(tx.wallet_id);
                     const isIncome = tx.type === 'income';
                     return (
@@ -191,7 +192,7 @@ export function TransactionsScreen() {
                           <Icon className={`w-5 h-5 ${isIncome ? 'text-green-600' : 'text-stone-500'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-stone-800 truncate">{tx.notes || cat?.label || tx.category}</p>
+                          <p className="font-semibold text-sm text-stone-800 truncate">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs text-stone-400">{formatRelative(tx.created_at)}</span>
                             {wallet && <span className="text-xs text-stone-400">· {wallet.name}</span>}

@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Profile, Household, HouseholdMember, Wallet, WalletTypeRow, Transaction, Budget, Goal, GoalInput } from '@/lib/types';
+import type { Profile, Household, HouseholdMember, Wallet, WalletTypeRow, Transaction, Budget, Goal, GoalInput, TransactionCategory } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import {
-  mockProfile, mockPartner, mockHousehold, mockWallets, mockWalletTypes, mockTransactions, mockBudgets, mockGoals,
+  mockProfile, mockPartner, mockHousehold, mockWallets, mockWalletTypes, mockCategories, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
 } from '@/lib/mockData';
 
@@ -18,6 +18,7 @@ interface AppState {
   budgets: Budget[];
   goals: Goal[];
   walletTypes: WalletTypeRow[];
+  categories: TransactionCategory[];
   loading: boolean;
   error: string | null;
   // Auth
@@ -38,6 +39,9 @@ interface AppState {
   addCustomWalletType: (name: string, icon: string) => Promise<WalletTypeRow>;
   updateWalletType: (id: string, updates: Partial<WalletTypeRow>) => Promise<void>;
   deleteWalletType: (id: string) => Promise<void>;
+  addCustomCategory: (name: string, icon: string, type: TransactionCategory['type']) => Promise<TransactionCategory>;
+  updateCategory: (id: string, updates: Partial<TransactionCategory>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
@@ -83,6 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [walletTypes, setWalletTypes] = useState<WalletTypeRow[]>([]);
+  const [categories, setCategories] = useState<TransactionCategory[]>([]);
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
@@ -207,6 +212,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const customRows = rows.filter((r) => !r.is_system);
       setWalletTypes([...systemRows, ...customRows]);
 
+      const { data: cat } = await supabase
+        .from('categories')
+        .select('*')
+        .or(`household_id.eq.${householdId},is_system.eq.true`);
+      const catRows = (cat as TransactionCategory[]) ?? [];
+      const systemCatRows = catRows.filter((r) => r.is_system);
+      const customCatRows = catRows.filter((r) => !r.is_system);
+      setCategories([...systemCatRows, ...customCatRows]);
+
       const { data: w } = await supabase
         .from('wallets')
         .select('*')
@@ -272,6 +286,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBudgets(mockBudgets);
     setGoals(mockGoals);
     setWalletTypes(mockWalletTypes);
+    setCategories(mockCategories);
     localStorage.setItem('duitbersama_session', 'demo');
   }, []);
 
@@ -407,6 +422,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBudgets([]);
     setGoals([]);
     setWalletTypes([]);
+    setCategories([]);
   }, [mode]);
 
   const setMode = useCallback(async (_mode: 'single' | 'couple', _partnerName?: string) => {
@@ -624,6 +640,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     setWalletTypes(prev => prev.filter(t => t.id !== id));
   }, [mode, wallets]);
+
+  const addCustomCategory = useCallback(async (name: string, icon: string, type: TransactionCategory['type']): Promise<TransactionCategory> => {
+    const createdAt = new Date().toISOString();
+    const baseId = slugify(name) || 'custom';
+    let id = baseId;
+    let n = 2;
+    while (categories.some(c => c.id === id)) {
+      id = `${baseId}_${n++}`;
+    }
+    const local = {
+      id,
+      name,
+      icon,
+      type,
+      user_id: profile?.id,
+      household_id: household?.id,
+      is_system: false,
+      created_at: createdAt,
+    };
+
+    if (mode === 'live' && profile && household) {
+      const { data, error } = await supabase.from('categories').insert({
+        id,
+        name,
+        icon,
+        type,
+        user_id: profile.id,
+        household_id: household.id,
+        is_system: false,
+      }).select().single();
+      if (error) throw error;
+      const inserted = (data as TransactionCategory) ?? local;
+      setCategories(prev => [...prev, inserted]);
+      return inserted;
+    }
+
+    setCategories(prev => [...prev, local]);
+    return local;
+  }, [categories, household, mode, profile]);
+
+  const updateCategory = useCallback(async (id: string, updates: Partial<TransactionCategory>) => {
+    if (mode === 'live') {
+      const { error } = await supabase.from('categories').update(updates).eq('id', id);
+      if (error) throw error;
+    }
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  }, [mode]);
+
+  const deleteCategory = useCallback(async (id: string) => {
+    const inUse = transactions.some(tx => tx.category === id);
+    if (inUse) {
+      throw new Error('Kategori ini masih dipakai oleh transaksi. Pindahkan transaksi tersebut ke kategori lain terlebih dahulu.');
+    }
+    if (mode === 'live') {
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) throw error;
+    }
+    setCategories(prev => prev.filter(c => c.id !== id));
+  }, [mode, transactions]);
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, 'id' | 'created_at'>) => {
     const newTx: Transaction = {
@@ -947,6 +1022,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     budgets,
     goals,
     walletTypes,
+    categories,
     loading,
     error,
     signIn,
@@ -964,6 +1040,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addCustomWalletType,
     updateWalletType,
     deleteWalletType,
+    addCustomCategory,
+    updateCategory,
+    deleteCategory,
     addTransaction,
     updateTransaction,
     deleteTransaction,

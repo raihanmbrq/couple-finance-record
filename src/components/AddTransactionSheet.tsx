@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
-import { CATEGORIES, type TransactionType } from '@/lib/types';
+import { CreateCategorySheet } from '@/components/CreateCategorySheet';
+import { type TransactionType } from '@/lib/types';
 import { formatIDRInput, parseIDRInput } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
@@ -17,7 +18,7 @@ interface AddTransactionSheetProps {
 }
 
 export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps) {
-  const { wallets, profile, addTransaction, walletTypes } = useApp();
+  const { wallets, profile, addTransaction, walletTypes, categories } = useApp();
   const formatWalletType = (type: string) => {
     const row = walletTypes.find((t) => t.id === type);
     if (row) return row.name;
@@ -34,6 +35,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAddWallet, setShowAddWallet] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
 
   useEffect(() => {
     if (open && wallets.length > 0 && !walletId) {
@@ -196,26 +198,36 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
          <div>
            <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
            <div className="grid grid-cols-4 gap-2">
-             {CATEGORIES.map((cat) => {
-               const Icon = getIcon(cat.icon);
-               const isActive = category === cat.key;
-               return (
-                 <button
-                   key={cat.key}
-                   onClick={() => setCategory(cat.key)}
-                   className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
-                     isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
-                   }`}
-                 >
-                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
-                     <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
-                   </div>
-                   <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
-                     {cat.label.split(' ')[0]}
-                   </span>
-                 </button>
-               );
-             })}
+             {categories
+               .filter((cat) => cat.type === 'both' || cat.type === type)
+               .map((cat) => {
+                 const Icon = getIcon(cat.icon);
+                 const isActive = category === cat.id;
+                 return (
+                   <button
+                     key={cat.id}
+                     onClick={() => setCategory(cat.id)}
+                     className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
+                       isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
+                     }`}
+                   >
+                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                       <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
+                     </div>
+                     <span className={`text-[10px] font-medium text-center leading-tight ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
+                       {cat.name.split(' ')[0]}
+                     </span>
+                   </button>
+                 );
+               })}
+             <button
+               type="button"
+               onClick={() => setShowAddCategory(true)}
+               className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
+             >
+               <Plus className="w-4 h-4" />
+               <span className="text-[10px] font-semibold text-center leading-tight">Add Category</span>
+             </button>
            </div>
          </div>
 
@@ -282,6 +294,20 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         </Button>
       </div>
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
+      <CreateCategorySheet
+        open={showAddCategory}
+        onClose={() => setShowAddCategory(false)}
+        onCreated={(id) => {
+          setCategory(id);
+          setType((prevType) => {
+            const createdCat = categories.find((c) => c.id === id);
+            if (createdCat && (createdCat.type === 'expense' || createdCat.type === 'income')) {
+              return createdCat.type;
+            }
+            return prevType;
+          });
+        }}
+      />
     </Sheet>
   );
 }

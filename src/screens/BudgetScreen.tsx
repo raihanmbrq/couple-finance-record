@@ -6,7 +6,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { CATEGORIES, getCategory, type Budget } from '@/lib/types';
+import { getCategory, type Budget } from '@/lib/types';
 import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
 import { Plus, PiggyBank, Trash2, Target } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
@@ -14,7 +14,7 @@ import { useToast } from '@/context/ToastContext';
 import { GoalsSection } from '@/components/GoalsSection';
 
 export function BudgetScreen() {
-  const { budgets, transactions, setBudget, deleteBudget } = useApp();
+  const { budgets, transactions, setBudget, deleteBudget, categories } = useApp();
   const { showToast } = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const [editCategory, setEditCategory] = useState<string | null>(null);
@@ -84,7 +84,11 @@ export function BudgetScreen() {
     }
   };
 
-  const availableCategories = CATEGORIES.filter(c => !budgets.some(b => b.category === c.key) && c.key !== 'salary');
+  const availableCategories = categories
+    .filter((c) => c.type === 'expense' || c.type === 'both')
+    .filter((c) => !budgets.some(b => b.category === c.id))
+    .filter((c) => c.id !== 'salary')
+    .map((c) => ({ key: c.id, label: c.name, icon: c.icon, color: 'stone' }));
 
   return (
     <div className="px-5 py-5 space-y-5">

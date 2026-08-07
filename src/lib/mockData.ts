@@ -1,4 +1,4 @@
-import type { Profile, Household, Wallet, Transaction, Budget, Goal } from '@/lib/types';
+import type { Profile, Household, Wallet, Transaction, Budget, Goal, TransactionCategory } from '@/lib/types';
 
 // Deterministic IDs for mock data
 const mockHouseholdId = 'hh-mock-001';
@@ -33,6 +33,22 @@ export const mockWalletTypes = [
   { id: 'cash', name: 'Cash', icon: 'Banknote', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
   { id: 'bank', name: 'Bank', icon: 'Landmark', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
   { id: 'ewallet', name: 'E-Wallet', icon: 'Smartphone', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+];
+
+export const mockCategories: TransactionCategory[] = [
+  { id: 'food', name: 'Food & Groceries', icon: 'Utensils', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'bills', name: 'Bills & Utilities', icon: 'Receipt', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'shopping', name: 'Shopping', icon: 'ShoppingBag', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'entertainment', name: 'Entertainment', icon: 'Clapperboard', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'transport', name: 'Transport', icon: 'Car', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'health', name: 'Health & Medical', icon: 'HeartPulse', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'education', name: 'Education', icon: 'GraduationCap', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'coffee', name: 'Coffee', icon: 'Coffee', type: 'expense', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'salary', name: 'Salary', icon: 'Banknote', type: 'income', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'other', name: 'Other', icon: 'Sparkles', type: 'both', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'transfer', name: 'Transfer', icon: 'ArrowLeftRight', type: 'both', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'goals', name: 'Goals', icon: 'Landmark', type: 'both', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
+  { id: 'gift', name: 'Gift', icon: 'Gift', type: 'both', user_id: null, household_id: null, is_system: true, created_at: daysAgo(30) },
 ];
 
 export const mockWalletsData: Wallet[] = [

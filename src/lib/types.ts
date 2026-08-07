@@ -111,6 +111,19 @@ export interface Goal {
   created_at: string;
 }
 
+export type TransactionCategoryType = 'expense' | 'income' | 'both';
+
+export interface TransactionCategory {
+  id: string;
+  name: string;
+  icon: string;
+  type: TransactionCategoryType;
+  user_id?: string | null;
+  household_id?: string | null;
+  is_system: boolean;
+  created_at: string;
+}
+
 export interface Category {
   key: string;
   label: string;
@@ -135,3 +148,22 @@ export const CATEGORIES: Category[] = [
 export function getCategory(key: string): Category | undefined {
   return CATEGORIES.find((c) => c.key === key);
 }
+
+// Icon options for custom transaction categories (lucide-react names).
+export const CATEGORY_ICON_OPTIONS = [
+  'Utensils',
+  'Receipt',
+  'ShoppingBag',
+  'Clapperboard',
+  'Car',
+  'HeartPulse',
+  'GraduationCap',
+  'Banknote',
+  'ArrowLeftRight',
+  'Landmark',
+  'Gift',
+  'Briefcase',
+  'Coffee',
+  'ShieldCheck',
+  'Sparkles',
+] as const;

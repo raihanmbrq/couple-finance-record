@@ -64,7 +64,7 @@ function AddWalletCard({ onClick }: { onClick: () => void }) {
 }
 
 export function HomeScreen() {
-  const { wallets, transactions, profile, isDemo, householdMembers, walletTypes } = useApp();
+  const { wallets, transactions, profile, isDemo, householdMembers, walletTypes, categories } = useApp();
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
@@ -375,7 +375,8 @@ export function HomeScreen() {
             <div className="divide-y divide-secondary">
               {breakdownData.map((item) => {
                 const catInfo = getCategory(item.category);
-                const Icon = getIcon(catInfo?.icon || 'CircleDot');
+                const dynCat = categories.find((c) => c.id === item.category);
+                const Icon = getIcon(dynCat?.icon || catInfo?.icon || 'CircleDot');
                 
                 return (
                   <div key={item.category} className="flex items-center gap-3 p-3">
@@ -385,7 +386,7 @@ export function HomeScreen() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-end mb-1.5">
                         <p className="font-semibold text-sm text-text-primary truncate pr-2">
-                          {catInfo?.label || item.category}
+                          {dynCat?.name || catInfo?.label || item.category}
                         </p>
                         <p className="font-bold text-sm text-text-primary">
                           {formatIDRShort(item.amount)}
@@ -420,6 +421,7 @@ export function HomeScreen() {
           ) : (
             recentTx.map((tx) => {
               const cat = getCategory(tx.category);
+              const dynCat = categories.find((c) => c.id === tx.category);
               const isIncome = tx.type === 'income';
               return (
                 <button
@@ -436,7 +438,7 @@ export function HomeScreen() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="font-semibold text-sm text-text-primary truncate mb-0.5">{tx.notes || cat?.label || tx.category}</p>
+                    <p className="font-semibold text-sm text-text-primary truncate mb-0.5">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
                     <p className="text-[11px] text-text-secondary truncate">{tx.spent_by}</p>
                     <p className="text-[10px] text-text-secondary/70 truncate">{formatRelative(tx.created_at)}</p>
                   </div>
