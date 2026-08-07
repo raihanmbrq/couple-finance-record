@@ -28,7 +28,6 @@ interface AppState {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateCurrency: (code: string) => Promise<void>;
-  updateThemeLocal: (theme: Profile['theme']) => void;
   // Onboarding
   setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
@@ -389,10 +388,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateCurrency = useCallback(async (code: string) => {
     await updateProfile({ currency: code });
   }, [updateProfile]);
-
-  const updateThemeLocal = useCallback((theme: Profile['theme']) => {
-    setProfile(prev => prev ? { ...prev, theme } : prev);
-  }, []);
 
   const signOut = useCallback(async () => {
     if (mode === 'live') {
@@ -1043,7 +1038,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signOut,
     updateProfile,
     updateCurrency,
-    updateThemeLocal,
     setMode,
     createHousehold,
     joinHousehold,

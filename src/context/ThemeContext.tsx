@@ -1,39 +1,27 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { ThemeId } from '@/lib/types';
+import type { AppearanceMode, ColorPreset } from '@/lib/types';
 
-const STORAGE_KEY = 'pf-theme';
+const APPEARANCE_KEY = 'pf-appearance';
+const PRESET_KEY = 'pf-color-preset';
 
-const VALID_THEMES: ThemeId[] = ['system', 'default', 'emerald', 'rose', 'dark'];
+const VALID_APPEARANCE: AppearanceMode[] = ['light', 'dark', 'system'];
+const VALID_PRESETS: ColorPreset[] = ['emerald', 'gold', 'rose', 'slate'];
 
-const RESOLVED_THEME_ATTR: Record<ThemeId, 'light' | 'dark'> = {
-  system: 'light',
-  default: 'light',
-  emerald: 'light',
-  rose: 'light',
-  dark: 'dark',
-};
-
-const THEME_ATTRIBUTE: Record<ThemeId, string> = {
-  system: 'system',
-  default: 'default',
-  emerald: 'emerald',
-  rose: 'rose',
-  dark: 'dark',
-};
-
-const THEME_COLORS: Record<ThemeId, { light: string; dark: string }> = {
-  system: { light: '#F8F6F3', dark: '#0F172A' },
-  default: { light: '#FFFDF5', dark: '#FFFDF5' },
-  emerald: { light: '#F0FDF4', dark: '#F0FDF4' },
-  rose: { light: '#FFF1F2', dark: '#FFF1F2' },
-  dark: { light: '#0F172A', dark: '#0F172A' },
+// HEX --bg-app per preset, per resolved mode (untuk <meta theme-color>).
+const THEME_BG: Record<ColorPreset, { light: string; dark: string }> = {
+  emerald: { light: '#F8FAFC', dark: '#022C22' },
+  gold: { light: '#F8FAFC', dark: '#0F172A' },
+  rose: { light: '#F8FAFC', dark: '#4C0519' },
+  slate: { light: '#F8FAFC', dark: '#090D16' },
 };
 
 interface ThemeContextValue {
-  theme: ThemeId;
+  appearanceMode: AppearanceMode;
+  colorPreset: ColorPreset;
   resolvedTheme: 'light' | 'dark';
-  setTheme: (theme: ThemeId) => void;
+  setAppearanceMode: (mode: AppearanceMode) => void;
+  setColorPreset: (preset: ColorPreset) => void;
   themeColor: string;
 }
 
@@ -43,28 +31,47 @@ function getSystemDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-function initialTheme(userTheme?: ThemeId | null): ThemeId {
-  const stored = localStorage.getItem(STORAGE_KEY) as ThemeId | null;
-  if (stored && VALID_THEMES.includes(stored)) return stored;
-  if (userTheme && VALID_THEMES.includes(userTheme)) return userTheme;
-  return 'default';
+function initialAppearance(userAppearance?: AppearanceMode | null): AppearanceMode {
+  const stored = localStorage.getItem(APPEARANCE_KEY) as AppearanceMode | null;
+  if (stored && VALID_APPEARANCE.includes(stored)) return stored;
+  if (userAppearance && VALID_APPEARANCE.includes(userAppearance)) return userAppearance;
+  return 'system';
 }
 
-export function ThemeProvider({ children, userTheme }: { children: ReactNode; userTheme?: ThemeId | null }) {
-  const [theme, setThemeState] = useState<ThemeId>(() => initialTheme(userTheme));
-  const userProfileThemeRef = useRef(userTheme ?? null);
+function initialPreset(userPreset?: ColorPreset | null): ColorPreset {
+  const stored = localStorage.getItem(PRESET_KEY) as ColorPreset | null;
+  if (stored && VALID_PRESETS.includes(stored)) return stored;
+  if (userPreset && VALID_PRESETS.includes(userPreset)) return userPreset;
+  return 'emerald';
+}
+
+interface ThemeProviderProps {
+  children: ReactNode;
+  userAppearance?: AppearanceMode | null;
+  userPreset?: ColorPreset | null;
+}
+
+export function ThemeProvider({ children, userAppearance, userPreset }: ThemeProviderProps) {
+  const [appearanceMode, setAppearanceModeState] = useState<AppearanceMode>(() => initialAppearance(userAppearance));
+  const [colorPreset, setColorPresetState] = useState<ColorPreset>(() => initialPreset(userPreset));
   const [systemDark, setSystemDark] = useState<boolean>(() => getSystemDark());
 
-  // Track profil dari Supabase; tanpa override bila user sudah pilih manual di localStorage
+  // Track preferensi dari Supabase; tanpa override bila user sudah pilih manual di localStorage
   useEffect(() => {
-    userProfileThemeRef.current = userTheme ?? null;
-    if (userTheme && !localStorage.getItem(STORAGE_KEY) && userTheme !== theme) {
-      setThemeState(userTheme);
+    if (userAppearance && !localStorage.getItem(APPEARANCE_KEY) && userAppearance !== appearanceMode) {
+      setAppearanceModeState(userAppearance);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userTheme]);
+  }, [userAppearance]);
 
-  // Watch OS color scheme (efektif saat theme === 'system')
+  useEffect(() => {
+    if (userPreset && !localStorage.getItem(PRESET_KEY) && userPreset !== colorPreset) {
+      setColorPresetState(userPreset);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPreset]);
+
+  // Watch OS color scheme real-time (efektif saat appearanceMode === 'system')
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
@@ -72,13 +79,19 @@ export function ThemeProvider({ children, userTheme }: { children: ReactNode; us
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Apply data-theme + meta theme-color
+  // Apply data-mode + data-preset di <html>
   useEffect(() => {
-    document.documentElement.dataset.theme = THEME_ATTRIBUTE[theme];
-    setSystemDark(getSystemDark());
+    document.documentElement.dataset.mode = appearanceMode;
+    document.documentElement.dataset.preset = colorPreset;
+  }, [appearanceMode, colorPreset]);
 
-    const resolved = theme === 'system' ? (systemDark ? 'dark' : 'light') : RESOLVED_THEME_ATTR[theme];
-    const color = THEME_COLORS[theme][resolved];
+  const resolvedTheme: 'light' | 'dark' =
+    appearanceMode === 'system' ? (systemDark ? 'dark' : 'light') : appearanceMode;
+
+  // Update <meta name="theme-color"> mengikuti --bg-app aktif
+  useEffect(() => {
+    setSystemDark(getSystemDark());
+    const color = THEME_BG[colorPreset][resolvedTheme];
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement('meta');
@@ -86,29 +99,38 @@ export function ThemeProvider({ children, userTheme }: { children: ReactNode; us
       document.head.appendChild(meta);
     }
     meta.content = color;
-  }, [theme, systemDark]);
+  }, [colorPreset, resolvedTheme]);
 
-  const persist = useCallback(async (t: ThemeId) => {
-    localStorage.setItem(STORAGE_KEY, t);
+  const persist = useCallback(async (mode: AppearanceMode, preset: ColorPreset) => {
+    localStorage.setItem(APPEARANCE_KEY, mode);
+    localStorage.setItem(PRESET_KEY, preset);
     const { data } = await supabase.auth.getUser();
-    const profileId = data?.user?.id ?? userProfileThemeRef.current;
+    const profileId = data?.user?.id;
     if (!profileId) return;
-    const { error } = await supabase.from('profiles').update({ theme: t }).eq('id', profileId);
-    if (error) console.error('Gagal simpan tema ke Supabase:', error.message);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ appearance_mode: mode, color_preset: preset })
+      .eq('id', profileId);
+    if (error) console.error('Gagal simpan preferensi tema ke Supabase:', error.message);
   }, []);
 
-  const setTheme = useCallback((t: ThemeId) => {
-    setThemeState(t);
-    persist(t);
-  }, [persist]);
+  const setAppearanceMode = useCallback((mode: AppearanceMode) => {
+    setAppearanceModeState(mode);
+    persist(mode, colorPreset);
+  }, [persist, colorPreset]);
 
-  const resolvedTheme: 'light' | 'dark' = theme === 'system' ? (systemDark ? 'dark' : 'light') : RESOLVED_THEME_ATTR[theme];
+  const setColorPreset = useCallback((preset: ColorPreset) => {
+    setColorPresetState(preset);
+    persist(appearanceMode, preset);
+  }, [persist, appearanceMode]);
 
   const value: ThemeContextValue = {
-    theme,
+    appearanceMode,
+    colorPreset,
     resolvedTheme,
-    setTheme,
-    themeColor: THEME_COLORS[theme][resolvedTheme],
+    setAppearanceMode,
+    setColorPreset,
+    themeColor: THEME_BG[colorPreset][resolvedTheme],
   };
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

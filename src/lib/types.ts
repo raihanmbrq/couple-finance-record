@@ -1,6 +1,7 @@
 export type UserRole = 'suami' | 'istri' | 'single' | 'partner' | 'owner' | 'member';
 
-export type ThemeId = 'system' | 'default' | 'emerald' | 'rose' | 'dark';
+export type AppearanceMode = 'light' | 'dark' | 'system';
+export type ColorPreset = 'emerald' | 'gold' | 'rose' | 'slate';
 
 export interface Profile {
   id: string;
@@ -10,7 +11,8 @@ export interface Profile {
   avatar_url?: string | null;
   household_id?: string | null;
   currency?: string | null;
-  theme?: ThemeId | null;
+  color_preset?: ColorPreset | null;
+  appearance_mode?: AppearanceMode | null;
   created_at: string;
 }
 

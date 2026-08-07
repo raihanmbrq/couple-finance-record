@@ -8,7 +8,7 @@ import { EditProfileSheet } from '@/components/EditProfileSheet';
 import { WalletTypeSettingsSheet } from '@/components/WalletTypeSettingsSheet';
 import { CategorySettingsSheet } from '@/components/CategorySettingsSheet';
 import { CurrencySettingsSheet } from '@/components/CurrencySettingsSheet';
-import { ThemeSettingsSheet, getThemeLabel } from '@/components/ThemeSettingsSheet';
+import { ThemeSettingsSheet, getAppearanceLabel, getPresetLabel } from '@/components/ThemeSettingsSheet';
 import { useTheme } from '@/context/ThemeContext';
 import { getCurrencyInfo } from '@/lib/currencies';
 import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, Palette, ChevronRight } from 'lucide-react';
@@ -30,7 +30,7 @@ export function ProfileScreen() {
   const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
   const activeCurrency = profile?.currency ?? 'IDR';
   const activeCurrencyInfo = getCurrencyInfo(activeCurrency);
-  const { theme } = useTheme();
+  const { appearanceMode, colorPreset } = useTheme();
 
   const handleCopy = () => {
     if (household?.invite_code) {
@@ -312,7 +312,9 @@ export function ProfileScreen() {
             <p className="text-xs text-stone-500">Pilih tampilan warna aplikasi</p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <span className="text-sm font-semibold text-stone-700">{getThemeLabel(theme)}</span>
+            <span className="text-sm font-semibold text-stone-700">
+              {getAppearanceLabel(appearanceMode)} · {getPresetLabel(colorPreset)}
+            </span>
             <ChevronRight className="w-4 h-4 text-stone-400" />
           </div>
         </button>

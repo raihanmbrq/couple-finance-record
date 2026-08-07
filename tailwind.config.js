@@ -6,6 +6,10 @@ export default {
       colors: {
         'primary': 'rgb(var(--color-primary) / <alpha-value>)',
         'primary-hover': 'rgb(var(--color-primary-hover) / <alpha-value>)',
+        'primary-dark': 'rgb(var(--color-primary-dark) / <alpha-value>)',
+        'bg-app': 'rgb(var(--color-bg-app) / <alpha-value>)',
+        'bg-card': 'rgb(var(--color-bg-card) / <alpha-value>)',
+        'text-main': 'rgb(var(--color-text-main) / <alpha-value>)',
         'secondary': 'rgb(var(--color-secondary) / <alpha-value>)',
         'background': 'rgb(var(--color-background) / <alpha-value>)',
         'surface': 'rgb(var(--color-surface) / <alpha-value>)',

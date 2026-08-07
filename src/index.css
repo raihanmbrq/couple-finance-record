@@ -4,59 +4,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Tema Default: Rich Amber Gold ───────────────────── */
-:root {
-  --color-primary: 245 158 11;        /* amber-500 #F59E0B */
-  --color-primary-hover: 217 119 6;   /* amber-600 #D97706 */
-  --color-secondary: 251 191 36;      /* amber-400 #FBBF24 */
-  --color-background: 255 251 245;    /* #FFFDF5 putih + tint amber tipis */
-  --color-surface: 255 255 255;       /* #FFFFFF putih murni */
-  --color-total-balance: 217 119 6;   /* amber-600 #D97706 */
-  --color-text-primary: 31 41 55;     /* #1F2937 deep slate */
-  --color-text-secondary: 120 53 15;  /* #78350F warm bronze */
-  --color-stone-50: 255 251 245;
-  --color-stone-100: 255 251 235;
-  --color-stone-200: 253 230 138;
-  --color-stone-300: 252 211 77;
-  --color-stone-400: 217 119 6;
-  --color-stone-500: 120 53 15;
-  --color-stone-600: 87 83 78;
-  --color-stone-700: 68 64 60;
-  --color-stone-800: 31 41 55;
-  --color-stone-900: 17 24 39;
-  --color-cream-100: 255 251 235;
-  --color-teal-50: 255 251 245;
-  --color-teal-100: 255 251 235;
-  --color-teal-600: 245 158 11;
-  --color-teal-700: 217 119 6;
-  --color-amber-50: 255 251 235;
-  --color-amber-100: 254 243 199;
-  --color-amber-200: 253 230 138;
-  --color-amber-600: 217 119 6;
-  --color-amber-700: 180 83 9;
-}
+/* ════════════════════════════════════════════════════════════════
+   THEMIFY SYSTEM — PairFlow
+   Selector: html[data-mode][data-preset]
+   - data-mode  : 'light' | 'dark' | 'system'
+   - data-preset: 'emerald' | 'gold' | 'rose' | 'slate'
+   Reserved tokens (wajib):
+     --color-primary / --color-primary-dark
+     --color-bg-app / --color-bg-card / --color-text-main
+   ════════════════════════════════════════════════════════════════ */
 
-/* ── Emerald Green ───────────────────────────────────── */
-html[data-theme='emerald'] {
+/* ── Base fallback = Emerald Light ─────────────────────────── */
+:root {
   --color-primary: 16 185 129;
   --color-primary-hover: 5 150 105;
-  --color-secondary: 167 243 208;
-  --color-background: 240 253 244;
-  --color-surface: 255 255 255;
-  --color-total-balance: 5 150 105;   /* emerald-600 #059669 */
-  --color-text-primary: 28 25 23;
+  --color-primary-dark: 5 150 105;
+  --color-secondary: 226 232 240;
+  --color-bg-app: 248 250 252;
+  --color-bg-card: 241 245 249;
+  --color-background: 248 250 252;
+  --color-surface: 241 245 249;
+  --color-text-main: 31 41 55;
+  --color-text-primary: 31 41 55;
   --color-text-secondary: 107 114 128;
-  --color-stone-50: 249 250 251;
-  --color-stone-100: 243 244 246;
-  --color-stone-200: 229 231 235;
-  --color-stone-300: 209 213 219;
-  --color-stone-400: 156 163 175;
-  --color-stone-500: 107 114 128;
-  --color-stone-600: 75 85 99;
-  --color-stone-700: 55 65 81;
-  --color-stone-800: 31 41 55;
-  --color-stone-900: 17 24 39;
-  --color-cream-100: 236 253 245;
+  --color-total-balance: 5 150 105;
+  --color-stone-50: 248 250 252;
+  --color-stone-100: 241 245 249;
+  --color-stone-200: 226 232 240;
+  --color-stone-300: 203 213 225;
+  --color-stone-400: 148 163 184;
+  --color-stone-500: 100 116 139;
+  --color-stone-600: 71 85 105;
+  --color-stone-700: 51 65 85;
+  --color-stone-800: 30 41 59;
+  --color-stone-900: 15 23 42;
+  --color-cream-100: 248 250 252;
   --color-teal-50: 236 253 245;
   --color-teal-100: 209 250 229;
   --color-teal-600: 16 185 129;
@@ -68,27 +50,175 @@ html[data-theme='emerald'] {
   --color-amber-700: 180 83 9;
 }
 
-/* ── Rose Pink ───────────────────────────────────────── */
-html[data-theme='rose'] {
-  --color-primary: 251 113 133;
+/* ── EMERALD · LIGHT ──────────────────────────────────────── */
+html[data-mode='light'][data-preset='emerald'] {
+  --color-primary: 16 185 129;          /* #10B981 */
+  --color-primary-dark: 5 150 105;      /* #059669 */
+  --color-primary-hover: 5 150 105;
+  --color-secondary: 226 232 240;
+  --color-bg-app: 248 250 252;          /* #F8FAFC */
+  --color-bg-card: 241 245 249;         /* #F1F5F9 */
+  --color-background: 248 250 252;
+  --color-surface: 241 245 249;
+  --color-text-main: 31 41 55;          /* #1F2937 */
+  --color-text-primary: 31 41 55;
+  --color-text-secondary: 107 114 128;
+  --color-total-balance: 5 150 105;
+  --color-stone-50: 248 250 252;
+  --color-stone-100: 241 245 249;
+  --color-stone-200: 226 232 240;
+  --color-stone-300: 203 213 225;
+  --color-stone-400: 148 163 184;
+  --color-stone-500: 100 116 139;
+  --color-stone-600: 71 85 105;
+  --color-stone-700: 51 65 85;
+  --color-stone-800: 30 41 59;
+  --color-stone-900: 15 23 42;
+  --color-cream-100: 248 250 252;
+  --color-teal-50: 236 253 245;
+  --color-teal-100: 209 250 229;
+  --color-teal-600: 16 185 129;
+  --color-teal-700: 5 150 105;
+  --color-amber-50: 255 251 235;
+  --color-amber-100: 254 243 199;
+  --color-amber-200: 253 230 138;
+  --color-amber-600: 217 119 6;
+  --color-amber-700: 180 83 9;
+}
+
+/* ── EMERALD · DARK ───────────────────────────────────────── */
+html[data-mode='dark'][data-preset='emerald'] {
+  --color-primary: 52 211 153;          /* #34D399 */
+  --color-primary-dark: 16 185 129;     /* #10B981 */
+  --color-primary-hover: 16 185 129;
+  --color-secondary: 6 78 59;
+  --color-bg-app: 2 44 34;              /* #022C22 */
+  --color-bg-card: 6 78 59;             /* #064E3B */
+  --color-background: 2 44 34;
+  --color-surface: 6 78 59;
+  --color-text-main: 248 250 252;       /* #F8FAFC */
+  --color-text-primary: 248 250 252;
+  --color-text-secondary: 110 231 183;
+  --color-total-balance: 52 211 153;
+  --color-stone-50: 2 44 34;
+  --color-stone-100: 6 78 59;
+  --color-stone-200: 10 107 99;
+  --color-stone-300: 16 185 129;
+  --color-stone-400: 52 211 153;
+  --color-stone-500: 110 231 183;
+  --color-stone-600: 167 243 208;
+  --color-stone-700: 209 250 229;
+  --color-stone-800: 236 253 245;
+  --color-stone-900: 248 250 252;
+  --color-cream-100: 2 44 34;
+  --color-teal-50: 3 50 40;
+  --color-teal-100: 6 78 59;
+  --color-teal-600: 52 211 153;
+  --color-teal-700: 16 185 129;
+  --color-amber-50: 45 30 8;
+  --color-amber-100: 69 42 8;
+  --color-amber-200: 146 64 14;
+  --color-amber-600: 251 191 36;
+  --color-amber-700: 245 158 11;
+}
+
+/* ── GOLD · LIGHT ─────────────────────────────────────────── */
+html[data-mode='light'][data-preset='gold'] {
+  --color-primary: 245 158 11;          /* #F59E0B */
+  --color-primary-dark: 217 119 6;      /* #D97706 */
+  --color-primary-hover: 217 119 6;
+  --color-secondary: 226 232 240;
+  --color-bg-app: 248 250 252;          /* #F8FAFC */
+  --color-bg-card: 241 245 249;         /* #F1F5F9 */
+  --color-background: 248 250 252;
+  --color-surface: 241 245 249;
+  --color-text-main: 31 41 55;          /* #1F2937 */
+  --color-text-primary: 31 41 55;
+  --color-text-secondary: 120 53 15;
+  --color-total-balance: 217 119 6;
+  --color-stone-50: 248 250 252;
+  --color-stone-100: 241 245 249;
+  --color-stone-200: 226 232 240;
+  --color-stone-300: 203 213 225;
+  --color-stone-400: 148 163 184;
+  --color-stone-500: 100 116 139;
+  --color-stone-600: 71 85 105;
+  --color-stone-700: 51 65 85;
+  --color-stone-800: 30 41 59;
+  --color-stone-900: 15 23 42;
+  --color-cream-100: 248 250 252;
+  --color-teal-50: 255 251 235;
+  --color-teal-100: 254 243 199;
+  --color-teal-600: 245 158 11;
+  --color-teal-700: 217 119 6;
+  --color-amber-50: 255 251 235;
+  --color-amber-100: 254 243 199;
+  --color-amber-200: 253 230 138;
+  --color-amber-600: 217 119 6;
+  --color-amber-700: 180 83 9;
+}
+
+/* ── GOLD · DARK ──────────────────────────────────────────── */
+html[data-mode='dark'][data-preset='gold'] {
+  --color-primary: 245 158 11;          /* #F59E0B */
+  --color-primary-dark: 217 119 6;      /* #D97706 */
+  --color-primary-hover: 217 119 6;
+  --color-secondary: 30 41 59;
+  --color-bg-app: 15 23 42;             /* #0F172A */
+  --color-bg-card: 30 41 59;            /* #1E293B */
+  --color-background: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-text-main: 248 250 252;       /* #F8FAFC */
+  --color-text-primary: 248 250 252;
+  --color-text-secondary: 148 163 184;
+  --color-total-balance: 217 119 6;
+  --color-stone-50: 15 23 42;
+  --color-stone-100: 30 41 59;
+  --color-stone-200: 51 65 85;
+  --color-stone-300: 71 85 105;
+  --color-stone-400: 100 116 139;
+  --color-stone-500: 148 163 184;
+  --color-stone-600: 203 213 225;
+  --color-stone-700: 226 232 240;
+  --color-stone-800: 241 245 249;
+  --color-stone-900: 248 250 252;
+  --color-cream-100: 30 41 59;
+  --color-teal-50: 15 23 42;
+  --color-teal-100: 30 41 59;
+  --color-teal-600: 245 158 11;
+  --color-teal-700: 217 119 6;
+  --color-amber-50: 69 42 8;
+  --color-amber-100: 120 53 15;
+  --color-amber-200: 217 119 6;
+  --color-amber-600: 251 191 36;
+  --color-amber-700: 245 158 11;
+}
+
+/* ── ROSE · LIGHT ─────────────────────────────────────────── */
+html[data-mode='light'][data-preset='rose'] {
+  --color-primary: 251 113 133;         /* #FB7185 */
+  --color-primary-dark: 225 29 72;      /* #E11D48 */
   --color-primary-hover: 244 63 94;
-  --color-secondary: 254 205 211;
-  --color-background: 255 241 242;
-  --color-surface: 255 255 255;
-  --color-total-balance: 225 29 72;   /* rose-600 #E11D48 */
-  --color-text-primary: 76 5 25;
+  --color-secondary: 226 232 240;
+  --color-bg-app: 248 250 252;          /* #F8FAFC */
+  --color-bg-card: 241 245 249;         /* #F1F5F9 */
+  --color-background: 248 250 252;
+  --color-surface: 241 245 249;
+  --color-text-main: 31 41 55;          /* #1F2937 */
+  --color-text-primary: 31 41 55;
   --color-text-secondary: 159 18 57;
-  --color-stone-50: 255 241 242;
-  --color-stone-100: 255 228 230;
-  --color-stone-200: 254 205 211;
-  --color-stone-300: 254 205 211;
-  --color-stone-400: 251 113 133;
-  --color-stone-500: 159 18 57;
-  --color-stone-600: 136 19 55;
-  --color-stone-700: 112 21 52;
-  --color-stone-800: 76 5 25;
-  --color-stone-900: 76 5 25;
-  --color-cream-100: 255 228 230;
+  --color-total-balance: 225 29 72;
+  --color-stone-50: 248 250 252;
+  --color-stone-100: 241 245 249;
+  --color-stone-200: 226 232 240;
+  --color-stone-300: 203 213 225;
+  --color-stone-400: 148 163 184;
+  --color-stone-500: 100 116 139;
+  --color-stone-600: 71 85 105;
+  --color-stone-700: 51 65 85;
+  --color-stone-800: 30 41 59;
+  --color-stone-900: 15 23 42;
+  --color-cream-100: 248 250 252;
   --color-teal-50: 255 241 242;
   --color-teal-100: 254 205 211;
   --color-teal-600: 244 63 94;
@@ -100,31 +230,107 @@ html[data-theme='rose'] {
   --color-amber-700: 190 18 60;
 }
 
-/* ── Midnight Dark ───────────────────────────────────── */
-html[data-theme='dark'] {
-  --color-primary: 56 189 248;
-  --color-primary-hover: 125 211 252;
-  --color-secondary: 51 65 85;
-  --color-background: 15 23 42;
-  --color-surface: 30 41 59;
-  --color-total-balance: 3 105 161;   /* sky-700 #0369A1 */
+/* ── ROSE · DARK ──────────────────────────────────────────── */
+html[data-mode='dark'][data-preset='rose'] {
+  --color-primary: 251 113 133;         /* #FB7185 */
+  --color-primary-dark: 244 63 94;      /* #F43F5E */
+  --color-primary-hover: 244 63 94;
+  --color-secondary: 136 19 55;
+  --color-bg-app: 76 5 25;              /* #4C0519 */
+  --color-bg-card: 136 19 55;           /* #881337 */
+  --color-background: 76 5 25;
+  --color-surface: 136 19 55;
+  --color-text-main: 248 250 252;       /* #F8FAFC */
+  --color-text-primary: 248 250 252;
+  --color-text-secondary: 251 113 133;
+  --color-total-balance: 244 63 94;
+  --color-stone-50: 76 5 25;
+  --color-stone-100: 136 19 55;
+  --color-stone-200: 159 18 57;
+  --color-stone-300: 190 18 60;
+  --color-stone-400: 225 29 72;
+  --color-stone-500: 244 63 94;
+  --color-stone-600: 251 113 133;
+  --color-stone-700: 254 205 211;
+  --color-stone-800: 255 228 230;
+  --color-stone-900: 248 250 252;
+  --color-cream-100: 136 19 55;
+  --color-teal-50: 76 5 25;
+  --color-teal-100: 136 19 55;
+  --color-teal-600: 244 63 94;
+  --color-teal-700: 225 29 72;
+  --color-amber-50: 69 42 8;
+  --color-amber-100: 120 53 15;
+  --color-amber-200: 190 18 60;
+  --color-amber-600: 244 63 94;
+  --color-amber-700: 225 29 72;
+}
+
+/* ── SLATE (Ocean Blue) · LIGHT ───────────────────────────── */
+html[data-mode='light'][data-preset='slate'] {
+  --color-primary: 59 130 246;          /* #3B82F6 */
+  --color-primary-dark: 37 99 235;      /* #2563EB */
+  --color-primary-hover: 37 99 235;
+  --color-secondary: 226 232 240;
+  --color-bg-app: 248 250 252;          /* #F8FAFC */
+  --color-bg-card: 241 245 249;         /* #F1F5F9 */
+  --color-background: 248 250 252;
+  --color-surface: 241 245 249;
+  --color-text-main: 15 23 42;          /* #0F172A */
+  --color-text-primary: 15 23 42;
+  --color-text-secondary: 71 85 105;
+  --color-total-balance: 37 99 235;
+  --color-stone-50: 248 250 252;
+  --color-stone-100: 241 245 249;
+  --color-stone-200: 226 232 240;
+  --color-stone-300: 203 213 225;
+  --color-stone-400: 148 163 184;
+  --color-stone-500: 100 116 139;
+  --color-stone-600: 71 85 105;
+  --color-stone-700: 51 65 85;
+  --color-stone-800: 30 41 59;
+  --color-stone-900: 15 23 42;
+  --color-cream-100: 248 250 252;
+  --color-teal-50: 239 246 255;
+  --color-teal-100: 219 234 254;
+  --color-teal-600: 59 130 246;
+  --color-teal-700: 37 99 235;
+  --color-amber-50: 255 251 235;
+  --color-amber-100: 254 243 199;
+  --color-amber-200: 253 230 138;
+  --color-amber-600: 217 119 6;
+  --color-amber-700: 180 83 9;
+}
+
+/* ── SLATE (Ocean Blue) · DARK (ex Midnight Dark) ─────────── */
+html[data-mode='dark'][data-preset='slate'] {
+  --color-primary: 96 165 250;          /* #60A5FA */
+  --color-primary-dark: 59 130 246;     /* #3B82F6 */
+  --color-primary-hover: 59 130 246;
+  --color-secondary: 19 28 46;
+  --color-bg-app: 9 13 22;              /* #090D16 */
+  --color-bg-card: 19 28 46;            /* #131C2E */
+  --color-background: 9 13 22;
+  --color-surface: 19 28 46;
+  --color-text-main: 248 250 252;       /* #F8FAFC */
   --color-text-primary: 248 250 252;
   --color-text-secondary: 148 163 184;
+  --color-total-balance: 59 130 246;
   --color-stone-50: 11 18 32;
   --color-stone-100: 17 26 44;
-  --color-stone-200: 30 41 59;
-  --color-stone-300: 51 65 85;
-  --color-stone-400: 100 116 139;
-  --color-stone-500: 148 163 184;
-  --color-stone-600: 203 213 225;
-  --color-stone-700: 226 232 240;
-  --color-stone-800: 241 245 249;
+  --color-stone-200: 19 28 46;
+  --color-stone-300: 30 41 59;
+  --color-stone-400: 51 65 85;
+  --color-stone-500: 100 116 139;
+  --color-stone-600: 148 163 184;
+  --color-stone-700: 203 213 225;
+  --color-stone-800: 226 232 240;
   --color-stone-900: 248 250 252;
-  --color-cream-100: 30 41 59;
+  --color-cream-100: 19 28 46;
   --color-teal-50: 15 42 58;
   --color-teal-100: 15 50 70;
-  --color-teal-600: 125 211 252;
-  --color-teal-700: 56 189 248;
+  --color-teal-600: 96 165 250;
+  --color-teal-700: 59 130 246;
   --color-amber-50: 45 30 8;
   --color-amber-100: 69 42 8;
   --color-amber-200: 146 64 14;
@@ -132,40 +338,7 @@ html[data-theme='dark'] {
   --color-amber-700: 245 158 11;
 }
 
-/* ── System Default: ikut prefers-color-scheme OS ────── */
-@media (prefers-color-scheme: dark) {
-  html[data-theme='system'] {
-    --color-primary: 56 189 248;
-    --color-primary-hover: 125 211 252;
-    --color-secondary: 51 65 85;
-    --color-background: 15 23 42;
-    --color-surface: 30 41 59;
-    --color-total-balance: 3 105 161;  /* sky-700 #0369A1 */
-    --color-text-primary: 248 250 252;
-    --color-text-secondary: 148 163 184;
-    --color-stone-50: 11 18 32;
-    --color-stone-100: 17 26 44;
-    --color-stone-200: 30 41 59;
-    --color-stone-300: 51 65 85;
-    --color-stone-400: 100 116 139;
-    --color-stone-500: 148 163 184;
-    --color-stone-600: 203 213 225;
-    --color-stone-700: 226 232 240;
-    --color-stone-800: 241 245 249;
-    --color-stone-900: 248 250 252;
-    --color-cream-100: 30 41 59;
-    --color-teal-50: 15 42 58;
-    --color-teal-100: 15 50 70;
-    --color-teal-600: 125 211 252;
-    --color-teal-700: 56 189 248;
-    --color-amber-50: 45 30 8;
-    --color-amber-100: 69 42 8;
-    --color-amber-200: 146 64 14;
-    --color-amber-600: 251 191 36;
-    --color-amber-700: 245 158 11;
-  }
-}
-
+/* ── Base element styling ─────────────────────────────────── */
 html {
   -webkit-tap-highlight-color: transparent;
   transition: background-color 0.2s ease;
