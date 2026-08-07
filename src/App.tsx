@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@/context/AppContext';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { Toaster } from '@/components/ui/Toaster';
 import { AppShell, type TabKey } from '@/components/AppShell';
@@ -13,13 +14,23 @@ import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { PairFlowLoader } from './components/ui/PairFlowLoader';
 
 function AppContent() {
-  const { profile, loading } = useApp();
+  const { profile, loading, updateThemeLocal } = useApp();
+  const { setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     return (localStorage.getItem('activeTab') as TabKey) || 'home';
   });
   const [showAddTx, setShowAddTx] = useState(false);
 
   const isAuthenticated = Boolean(profile);
+
+  // Sinkron tema dari profil Supabase ke ThemeProvider
+  useEffect(() => {
+    if (isAuthenticated && profile?.theme) {
+      setTheme(profile.theme);
+      updateThemeLocal(profile.theme);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, profile?.theme]);
 
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab);
@@ -69,8 +80,10 @@ export default function App() {
   return (
     <ToastProvider>
       <AppProvider>
-        <AppContent />
-        <Toaster />
+        <ThemeProvider>
+          <AppContent />
+          <Toaster />
+        </ThemeProvider>
       </AppProvider>
     </ToastProvider>
   );

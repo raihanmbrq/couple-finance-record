@@ -82,7 +82,7 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
              })}
              <button
                onClick={() => setShowCreateType(true)}
-               className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
+               className="flex items-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
                <Plus className="w-4 h-4" />
                <span className="text-sm font-semibold">Wallet Type</span>

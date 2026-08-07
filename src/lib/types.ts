@@ -1,5 +1,7 @@
 export type UserRole = 'suami' | 'istri' | 'single' | 'partner' | 'owner' | 'member';
 
+export type ThemeId = 'system' | 'default' | 'emerald' | 'rose' | 'dark';
+
 export interface Profile {
   id: string;
   email: string;
@@ -8,6 +10,7 @@ export interface Profile {
   avatar_url?: string | null;
   household_id?: string | null;
   currency?: string | null;
+  theme?: ThemeId | null;
   created_at: string;
 }
 

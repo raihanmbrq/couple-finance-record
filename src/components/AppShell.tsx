@@ -62,7 +62,7 @@ function NavButton({
          <div className="flex-shrink-0 w-16 flex justify-center -mt-8 relative z-50">
            <button
              onClick={onAddClick}
-             className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30 border-4 border-surface hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all"
+              className="w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover flex items-center justify-center text-white shadow-lg shadow-primary/30 border-4 border-surface hover:from-primary-hover hover:to-primary hover:scale-105 active:scale-95 transition-all"
            >
              <Plus className="w-7 h-7" strokeWidth={2.5} />
            </button>

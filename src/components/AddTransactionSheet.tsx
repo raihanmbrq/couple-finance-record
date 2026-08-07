@@ -188,7 +188,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
               className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
             >
               <Plus className="w-4 h-4" />
-              <span className="text-sm font-semibold">Wallet</span>
+              <span className="text-sm font-semibold">Add New Wallet</span>
             </button>
           </div>
           {wallets.length === 0 && (
@@ -228,7 +228,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
                <Plus className="w-4 h-4" />
-               <span className="text-[10px] font-semibold text-center leading-tight">Add Category</span>
+               <span className="text-[10px] font-semibold text-center leading-tight">Category</span>
              </button>
            </div>
          </div>

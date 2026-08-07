@@ -8,8 +8,10 @@ import { EditProfileSheet } from '@/components/EditProfileSheet';
 import { WalletTypeSettingsSheet } from '@/components/WalletTypeSettingsSheet';
 import { CategorySettingsSheet } from '@/components/CategorySettingsSheet';
 import { CurrencySettingsSheet } from '@/components/CurrencySettingsSheet';
+import { ThemeSettingsSheet, getThemeLabel } from '@/components/ThemeSettingsSheet';
+import { useTheme } from '@/context/ThemeContext';
 import { getCurrencyInfo } from '@/lib/currencies';
-import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, ChevronRight } from 'lucide-react';
+import { User, Mail, Users, LogOut, Copy, Check, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, Palette, ChevronRight } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 export function ProfileScreen() {
@@ -18,6 +20,7 @@ export function ProfileScreen() {
   const [showWalletTypes, setShowWalletTypes] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
+  const [showTheme, setShowTheme] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -27,6 +30,7 @@ export function ProfileScreen() {
   const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
   const activeCurrency = profile?.currency ?? 'IDR';
   const activeCurrencyInfo = getCurrencyInfo(activeCurrency);
+  const { theme } = useTheme();
 
   const handleCopy = () => {
     if (household?.invite_code) {
@@ -293,6 +297,27 @@ export function ProfileScreen() {
         </button>
       </Card>
 
+      {/* Theme Settings */}
+      <Card className="p-4">
+        <button
+          type="button"
+          onClick={() => setShowTheme(true)}
+          className="w-full flex items-center gap-3 text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+            <Palette className="w-5 h-5 text-teal-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm text-stone-800">Tema Aplikasi / App Theme</p>
+            <p className="text-xs text-stone-500">Pilih tampilan warna aplikasi</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-sm font-semibold text-stone-700">{getThemeLabel(theme)}</span>
+            <ChevronRight className="w-4 h-4 text-stone-400" />
+          </div>
+        </button>
+      </Card>
+
       {/* Sign Out */}
       <Button variant="danger" fullWidth onClick={signOut}>
         <LogOut className="w-5 h-5 inline mr-2" />
@@ -303,6 +328,7 @@ export function ProfileScreen() {
       <WalletTypeSettingsSheet open={showWalletTypes} onClose={() => setShowWalletTypes(false)} />
       <CategorySettingsSheet open={showCategories} onClose={() => setShowCategories(false)} />
       <CurrencySettingsSheet open={showCurrency} onClose={() => setShowCurrency(false)} />
+      <ThemeSettingsSheet open={showTheme} onClose={() => setShowTheme(false)} />
     </div>
   );
 }

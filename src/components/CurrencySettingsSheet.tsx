@@ -51,13 +51,13 @@ export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetPr
       <div className="flex flex-col h-full max-h-[70vh]">
         {/* Sticky Search Bar */}
         <div className="sticky top-0 z-10 -mx-5 px-5 pt-2 pb-3 bg-surface border-b border-secondary">
-          <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-secondary border border-secondary-hover">
-            <Search className="w-4 h-4 text-text-secondary shrink-0" />
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-secondary" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari kode atau nama mata uang..."
-              className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-secondary focus:outline-none"
+              className="input-field pl-11"
             />
           </div>
         </div>
@@ -77,8 +77,8 @@ export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetPr
                   type="button"
                   disabled={saving}
                   onClick={() => handleSelect(c.code)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors ${
-                    isActive ? 'bg-primary/10' : 'hover:bg-secondary'
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all border-2 ${
+                    isActive ? 'border-primary bg-primary/10' : 'border-transparent hover:bg-secondary'
                   }`}
                 >
                   <span className="text-xl leading-none shrink-0">{c.flag}</span>

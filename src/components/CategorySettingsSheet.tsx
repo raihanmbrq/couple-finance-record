@@ -96,7 +96,7 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
           return (
             <div
               key={c.id}
-              className="p-3 rounded-xl border border-secondary bg-secondary space-y-3"
+              className={editingId === c.id ? 'space-y-3' : 'p-3 rounded-xl border border-secondary bg-secondary space-y-3'}
             >
               {editingId === c.id ? (
                 <div className="space-y-5">
@@ -130,16 +130,19 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
                     <div className="grid grid-cols-4 gap-2">
                       {CATEGORY_ICON_OPTIONS.map((iconName) => {
                         const IconOption = getIcon(iconName);
+                        const isActive = editIcon === iconName;
                         return (
                           <button
                             key={iconName}
                             type="button"
                             onClick={() => setEditIcon(iconName)}
-                            className={`flex items-center justify-center p-3 rounded-xl border-2 transition-all ${
-                              editIcon === iconName ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
+                            className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2 ${
+                              isActive ? 'border-primary bg-primary/10' : 'border-transparent bg-secondary'
                             }`}
                           >
-                            <IconOption className={`w-5 h-5 ${editIcon === iconName ? 'text-primary' : 'text-text-secondary'}`} />
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
+                              <IconOption className={`w-4.5 h-4.5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
+                            </div>
                           </button>
                         );
                       })}

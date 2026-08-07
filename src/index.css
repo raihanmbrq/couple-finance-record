@@ -4,20 +4,176 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    -webkit-tap-highlight-color: transparent;
+/* ── Tema Default: Rich Amber Gold ───────────────────── */
+:root {
+  --color-primary: 245 158 11;        /* amber-500 #F59E0B */
+  --color-primary-hover: 217 119 6;   /* amber-600 #D97706 */
+  --color-secondary: 251 191 36;      /* amber-400 #FBBF24 */
+  --color-background: 255 251 245;    /* #FFFDF5 putih + tint amber tipis */
+  --color-surface: 255 255 255;       /* #FFFFFF putih murni */
+  --color-total-balance: 217 119 6;   /* amber-600 #D97706 */
+  --color-text-primary: 31 41 55;     /* #1F2937 deep slate */
+  --color-text-secondary: 120 53 15;  /* #78350F warm bronze */
+  --color-stone-50: 255 251 245;
+  --color-stone-100: 255 251 235;
+  --color-stone-200: 253 230 138;
+  --color-stone-300: 252 211 77;
+  --color-stone-400: 217 119 6;
+  --color-stone-500: 120 53 15;
+  --color-stone-600: 87 83 78;
+  --color-stone-700: 68 64 60;
+  --color-stone-800: 31 41 55;
+  --color-stone-900: 17 24 39;
+  --color-cream-100: 255 251 235;
+  --color-teal-50: 255 251 245;
+  --color-teal-100: 255 251 235;
+  --color-teal-600: 245 158 11;
+  --color-teal-700: 217 119 6;
+  --color-amber-50: 255 251 235;
+  --color-amber-100: 254 243 199;
+  --color-amber-200: 253 230 138;
+  --color-amber-600: 217 119 6;
+  --color-amber-700: 180 83 9;
+}
+
+/* ── Emerald Green ───────────────────────────────────── */
+html[data-theme='emerald'] {
+  --color-primary: 16 185 129;
+  --color-primary-hover: 5 150 105;
+  --color-secondary: 167 243 208;
+  --color-background: 240 253 244;
+  --color-surface: 255 255 255;
+  --color-total-balance: 5 150 105;   /* emerald-600 #059669 */
+  --color-text-primary: 28 25 23;
+  --color-text-secondary: 107 114 128;
+  --color-stone-50: 249 250 251;
+  --color-stone-100: 243 244 246;
+  --color-stone-200: 229 231 235;
+  --color-stone-300: 209 213 219;
+  --color-stone-400: 156 163 175;
+  --color-stone-500: 107 114 128;
+  --color-stone-600: 75 85 99;
+  --color-stone-700: 55 65 81;
+  --color-stone-800: 31 41 55;
+  --color-stone-900: 17 24 39;
+  --color-cream-100: 236 253 245;
+  --color-teal-50: 236 253 245;
+  --color-teal-100: 209 250 229;
+  --color-teal-600: 16 185 129;
+  --color-teal-700: 5 150 105;
+  --color-amber-50: 255 251 235;
+  --color-amber-100: 254 243 199;
+  --color-amber-200: 253 230 138;
+  --color-amber-600: 217 119 6;
+  --color-amber-700: 180 83 9;
+}
+
+/* ── Rose Pink ───────────────────────────────────────── */
+html[data-theme='rose'] {
+  --color-primary: 251 113 133;
+  --color-primary-hover: 244 63 94;
+  --color-secondary: 254 205 211;
+  --color-background: 255 241 242;
+  --color-surface: 255 255 255;
+  --color-total-balance: 225 29 72;   /* rose-600 #E11D48 */
+  --color-text-primary: 76 5 25;
+  --color-text-secondary: 159 18 57;
+  --color-stone-50: 255 241 242;
+  --color-stone-100: 255 228 230;
+  --color-stone-200: 254 205 211;
+  --color-stone-300: 254 205 211;
+  --color-stone-400: 251 113 133;
+  --color-stone-500: 159 18 57;
+  --color-stone-600: 136 19 55;
+  --color-stone-700: 112 21 52;
+  --color-stone-800: 76 5 25;
+  --color-stone-900: 76 5 25;
+  --color-cream-100: 255 228 230;
+  --color-teal-50: 255 241 242;
+  --color-teal-100: 254 205 211;
+  --color-teal-600: 244 63 94;
+  --color-teal-700: 225 29 72;
+  --color-amber-50: 255 241 242;
+  --color-amber-100: 254 205 211;
+  --color-amber-200: 251 113 133;
+  --color-amber-600: 225 29 72;
+  --color-amber-700: 190 18 60;
+}
+
+/* ── Midnight Dark ───────────────────────────────────── */
+html[data-theme='dark'] {
+  --color-primary: 56 189 248;
+  --color-primary-hover: 125 211 252;
+  --color-secondary: 51 65 85;
+  --color-background: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-total-balance: 3 105 161;   /* sky-700 #0369A1 */
+  --color-text-primary: 248 250 252;
+  --color-text-secondary: 148 163 184;
+  --color-stone-50: 11 18 32;
+  --color-stone-100: 17 26 44;
+  --color-stone-200: 30 41 59;
+  --color-stone-300: 51 65 85;
+  --color-stone-400: 100 116 139;
+  --color-stone-500: 148 163 184;
+  --color-stone-600: 203 213 225;
+  --color-stone-700: 226 232 240;
+  --color-stone-800: 241 245 249;
+  --color-stone-900: 248 250 252;
+  --color-cream-100: 30 41 59;
+  --color-teal-50: 15 42 58;
+  --color-teal-100: 15 50 70;
+  --color-teal-600: 125 211 252;
+  --color-teal-700: 56 189 248;
+  --color-amber-50: 45 30 8;
+  --color-amber-100: 69 42 8;
+  --color-amber-200: 146 64 14;
+  --color-amber-600: 251 191 36;
+  --color-amber-700: 245 158 11;
+}
+
+/* ── System Default: ikut prefers-color-scheme OS ────── */
+@media (prefers-color-scheme: dark) {
+  html[data-theme='system'] {
+    --color-primary: 56 189 248;
+    --color-primary-hover: 125 211 252;
+    --color-secondary: 51 65 85;
+    --color-background: 15 23 42;
+    --color-surface: 30 41 59;
+    --color-total-balance: 3 105 161;  /* sky-700 #0369A1 */
+    --color-text-primary: 248 250 252;
+    --color-text-secondary: 148 163 184;
+    --color-stone-50: 11 18 32;
+    --color-stone-100: 17 26 44;
+    --color-stone-200: 30 41 59;
+    --color-stone-300: 51 65 85;
+    --color-stone-400: 100 116 139;
+    --color-stone-500: 148 163 184;
+    --color-stone-600: 203 213 225;
+    --color-stone-700: 226 232 240;
+    --color-stone-800: 241 245 249;
+    --color-stone-900: 248 250 252;
+    --color-cream-100: 30 41 59;
+    --color-teal-50: 15 42 58;
+    --color-teal-100: 15 50 70;
+    --color-teal-600: 125 211 252;
+    --color-teal-700: 56 189 248;
+    --color-amber-50: 45 30 8;
+    --color-amber-100: 69 42 8;
+    --color-amber-200: 146 64 14;
+    --color-amber-600: 251 191 36;
+    --color-amber-700: 245 158 11;
   }
-  body {
-    @apply bg-background text-text-primary font-sans antialiased;
-    overscroll-behavior-y: none;
-  }
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+body {
+  @apply bg-background text-text-primary font-sans antialiased;
+  overscroll-behavior-y: none;
 }
 
 @layer components {
