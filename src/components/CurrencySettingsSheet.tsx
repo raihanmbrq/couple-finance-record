@@ -1,0 +1,113 @@
+import { useMemo, useState } from 'react';
+import { useApp } from '@/context/AppContext';
+import { Sheet } from '@/components/ui/Sheet';
+import { useToast } from '@/context/ToastContext';
+import { CURRENCIES, getCurrencyInfo } from '@/lib/currencies';
+import { Search, Check } from 'lucide-react';
+
+interface CurrencySettingsSheetProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetProps) {
+  const { profile, updateCurrency } = useApp();
+  const { showToast } = useToast();
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const activeCode = profile?.currency ?? 'IDR';
+
+  const filteredCurrencies = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return CURRENCIES;
+    return CURRENCIES.filter(
+      (c) =>
+        c.code.toLowerCase().includes(q) ||
+        c.name.toLowerCase().includes(q) ||
+        c.symbol.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  const handleSelect = async (code: string) => {
+    if (code === activeCode) {
+      onClose();
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateCurrency(code);
+      showToast('Mata uang berhasil diperbarui!');
+      onClose();
+    } catch {
+      showToast('Gagal memperbarui mata uang. Coba lagi.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Pilih Mata Uang">
+      <div className="flex flex-col h-full max-h-[70vh]">
+        {/* Sticky Search Bar */}
+        <div className="sticky top-0 z-10 -mx-5 px-5 pt-2 pb-3 bg-surface border-b border-secondary">
+          <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-secondary border border-secondary-hover">
+            <Search className="w-4 h-4 text-text-secondary shrink-0" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari kode atau nama mata uang..."
+              className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-secondary focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Currency List */}
+        <div className="flex-1 overflow-y-auto no-scrollbar -mx-5 px-5 py-3 space-y-1">
+          {filteredCurrencies.length === 0 ? (
+            <p className="text-sm text-text-secondary text-center py-8">
+              Mata uang tidak ditemukan.
+            </p>
+          ) : (
+            filteredCurrencies.map((c) => {
+              const isActive = c.code === activeCode;
+              return (
+                <button
+                  key={c.code}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSelect(c.code)}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors ${
+                    isActive ? 'bg-primary/10' : 'hover:bg-secondary'
+                  }`}
+                >
+                  <span className="text-xl leading-none shrink-0">{c.flag}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-baseline gap-2">
+                      <span className={`font-semibold text-sm ${isActive ? 'text-primary' : 'text-text-primary'}`}>
+                        {c.code}
+                      </span>
+                      <span className="text-xs text-text-secondary">({c.symbol})</span>
+                    </span>
+                    <span className="block text-xs text-text-secondary truncate">{c.name}</span>
+                  </span>
+                  {isActive && (
+                    <span className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-white" />
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="pt-3 -mx-5 px-5 border-t border-secondary">
+          <p className="text-xs text-text-secondary">
+            Mata uang aktif: <span className="font-semibold text-text-primary">{activeCode} ({getCurrencyInfo(activeCode).symbol})</span>
+          </p>
+        </div>
+      </div>
+    </Sheet>
+  );
+}

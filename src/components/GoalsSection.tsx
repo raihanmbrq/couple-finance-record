@@ -8,7 +8,8 @@ import { Input, Select } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ASSET_CATEGORIES, type Goal } from '@/lib/types';
-import { formatIDR, formatIDRInput, parseIDRInput, formatDateShort } from '@/lib/format';
+import { formatMoney, formatMoneyInput, parseMoneyInput, formatDateShort } from '@/lib/format';
+import { getCurrencySymbol } from '@/lib/currencies';
 import { calculateMonthlyContribution, durationLabel, monthsBetween } from '@/lib/goalMath';
 import { PiggyBank, Plus, Trash2, Wallet, Pencil } from 'lucide-react';
 
@@ -22,7 +23,8 @@ function SummaryRow({ label, value, highlight = false }: { label: string; value:
 }
 
 export function GoalsSection() {
-  const { goals, wallets, saveGoal, deleteGoal, depositToGoal } = useApp();
+  const { goals, wallets, saveGoal, deleteGoal, depositToGoal, profile } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
 
   // Create / Edit form
@@ -44,7 +46,7 @@ export function GoalsSection() {
 
   const isInvestment = ASSET_CATEGORIES.find(c => c.key === category)?.isInvestment ?? false;
   const rate = isInvestment ? (parseFloat(returnRate.replace(',', '.')) || 0) : 0;
-  const amount = parseIDRInput(targetAmount);
+  const amount = parseMoneyInput(targetAmount);
   const months = useMemo(() => {
     if (!targetDate) return 0;
     return monthsBetween(new Date(), new Date(targetDate));
@@ -77,7 +79,7 @@ export function GoalsSection() {
   const openEdit = (goal: Goal) => {
     setEditing(goal);
     setTitle(goal.title);
-    setTargetAmount(formatIDRInput(goal.target_amount));
+    setTargetAmount(formatMoneyInput(goal.target_amount, currency));
     setTargetDate(goal.target_date.slice(0, 10));
     setCategory(goal.asset_category);
     setReturnRate(goal.expected_return_rate ? String(goal.expected_return_rate) : '5');
@@ -118,7 +120,7 @@ export function GoalsSection() {
   const handleDeposit = async () => {
     const goal = depositGoal;
     if (!goal || !depositWallet) return;
-    const amt = parseIDRInput(depositAmount);
+    const amt = parseMoneyInput(depositAmount);
     if (!amt) return;
     setDepositing(true);
     try {
@@ -204,7 +206,7 @@ export function GoalsSection() {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-text-secondary">
-                    {formatIDR(goal.current_amount)} dari {formatIDR(goal.target_amount)}
+                    {formatMoney(goal.current_amount, currency)} dari {formatMoney(goal.target_amount, currency)}
                   </span>
                   <span className="text-xs font-bold text-primary">{pct}%</span>
                 </div>
@@ -215,7 +217,7 @@ export function GoalsSection() {
                       Target {formatDateShort(goal.target_date)} • {durationLabel(monthsBetween(new Date(), new Date(goal.target_date)))}
                     </p>
                     <p className="text-text-secondary">
-                      Estimasi tabungan: <span className="font-semibold text-text-primary">{formatIDR(goal.monthly_contribution)}/bln</span>
+                      Estimasi tabungan: <span className="font-semibold text-text-primary">{formatMoney(goal.monthly_contribution, currency)}/bln</span>
                     </p>
                   </div>
                   <Button
@@ -245,10 +247,10 @@ export function GoalsSection() {
           />
           <Input
             label="Jumlah Target"
-            prefix="Rp"
+            prefix={getCurrencySymbol(currency)}
             placeholder="150.000.000"
             inputMode="numeric"
-            value={targetAmount ? formatIDRInput(parseIDRInput(targetAmount)) : ''}
+            value={targetAmount ? formatMoneyInput(parseMoneyInput(targetAmount), currency) : ''}
             onChange={(e) => setTargetAmount(e.target.value)}
             className="text-xl font-bold"
           />
@@ -285,16 +287,16 @@ export function GoalsSection() {
 
           <div className="rounded-xl bg-secondary/60 p-4 space-y-2">
             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Ringkasan</p>
-            <SummaryRow label="Total Target" value={formatIDR(amount)} />
+            <SummaryRow label="Total Target" value={formatMoney(amount, currency)} />
             <SummaryRow label="Durasi" value={durationLabel(months)} />
             <SummaryRow
               label="Aset"
               value={isInvestment ? `${categoryLabel} (Return ${rate}%/thn)` : categoryLabel}
             />
-            <SummaryRow label="Tabungan / Bulan" value={formatIDR(pmt)} highlight />
+            <SummaryRow label="Tabungan / Bulan" value={formatMoney(pmt, currency)} highlight />
             {isInvestment && rate > 0 && (
               <p className="text-xs text-income font-medium">
-                Hemat {formatIDR(pmt0 - pmt)}/bln dibanding tanpa return ({formatIDR(pmt0)}/bln)
+                Hemat {formatMoney(pmt0 - pmt, currency)}/bln dibanding tanpa return ({formatMoney(pmt0, currency)}/bln)
               </p>
             )}
           </div>
@@ -323,15 +325,15 @@ export function GoalsSection() {
           >
             <option value="">Pilih Wallet</option>
             {wallets.map((w) => (
-              <option key={w.id} value={w.id}>{w.name} — {formatIDR(w.balance)}</option>
+              <option key={w.id} value={w.id}>{w.name} — {formatMoney(w.balance, currency)}</option>
             ))}
           </Select>
           <Input
             label="Jumlah Deposit"
-            prefix="Rp"
+            prefix={getCurrencySymbol(currency)}
             placeholder="500.000"
             inputMode="numeric"
-            value={depositAmount ? formatIDRInput(parseIDRInput(depositAmount)) : ''}
+            value={depositAmount ? formatMoneyInput(parseMoneyInput(depositAmount), currency) : ''}
             onChange={(e) => setDepositAmount(e.target.value)}
             className="text-xl font-bold"
             autoFocus
@@ -339,7 +341,7 @@ export function GoalsSection() {
           <Button
             fullWidth
             onClick={handleDeposit}
-            disabled={depositing || !depositWallet || !parseIDRInput(depositAmount)}
+            disabled={depositing || !depositWallet || !parseMoneyInput(depositAmount)}
           >
             {depositing ? 'Memproses...' : 'Konfirmasi Deposit'}
           </Button>

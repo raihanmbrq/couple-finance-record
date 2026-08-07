@@ -27,6 +27,7 @@ interface AppState {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateCurrency: (code: string) => Promise<void>;
   // Onboarding
   setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
@@ -145,6 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           full_name: metaFullName?.trim() || email.split('@')[0] || 'User',
           role: 'single',
           avatar_url: null,
+          currency: 'IDR',
           created_at: new Date().toISOString(),
         };
         const { error: insertErr } = await supabase.from('profiles').insert(newProfile);
@@ -348,6 +350,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         full_name: fullName.trim() || email.split('@')[0] || 'User',
         role: 'single',
         avatar_url: null,
+        currency: 'IDR',
         created_at: new Date().toISOString(),
       };
 
@@ -381,6 +384,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     setProfile(prev => prev ? { ...prev, ...updates } : prev);
   }, [mode, profile]);
+
+  const updateCurrency = useCallback(async (code: string) => {
+    await updateProfile({ currency: code });
+  }, [updateProfile]);
 
   const signOut = useCallback(async () => {
     if (mode === 'live') {
@@ -1030,6 +1037,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     signOut,
     updateProfile,
+    updateCurrency,
     setMode,
     createHousehold,
     joinHousehold,

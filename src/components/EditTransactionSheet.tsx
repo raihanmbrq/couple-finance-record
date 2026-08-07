@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CreateCategorySheet } from '@/components/CreateCategorySheet';
 import { type Transaction, type TransactionType } from '@/lib/types';
-import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
+import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format';
+import { getCurrencySymbol } from '@/lib/currencies';
 import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2 } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
@@ -20,6 +21,7 @@ interface EditTransactionSheetProps {
 
 export function EditTransactionSheet({ open, transaction, onClose }: EditTransactionSheetProps) {
   const { wallets, profile, updateTransaction, deleteTransaction, walletTypes, categories } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
@@ -74,7 +76,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
 
   const handleSubmit = async () => {
     if (!transaction) return;
-    const amt = parseIDRInput(amount);
+    const amt = parseMoneyInput(amount);
     if (!amt) {
       setError('Please enter an amount');
       return;
@@ -136,10 +138,10 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
 
         <Input
           label="Amount"
-          prefix="Rp"
+          prefix={getCurrencySymbol(currency)}
           placeholder="0"
           inputMode="numeric"
-          value={formatIDRInput(parseIDRInput(amount))}
+          value={formatMoneyInput(parseMoneyInput(amount), currency)}
           onChange={(e) => setAmount(e.target.value)}
           className="text-2xl font-bold"
         />
@@ -171,7 +173,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
             ))}
           </div>
           {selectedWallet && (
-            <p className="text-xs text-text-secondary mt-2">Current wallet balance: {formatIDR(selectedWallet.balance)}</p>
+            <p className="text-xs text-text-secondary mt-2">Current wallet balance: {formatMoney(selectedWallet.balance, currency)}</p>
           )}
         </fieldset>
 

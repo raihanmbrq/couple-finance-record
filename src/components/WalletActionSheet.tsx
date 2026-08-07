@@ -3,7 +3,8 @@ import { useApp } from '@/context/AppContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { formatIDRInput, parseIDRInput } from '@/lib/format';
+import { formatMoneyInput, parseMoneyInput } from '@/lib/format';
+import { getCurrencySymbol } from '@/lib/currencies';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { type Wallet } from '@/lib/types';
 import { Plus } from 'lucide-react';
@@ -17,7 +18,8 @@ interface WalletActionSheetProps {
 }
 
 export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetProps) {
-  const { walletTypes, updateWallet, deleteWallet } = useApp();
+  const { walletTypes, updateWallet, deleteWallet, profile } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
   const [name, setName] = useState('');
   const [type, setType] = useState('');
@@ -53,7 +55,7 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
       await updateWallet(wallet.id, {
         name: name.trim(),
         type,
-        balance: parseIDRInput(balance),
+        balance: parseMoneyInput(balance),
       });
       onClose();
       showToast('Wallet berhasil diupdate');
@@ -125,10 +127,10 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
 
         <Input
           label="Balance"
-          prefix="Rp"
+          prefix={getCurrencySymbol(currency)}
           placeholder="0"
           inputMode="numeric"
-          value={balance ? formatIDRInput(parseIDRInput(balance)) : ''}
+          value={balance ? formatMoneyInput(parseMoneyInput(balance), currency) : ''}
           onChange={(e) => setBalance(e.target.value)}
         />
 

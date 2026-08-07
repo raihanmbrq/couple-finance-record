@@ -1,31 +1,66 @@
-export function formatIDR(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
+import { getCurrencyInfo } from '@/lib/currencies';
+
+export function formatMoney(amount: number, currency: string = 'IDR'): string {
+  const info = getCurrencyInfo(currency);
+  return new Intl.NumberFormat(info.locale, {
     style: 'currency',
-    currency: 'IDR',
+    currency: info.code,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
-export function formatIDRShort(amount: number): string {
+export function formatMoneyShort(amount: number, currency: string = 'IDR'): string {
+  const info = getCurrencyInfo(currency);
   const absAmount = Math.abs(amount);
-  if (absAmount >= 1_000_000_000) {
-    return `Rp ${(amount / 1_000_000_000).toFixed(1)} M`;
+
+  // Indonesia-specific shorthand (M = miliar, JT = juta) preserved for IDR.
+  if (info.code === 'IDR') {
+    if (absAmount >= 1_000_000_000) {
+      return `Rp ${(amount / 1_000_000_000).toFixed(1)} M`;
+    }
+    if (absAmount >= 100_000_000) {
+      return `Rp ${(amount / 1_000_000).toFixed(1)} JT`;
+    }
+    return formatMoney(amount, 'IDR');
   }
-  if (absAmount >= 100_000_000) {
-    return `Rp ${(amount / 1_000_000).toFixed(1)} JT`;
-  }
-  return formatIDR(amount);
+
+  // Other currencies: use compact notation so large amounts stay readable.
+  return new Intl.NumberFormat(info.locale, {
+    style: 'currency',
+    currency: info.code,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount);
 }
 
-export function parseIDRInput(value: string): number {
+export function parseMoneyInput(value: string): number {
   const digits = value.replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
 }
 
-export function formatIDRInput(amount: number): string {
+export function formatMoneyInput(amount: number, currency: string = 'IDR'): string {
   if (!amount) return '';
-  return new Intl.NumberFormat('id-ID').format(amount);
+  const info = getCurrencyInfo(currency);
+  return new Intl.NumberFormat(info.locale).format(amount);
+}
+
+// --- Legacy wrappers (kept for compatibility; default to IDR) ---
+
+export function formatIDR(amount: number): string {
+  return formatMoney(amount, 'IDR');
+}
+
+export function formatIDRShort(amount: number): string {
+  return formatMoneyShort(amount, 'IDR');
+}
+
+export function parseIDRInput(value: string): number {
+  return parseMoneyInput(value);
+}
+
+export function formatIDRInput(amount: number): string {
+  return formatMoneyInput(amount, 'IDR');
 }
 
 export function formatDate(date: string | Date): string {

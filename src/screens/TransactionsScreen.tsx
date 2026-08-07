@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 import { getCategory } from '@/lib/types';
-import { formatDate, formatIDR, formatRelative } from '@/lib/format';
+import { formatDate, formatMoney, formatRelative } from '@/lib/format';
 import { Plus, Search, Filter, TrendingUp, TrendingDown, Receipt, X } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 
 export function TransactionsScreen() {
-  const { transactions, wallets, categories } = useApp();
+  const { transactions, wallets, categories, profile } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
   const [filterWallet, setFilterWallet] = useState('all');
@@ -200,7 +201,7 @@ export function TransactionsScreen() {
                           <Badge color="secondary" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
                         </div>
                         <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
-                          {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
+                          {isIncome ? '+' : '-'}{formatMoney(tx.amount, currency)}
                         </p>
                       </button>
                     );

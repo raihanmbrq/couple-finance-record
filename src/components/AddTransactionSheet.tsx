@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CreateCategorySheet } from '@/components/CreateCategorySheet';
 import { type TransactionType } from '@/lib/types';
-import { formatIDRInput, parseIDRInput } from '@/lib/format';
+import { formatMoneyInput, parseMoneyInput } from '@/lib/format';
+import { getCurrencySymbol } from '@/lib/currencies';
 import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
@@ -19,6 +20,7 @@ interface AddTransactionSheetProps {
 
 export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps) {
   const { wallets, profile, addTransaction, walletTypes, categories } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const formatWalletType = (type: string) => {
     const row = walletTypes.find((t) => t.id === type);
     if (row) return row.name;
@@ -60,7 +62,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   };
 
   const handleSubmit = async () => {
-    const amt = parseIDRInput(amount);
+    const amt = parseMoneyInput(amount);
     if (!amt) {
       setError('Please enter an amount');
       return;
@@ -155,10 +157,10 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         {/* Amount */}
         <Input
           label="Amount"
-          prefix="Rp"
+          prefix={getCurrencySymbol(currency)}
           placeholder="0"
           inputMode="numeric"
-          value={formatIDRInput(parseIDRInput(amount))}
+          value={formatMoneyInput(parseMoneyInput(amount), currency)}
           onChange={(e) => setAmount(e.target.value)}
           className="text-2xl font-bold"
         />

@@ -16,6 +16,7 @@ export const mockProfile: Profile = {
   role: 'suami',
   avatar_url: null,
   household_id: mockHouseholdId,
+  currency: 'IDR',
   created_at: daysAgo(30),
 };
 

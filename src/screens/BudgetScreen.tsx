@@ -7,14 +7,16 @@ import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getCategory, type Budget } from '@/lib/types';
-import { formatIDR, formatIDRInput, parseIDRInput } from '@/lib/format';
+import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format';
+import { getCurrencySymbol } from '@/lib/currencies';
 import { Plus, PiggyBank, Trash2, Target } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
 import { GoalsSection } from '@/components/GoalsSection';
 
 export function BudgetScreen() {
-  const { budgets, transactions, setBudget, deleteBudget, categories } = useApp();
+  const { budgets, transactions, setBudget, deleteBudget, categories, profile } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const [editCategory, setEditCategory] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function BudgetScreen() {
 
   const handleSetBudget = async () => {
     if (!editCategory) return;
-    const amt = parseIDRInput(editAmount);
+    const amt = parseMoneyInput(editAmount);
     if (!amt) return;
     setLoading(true);
     try {
@@ -62,7 +64,7 @@ export function BudgetScreen() {
 
   const openEdit = (category: string, currentLimit: number) => {
     setEditCategory(category);
-    setEditAmount(currentLimit ? formatIDRInput(currentLimit) : '');
+    setEditAmount(currentLimit ? formatMoneyInput(currentLimit, currency) : '');
     setShowAdd(true);
   };
 
@@ -112,16 +114,16 @@ export function BudgetScreen() {
          <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
              <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Budget</p>
-             <p className="font-display font-bold text-xs">{formatIDR(totalBudget)}</p>
+              <p className="font-display font-bold text-xs">{formatMoney(totalBudget, currency)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
              <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
-             <p className="font-display font-bold text-xs text-expense-dark">{formatIDR(totalSpent)}</p>
+              <p className="font-display font-bold text-xs text-expense-dark">{formatMoney(totalSpent, currency)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
              <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
              <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-income-dark' : 'text-expense-dark'}`}>
-               {formatIDR(totalRemaining)}
+                {formatMoney(totalRemaining, currency)}
              </p>
            </div>
          </div>
@@ -156,7 +158,7 @@ export function BudgetScreen() {
                      <div>
                        <p className="font-semibold text-sm text-text-primary">{cat?.label ?? budget.category}</p>
                        <p className="text-xs text-text-secondary">
-                         {formatIDR(spent)} of {formatIDR(budget.limit_amount)}
+                          {formatMoney(spent, currency)} of {formatMoney(budget.limit_amount, currency)}
                        </p>
                      </div>
                    </div>
@@ -183,7 +185,7 @@ export function BudgetScreen() {
                      {pct.toFixed(0)}% used
                    </span>
                    <span className={`text-xs font-bold ${remaining >= 0 ? 'text-income' : 'text-expense'}`}>
-                     {remaining >= 0 ? `${formatIDR(remaining)} left` : `${formatIDR(-remaining)} over`}
+                      {remaining >= 0 ? `${formatMoney(remaining, currency)} left` : `${formatMoney(-remaining, currency)} over`}
                    </span>
                  </div>
               </Card>
@@ -228,10 +230,10 @@ export function BudgetScreen() {
                </div>
                <Input
                 label="Monthly Limit"
-                prefix="Rp"
+                prefix={getCurrencySymbol(currency)}
                 placeholder="3.000.000"
                 inputMode="numeric"
-                value={editAmount ? formatIDRInput(parseIDRInput(editAmount)) : ''}
+                value={editAmount ? formatMoneyInput(parseMoneyInput(editAmount), currency) : ''}
                 onChange={(e) => setEditAmount(e.target.value)}
                 className="text-xl font-bold"
                 autoFocus
@@ -240,7 +242,7 @@ export function BudgetScreen() {
           )}
 
           {editCategory && (
-            <Button fullWidth onClick={handleSetBudget} disabled={loading || !parseIDRInput(editAmount)}>
+            <Button fullWidth onClick={handleSetBudget} disabled={loading || !parseMoneyInput(editAmount)}>
               {loading ? 'Saving...' : 'Save Budget'}
             </Button>
           )}

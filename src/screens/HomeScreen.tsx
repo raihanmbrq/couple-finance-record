@@ -1,6 +1,6 @@
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
-import { formatIDR, formatIDRShort, formatRelative } from '@/lib/format';
+import { formatMoney, formatMoneyShort, formatRelative } from '@/lib/format';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
 import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useRef } from 'react';
@@ -65,6 +65,7 @@ function AddWalletCard({ onClick }: { onClick: () => void }) {
 
 export function HomeScreen() {
   const { wallets, transactions, profile, isDemo, householdMembers, walletTypes, categories } = useApp();
+  const currency = profile?.currency ?? 'IDR';
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
@@ -123,8 +124,8 @@ export function HomeScreen() {
     sortedMemberBalances.length > 0
       ? sortedMemberBalances.map(({ member, balance }) => {
           const isMe = member.user_id === profile?.id;
-          const incomeStr = formatIDRShort(monthIncomeFor(member.user_id));
-          const expenseStr = formatIDRShort(monthExpenseFor(member.user_id));
+          const incomeStr = formatMoneyShort(monthIncomeFor(member.user_id), currency);
+          const expenseStr = formatMoneyShort(monthExpenseFor(member.user_id), currency);
           return {
             key: member.user_id,
             label: isMe ? 'My Total Balance' : memberName(member),
@@ -137,8 +138,8 @@ export function HomeScreen() {
           key: profile?.id ?? 'me',
           label: 'My Total Balance',
           balance: totalBalance,
-          incomeStr: formatIDRShort(allIncome),
-          expenseStr: formatIDRShort(allExpense),
+          incomeStr: formatMoneyShort(allIncome, currency),
+          expenseStr: formatMoneyShort(allExpense, currency),
         }];
 
   const myWalletChunks = chunk(wallets, 4);
@@ -242,7 +243,7 @@ export function HomeScreen() {
                     <span className="text-text-secondary-dark text-sm font-medium">{slide.label}</span>
                     {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">DEMO</span>}
                   </div>
-                  <p className="font-display font-extrabold text-3xl mb-4">{formatIDR(slide.balance)}</p>
+                  <p className="font-display font-extrabold text-3xl mb-4">{formatMoney(slide.balance, currency)}</p>
                   <div className="flex gap-3">
                     <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
@@ -314,7 +315,7 @@ export function HomeScreen() {
                               </div>
                               <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
                               <p className="font-display font-bold text-text-primary truncate text-xs">
-                                {formatIDRShort(wallet.balance)}
+                                {formatMoneyShort(wallet.balance, currency)}
                               </p>
                             </Card>
                           </button>
@@ -389,7 +390,7 @@ export function HomeScreen() {
                           {dynCat?.name || catInfo?.label || item.category}
                         </p>
                         <p className="font-bold text-sm text-text-primary">
-                          {formatIDRShort(item.amount)}
+                          {formatMoneyShort(item.amount, currency)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -443,8 +444,8 @@ export function HomeScreen() {
                     <p className="text-[10px] text-text-secondary/70 truncate">{formatRelative(tx.created_at)}</p>
                   </div>
                   <div className="shrink-0 flex items-center">
-                    <p className={`font-bold ${formatIDRShort(tx.amount).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-income' : 'text-text-primary'}`}>
-                      {isIncome ? '+' : '-'}{formatIDRShort(tx.amount)}
+                    <p className={`font-bold ${formatMoneyShort(tx.amount, currency).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-income' : 'text-text-primary'}`}>
+                      {isIncome ? '+' : '-'}{formatMoneyShort(tx.amount, currency)}
                     </p>
                   </div>
                 </button>

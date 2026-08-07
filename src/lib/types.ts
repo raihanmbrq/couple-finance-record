@@ -7,6 +7,7 @@ export interface Profile {
   role: UserRole;
   avatar_url?: string | null;
   household_id?: string | null;
+  currency?: string | null;
   created_at: string;
 }
 
