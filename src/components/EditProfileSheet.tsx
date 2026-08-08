@@ -62,7 +62,7 @@ export function EditProfileSheet({ open, onClose }: EditProfileSheetProps) {
           onChange={(e) => setAvatarUrl(e.target.value)}
         />
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth onClick={handleSave} disabled={loading}>
           {loading ? 'Saving...' : 'Save Profile'}

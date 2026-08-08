@@ -12,8 +12,8 @@ export function PairFlowLoader() {
         />
       </div>
       <div className="text-center">
-        <p className="text-lg font-bold text-sky-800">PairFlow</p>
-        <p className="text-sm text-stone-500">Harmonize Your Cashflow, Together</p>
+        <p className="text-lg font-bold text-text-primary">PairFlow</p>
+        <p className="text-sm text-text-secondary">Harmonize Your Cashflow, Together</p>
       </div>
     </div>
   );

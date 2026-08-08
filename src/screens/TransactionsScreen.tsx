@@ -64,12 +64,12 @@ export function TransactionsScreen() {
     <div className="px-5 py-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-extrabold text-2xl text-stone-800">Transactions</h1>
+        <h1 className="font-display font-extrabold text-2xl text-text-primary">Transactions</h1>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-secondary" />
         <input
           className="input-field pl-11"
           placeholder="Search transactions..."
@@ -79,7 +79,7 @@ export function TransactionsScreen() {
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
-            showFilters || hasActiveFilters ? 'bg-teal-50 text-teal-700' : 'text-stone-400 hover:bg-cream-100'
+            showFilters || hasActiveFilters ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-secondary'
           }`}
         >
           <Filter className="w-4.5 h-4.5" />
@@ -90,12 +90,12 @@ export function TransactionsScreen() {
       {showFilters && (
         <Card className="p-4 space-y-3 animate-fade-in">
           <div>
-            <label className="block text-xs font-semibold text-stone-500 mb-2">WALLET</label>
+            <label className="block text-xs font-semibold text-text-secondary mb-2">WALLET</label>
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilterWallet('all')}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  filterWallet === 'all' ? 'bg-teal-700 text-white' : 'bg-cream-100 text-stone-500'
+                  filterWallet === 'all' ? 'bg-primary text-white' : 'bg-secondary text-text-secondary'
                 }`}
               >
                 All
@@ -105,7 +105,7 @@ export function TransactionsScreen() {
                   key={w.id}
                   onClick={() => setFilterWallet(w.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    filterWallet === w.id ? 'bg-teal-700 text-white' : 'bg-cream-100 text-stone-500'
+                    filterWallet === w.id ? 'bg-primary text-white' : 'bg-secondary text-text-secondary'
                   }`}
                 >
                   {w.name}
@@ -114,12 +114,12 @@ export function TransactionsScreen() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-stone-500 mb-2">CATEGORY</label>
+            <label className="block text-xs font-semibold text-text-secondary mb-2">CATEGORY</label>
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilterCategory('all')}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  filterCategory === 'all' ? 'bg-teal-700 text-white' : 'bg-cream-100 text-stone-500'
+                  filterCategory === 'all' ? 'bg-primary text-white' : 'bg-secondary text-text-secondary'
                 }`}
               >
                 All
@@ -129,7 +129,7 @@ export function TransactionsScreen() {
                   key={c.id}
                   onClick={() => setFilterCategory(c.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    filterCategory === c.id ? 'bg-teal-700 text-white' : 'bg-cream-100 text-stone-500'
+                    filterCategory === c.id ? 'bg-primary text-white' : 'bg-secondary text-text-secondary'
                   }`}
                 >
                   {c.name.split(' ')[0]}
@@ -138,7 +138,7 @@ export function TransactionsScreen() {
             </div>
           </div>
           {hasActiveFilters && (
-            <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-red-500 font-semibold">
+            <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-expense font-semibold">
               <X className="w-3.5 h-3.5" />
               Clear filters
             </button>
@@ -147,7 +147,7 @@ export function TransactionsScreen() {
       )}
 
       {/* Results count */}
-      <p className="text-xs text-stone-400 font-medium">
+      <p className="text-xs text-text-secondary font-medium">
         {filtered.length} {filtered.length === 1 ? 'transaction' : 'transactions'}
       </p>
 
@@ -172,8 +172,8 @@ export function TransactionsScreen() {
                 : formatDate(date);
             return (
               <div key={dayKey} className="space-y-2">
-                <p className="px-1 text-xs font-semibold text-stone-500 uppercase tracking-wide">{label}</p>
-                <Card className="divide-y divide-stone-100">
+                <p className="px-1 text-xs font-semibold text-text-secondary uppercase tracking-wide">{label}</p>
+                <Card className="divide-y divide-secondary">
                   {items.map((tx) => {
                     const cat = getCategory(tx.category);
                     const dynCat = categories.find((c) => c.id === tx.category);
@@ -185,22 +185,22 @@ export function TransactionsScreen() {
                         key={tx.id}
                         type="button"
                         onClick={() => setEditingTransaction(tx)}
-                        className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-cream-50 transition-colors"
+                        className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-secondary/50 transition-colors"
                       >
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          isIncome ? 'bg-green-50' : 'bg-cream-100'
+                          isIncome ? 'bg-income/10' : 'bg-secondary'
                         }`}>
-                          <Icon className={`w-5 h-5 ${isIncome ? 'text-green-600' : 'text-stone-500'}`} />
+                          <Icon className={`w-5 h-5 ${isIncome ? 'text-income' : 'text-text-secondary'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-stone-800 truncate">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
+                          <p className="font-semibold text-sm text-text-primary truncate">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs text-stone-400">{formatRelative(tx.created_at)}</span>
-                            {wallet && <span className="text-xs text-stone-400">· {wallet.name}</span>}
+                            <span className="text-xs text-text-secondary">{formatRelative(tx.created_at)}</span>
+                            {wallet && <span className="text-xs text-text-secondary">· {wallet.name}</span>}
                           </div>
                           <Badge color="secondary" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
                         </div>
-                        <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-green-600' : 'text-stone-700'}`}>
+                        <p className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-income' : 'text-text-primary'}`}>
                           {isIncome ? '+' : '-'}{formatMoney(tx.amount, currency)}
                         </p>
                       </button>

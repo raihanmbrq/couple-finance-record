@@ -168,7 +168,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
                 }`}
               >
                 <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
-                <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
+                <p className="text-xs text-text-secondary">{formatWalletType(w.type)}</p>
               </button>
             ))}
           </div>

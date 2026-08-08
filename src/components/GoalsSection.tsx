@@ -350,10 +350,10 @@ export function GoalsSection() {
 
       {deleteGoalTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+          <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-expense" />
               </div>
               <h3 className="font-display font-bold text-lg text-text-primary">Hapus Goal?</h3>
               <p className="text-sm text-text-secondary">
@@ -371,7 +371,7 @@ export function GoalsSection() {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-all"
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all"
               >
                 Hapus
               </button>

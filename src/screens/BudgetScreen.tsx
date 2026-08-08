@@ -106,28 +106,28 @@ export function BudgetScreen() {
        </div>
 
        {/* Monthly Recap Summary */}
-       <Card elevated className="bg-gradient-to-br from-text-primary to-text-primary/90 border-0 text-white p-5">
+       <Card elevated className="bg-total-balance border-0 text-white p-5">
          <div className="flex items-center gap-2 mb-3">
            <Target className="w-5 h-5 text-warning" />
-           <span className="text-text-secondary-dark text-sm font-medium">Monthly Recap</span>
+           <span className="text-white/70 text-sm font-medium">Monthly Recap</span>
          </div>
          <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Budget</p>
-              <p className="font-display font-bold text-xs">{formatMoney(totalBudget, currency)}</p>
+             <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>Budget</p>
+              <p className="font-display font-bold text-xs text-white">{formatMoney(totalBudget, currency)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
-              <p className="font-display font-bold text-xs text-expense-dark">{formatMoney(totalSpent, currency)}</p>
+             <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
+              <p className="font-display font-bold text-xs text-expense">{formatMoney(totalSpent, currency)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-text-secondary-dark ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
-             <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-income-dark' : 'text-expense-dark'}`}>
+             <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
+             <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-white' : 'text-expense'}`}>
                 {formatMoney(totalRemaining, currency)}
              </p>
            </div>
          </div>
-        </Card>
+       </Card>
       {/* Budget List */}
       {budgets.length === 0 ? (
         <EmptyState
@@ -251,10 +251,10 @@ export function BudgetScreen() {
 
       {deleteBudgetTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+          <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-expense" />
               </div>
               <h3 className="font-display font-bold text-lg text-text-primary">Hapus Budget?</h3>
               <p className="text-sm text-text-secondary">
@@ -274,7 +274,7 @@ export function BudgetScreen() {
                 type="button"
                 onClick={handleDeleteBudget}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-all disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all disabled:opacity-50"
               >
                 {loading ? 'Menghapus...' : 'Hapus'}
               </button>

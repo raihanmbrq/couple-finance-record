@@ -46,7 +46,7 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-cream-50">
+      <div className="w-full h-screen flex items-center justify-center bg-bg-app">
         <PairFlowLoader />
       </div>
     );

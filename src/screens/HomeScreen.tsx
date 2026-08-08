@@ -429,7 +429,7 @@ export function HomeScreen() {
                   key={tx.id}
                   type="button"
                   onClick={() => setEditingTransaction(tx)}
-                  className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-secondary transition-colors"
+                  className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-secondary transition-colors first:rounded-t-2xl last:rounded-b-2xl"
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-income/10' : 'bg-secondary'}`}>
                     {isIncome ? (

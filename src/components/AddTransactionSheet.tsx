@@ -179,7 +179,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                  }`}
                >
                  <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
-                 <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
+                 <p className="text-xs text-text-secondary">{formatWalletType(w.type)}</p>
                </button>
             ))}
             <button
@@ -237,9 +237,9 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         {/* Target Wallet (For Transfers) */}
         {category === 'transfer' && (
           <div>
-            <label className="block text-sm font-medium text-stone-600 mb-2">Target Wallet</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Target Wallet</label>
             {wallets.length < 2 ? (
-              <p className="text-sm text-stone-500 mt-2">You need at least another wallet to make a transfer.</p>
+              <p className="text-sm text-text-secondary mt-2">You need at least another wallet to make a transfer.</p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {wallets.filter(w => w.id !== walletId).map((w) => (
@@ -248,17 +248,17 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                     type="button"
                     onClick={() => setTargetWalletId(w.id)}
                     className={`p-3 rounded-xl text-left transition-all border-2 ${
-                      targetWalletId === w.id ? 'border-teal-500 bg-teal-50' : 'border-stone-200 bg-cream-50'
+                      targetWalletId === w.id ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
                     }`}
                   >
-                    <p className="font-semibold text-sm text-stone-800 truncate">{w.name}</p>
-                    <p className="text-xs text-stone-400">{formatWalletType(w.type)}</p>
+                    <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
+                    <p className="text-xs text-text-secondary">{formatWalletType(w.type)}</p>
                   </button>
                 ))}
                 <button
                   type="button"
                   onClick={() => setShowAddWallet(true)}
-                  className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-teal-500/40 text-teal-700 hover:border-teal-500 hover:bg-teal-50 transition-all"
+                  className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-primary/40 text-primary hover:border-primary hover:bg-primary/10 transition-all"
                 >
                   <Plus className="w-4 h-4" />
                   <span className="text-sm font-semibold">Wallet</span>

@@ -125,7 +125,7 @@ export function ThemeSettingsSheet({ open, onClose }: ThemeSettingsSheetProps) {
                   >
                     <span className="flex items-center shrink-0">
                       <span
-                        className="w-6 h-6 rounded-full border border-stone-300 flex items-center justify-center"
+                        className="w-6 h-6 rounded-full border border-secondary flex items-center justify-center"
                         style={{ backgroundColor: t.swatch.bg }}
                       >
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: t.swatch.primary }} />
