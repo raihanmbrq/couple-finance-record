@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Profile, Household, HouseholdMember, Wallet, WalletTypeRow, Transaction, Budget, Goal, GoalInput, TransactionCategory } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { uploadAvatarToCloudinary } from '@/lib/cloudinary';
 import {
   mockProfile, mockPartner, mockHousehold, mockWallets, mockWalletTypes, mockCategories, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
@@ -28,6 +29,7 @@ interface AppState {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateCurrency: (code: string) => Promise<void>;
+  updateAvatar: (file: File) => Promise<void>;
   // Onboarding
   setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
@@ -388,6 +390,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateCurrency = useCallback(async (code: string) => {
     await updateProfile({ currency: code });
   }, [updateProfile]);
+
+  const updateAvatar = useCallback(async (file: File) => {
+    if (!profile) return;
+    if (mode === 'demo') {
+      throw new Error('Upload avatar tidak tersedia di demo mode.');
+    }
+    const avatarUrl = await uploadAvatarToCloudinary(file, profile.id);
+    const { error } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', profile.id);
+    if (error) throw error;
+    setProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+  }, [mode, profile]);
 
   const signOut = useCallback(async () => {
     if (mode === 'live') {
@@ -1038,6 +1051,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signOut,
     updateProfile,
     updateCurrency,
+    updateAvatar,
     setMode,
     createHousehold,
     joinHousehold,
