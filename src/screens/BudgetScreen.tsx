@@ -12,12 +12,14 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { Plus, PiggyBank, Trash2, Target } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { GoalsSection } from '@/components/GoalsSection';
 
 export function BudgetScreen() {
   const { budgets, transactions, setBudget, deleteBudget, categories, profile } = useApp();
   const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
+  const { t } = useLanguage();
   const [showAdd, setShowAdd] = useState(false);
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
@@ -56,7 +58,7 @@ export function BudgetScreen() {
       setEditCategory(null);
       setEditAmount('');
       setShowAdd(false);
-      showToast('Budget berhasil disimpan');
+      showToast(t('toast.saved'));
     } finally {
       setLoading(false);
     }
@@ -80,7 +82,7 @@ export function BudgetScreen() {
     try {
       await deleteBudget(deleteBudgetTarget.id);
       setDeleteBudgetTarget(null);
-      showToast('Budget berhasil dihapus', 'error');
+      showToast(t('toast.deleted'), 'error');
     } finally {
       setLoading(false);
     }
@@ -95,7 +97,7 @@ export function BudgetScreen() {
   return (
     <div className="px-5 py-5 space-y-5">
        <div className="flex items-center justify-between">
-         <h1 className="font-display font-extrabold text-2xl text-text-primary">Set Budgets</h1>
+         <h1 className="font-display font-extrabold text-2xl text-text-primary">{t('budget.title')}</h1>
          <button
            onClick={openAdd}
            disabled={availableCategories.length === 0}
@@ -109,19 +111,19 @@ export function BudgetScreen() {
        <Card elevated className="bg-total-balance border-0 text-white p-5">
          <div className="flex items-center gap-2 mb-3">
            <Target className="w-5 h-5 text-warning" />
-           <span className="text-white/70 text-sm font-medium">Monthly Recap</span>
+            <span className="text-white/70 text-sm font-medium">{t('budget.monthlyRecap')}</span>
          </div>
          <div className={isLargeBudget ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-3'}>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>Budget</p>
+              <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>{t('budget.budget')}</p>
               <p className="font-display font-bold text-xs text-white">{formatMoney(totalBudget, currency)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>Spent</p>
+              <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>{t('budget.spent')}</p>
               <p className="font-display font-bold text-xs text-expense">{formatMoney(totalSpent, currency)}</p>
            </div>
            <div className={isLargeBudget ? 'flex justify-between items-center bg-white/5 rounded-lg p-2.5' : ''}>
-             <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>Remaining</p>
+              <p className={`text-xs text-white/70 ${isLargeBudget ? '' : 'mb-1'}`}>{t('budget.remaining')}</p>
              <p className={`font-display font-bold text-xs ${totalRemaining >= 0 ? 'text-white' : 'text-expense'}`}>
                 {formatMoney(totalRemaining, currency)}
              </p>
@@ -132,11 +134,11 @@ export function BudgetScreen() {
       {budgets.length === 0 ? (
         <EmptyState
           icon={<PiggyBank className="w-7 h-7" />}
-          title="No budgets set"
-          description="Set monthly spending limits per category to track your progress."
+          title={t('budget.empty')}
+          description=""
           action={<Button size="sm" onClick={openAdd}>
             <Plus className="w-4 h-4 inline mr-1" />
-            Set Budget
+            {t('budget.setBudget')}
           </Button>}
         />
       ) : (
@@ -167,7 +169,7 @@ export function BudgetScreen() {
                        onClick={() => openEdit(budget.category, budget.limit_amount)}
                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
                      >
-                       Edit
+                        {t('budget.setBudget')}
                      </button>
                      <button
                        onClick={() => setDeleteBudgetTarget(budget)}
@@ -182,10 +184,10 @@ export function BudgetScreen() {
 
                  <div className="flex items-center justify-between mt-2">
                    <span className="text-xs font-medium text-text-secondary">
-                     {pct.toFixed(0)}% used
+                      {pct.toFixed(0)}% {t('budget.spent')}
                    </span>
                    <span className={`text-xs font-bold ${remaining >= 0 ? 'text-income' : 'text-expense'}`}>
-                      {remaining >= 0 ? `${formatMoney(remaining, currency)} left` : `${formatMoney(-remaining, currency)} over`}
+                       {remaining >= 0 ? `${formatMoney(remaining, currency)} ${t('budget.remaining')}` : `${formatMoney(-remaining, currency)} over`}
                    </span>
                  </div>
               </Card>
@@ -197,11 +199,11 @@ export function BudgetScreen() {
       <GoalsSection />
 
       {/* Add/Edit Budget Sheet */}
-      <Sheet open={showAdd} onClose={() => setShowAdd(false)} title={editCategory ? 'Edit Budget' : 'Set Budget'}>
+      <Sheet open={showAdd} onClose={() => setShowAdd(false)} title={editCategory ? t('budget.setBudget') : t('budget.setBudget')}>
         <div className="space-y-5">
            {!editCategory ? (
              <div>
-               <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">{t('budget.categoryLabel')}</label>
                <div className="grid grid-cols-2 gap-2">
                  {availableCategories.map((cat) => {
                    const Icon = getIcon(cat.icon);
@@ -229,7 +231,7 @@ export function BudgetScreen() {
                  <span className="font-semibold text-primary">{getCategory(editCategory)?.label ?? editCategory}</span>
                </div>
                <Input
-                label="Monthly Limit"
+                label={t('budget.budget')}
                 prefix={getCurrencySymbol(currency)}
                 placeholder="3.000.000"
                 inputMode="numeric"
@@ -243,7 +245,7 @@ export function BudgetScreen() {
 
           {editCategory && (
             <Button fullWidth onClick={handleSetBudget} disabled={loading || !parseMoneyInput(editAmount)}>
-              {loading ? 'Saving...' : 'Save Budget'}
+              {loading ? t('profile.joining') : t('budget.setBudget')}
             </Button>
           )}
         </div>
@@ -256,9 +258,9 @@ export function BudgetScreen() {
               <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
                 <Trash2 className="w-6 h-6 text-expense" />
               </div>
-              <h3 className="font-display font-bold text-lg text-text-primary">Hapus Budget?</h3>
+              <h3 className="font-display font-bold text-lg text-text-primary">{t('budget.deleteTitle')}</h3>
               <p className="text-sm text-text-secondary">
-                Budget {getCategory(deleteBudgetTarget.category)?.label ?? deleteBudgetTarget.category} akan dihapus.
+                {t('budget.deleteDesc', { name: getCategory(deleteBudgetTarget.category)?.label ?? deleteBudgetTarget.category })}
               </p>
             </div>
             <div className="flex gap-2">
@@ -268,7 +270,7 @@ export function BudgetScreen() {
                 disabled={loading}
                 className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all disabled:opacity-50"
               >
-                Batal
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -276,7 +278,7 @@ export function BudgetScreen() {
                 disabled={loading}
                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all disabled:opacity-50"
               >
-                {loading ? 'Menghapus...' : 'Hapus'}
+                {loading ? t('profile.joining') : t('common.delete')}
               </button>
             </div>
           </div>

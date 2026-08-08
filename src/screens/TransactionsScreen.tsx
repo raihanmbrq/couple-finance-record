@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -13,6 +14,7 @@ import { getIcon } from '@/lib/icons';
 
 export function TransactionsScreen() {
   const { transactions, wallets, categories, profile } = useApp();
+  const { t } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
@@ -64,7 +66,7 @@ export function TransactionsScreen() {
     <div className="px-5 py-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-extrabold text-2xl text-text-primary">Transactions</h1>
+        <h1 className="font-display font-extrabold text-2xl text-text-primary">{t('tx.title')}</h1>
       </div>
 
       {/* Search */}
@@ -72,7 +74,7 @@ export function TransactionsScreen() {
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-secondary" />
         <input
           className="input-field pl-11"
-          placeholder="Search transactions..."
+          placeholder={t('tx.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -90,7 +92,7 @@ export function TransactionsScreen() {
       {showFilters && (
         <Card className="p-4 space-y-3 animate-fade-in">
           <div>
-            <label className="block text-xs font-semibold text-text-secondary mb-2">WALLET</label>
+            <label className="block text-xs font-semibold text-text-secondary mb-2">{t('tx.walletLabel')}</label>
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilterWallet('all')}
@@ -98,7 +100,7 @@ export function TransactionsScreen() {
                   filterWallet === 'all' ? 'bg-primary text-white' : 'bg-secondary text-text-secondary'
                 }`}
               >
-                All
+                {t('tx.all')}
               </button>
               {wallets.map(w => (
                 <button
@@ -114,7 +116,7 @@ export function TransactionsScreen() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-text-secondary mb-2">CATEGORY</label>
+            <label className="block text-xs font-semibold text-text-secondary mb-2">{t('tx.categoryLabel')}</label>
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilterCategory('all')}
@@ -122,7 +124,7 @@ export function TransactionsScreen() {
                   filterCategory === 'all' ? 'bg-primary text-white' : 'bg-secondary text-text-secondary'
                 }`}
               >
-                All
+                {t('tx.all')}
               </button>
               {categories.map(c => (
                 <button
@@ -140,7 +142,7 @@ export function TransactionsScreen() {
           {hasActiveFilters && (
             <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-expense font-semibold">
               <X className="w-3.5 h-3.5" />
-              Clear filters
+              {t('tx.clearFilters')}
             </button>
           )}
         </Card>
@@ -148,15 +150,15 @@ export function TransactionsScreen() {
 
       {/* Results count */}
       <p className="text-xs text-text-secondary font-medium">
-        {filtered.length} {filtered.length === 1 ? 'transaction' : 'transactions'}
+        {filtered.length === 1 ? t('tx.countOne') : t('tx.countMany', { count: filtered.length })}
       </p>
 
       {/* Transaction List */}
       {filtered.length === 0 ? (
         <EmptyState
           icon={<Receipt className="w-7 h-7" />}
-          title="No transactions found"
-          description={hasActiveFilters ? "Try adjusting your filters" : "No transactions have been added yet"}
+          title={t('tx.notFound')}
+          description={hasActiveFilters ? t('tx.adjustFilters') : t('tx.empty')}
         />
       ) : (
         <div className="space-y-4">
@@ -166,9 +168,9 @@ export function TransactionsScreen() {
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
             const label = date.toDateString() === today.toDateString()
-              ? 'Today'
+              ? t('tx.today')
               : date.toDateString() === yesterday.toDateString()
-                ? 'Yesterday'
+                ? t('tx.yesterday')
                 : formatDate(date);
             return (
               <div key={dayKey} className="space-y-2">

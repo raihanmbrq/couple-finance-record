@@ -2,6 +2,7 @@ export type UserRole = 'suami' | 'istri' | 'single' | 'partner' | 'owner' | 'mem
 
 export type AppearanceMode = 'light' | 'dark' | 'system';
 export type ColorPreset = 'emerald' | 'gold' | 'rose' | 'slate';
+export type Language = 'id' | 'en';
 
 export interface Profile {
   id: string;
@@ -13,6 +14,7 @@ export interface Profile {
   currency?: string | null;
   color_preset?: ColorPreset | null;
   appearance_mode?: AppearanceMode | null;
+  language?: Language | null;
   created_at: string;
 }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,14 +14,15 @@ interface CreateCategorySheetProps {
   onCreated: (id: string) => void;
 }
 
-const TYPE_OPTIONS: { value: TransactionCategoryType; label: string }[] = [
-  { value: 'expense', label: 'Expense' },
-  { value: 'income', label: 'Income' },
-  { value: 'both', label: 'Both' },
+const TYPE_OPTIONS: { value: TransactionCategoryType; labelKey: string }[] = [
+  { value: 'expense', labelKey: 'cat.typeExpense' },
+  { value: 'income', labelKey: 'cat.typeIncome' },
+  { value: 'both', labelKey: 'cat.typeBoth' },
 ];
 
 export function CreateCategorySheet({ open, onClose, onCreated }: CreateCategorySheetProps) {
   const { addCustomCategory } = useApp();
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [name, setName] = useState('');
   const [type, setType] = useState<TransactionCategoryType>('expense');
@@ -30,7 +32,7 @@ export function CreateCategorySheet({ open, onClose, onCreated }: CreateCategory
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Nama kategori wajib diisi');
+      setError(t('cat.nameRequired'));
       return;
     }
     setError('');
@@ -41,28 +43,28 @@ export function CreateCategorySheet({ open, onClose, onCreated }: CreateCategory
       setType('expense');
       setIcon('Sparkles');
       onClose();
-      showToast('Kategori baru berhasil ditambahkan!');
+      showToast(t('cat.addedToast'));
       onCreated(created.id);
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg || 'Gagal menambahkan kategori');
+      setError(msg || t('cat.failedAdd'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Create Category">
+    <Sheet open={open} onClose={onClose} title={t('cat.addTitle')}>
       <div className="space-y-5">
         <Input
-          label="Nama Kategori"
-          placeholder="misal Makan Siang, Gaji Bonus"
+          label={t('cat.nameLabel')}
+          placeholder={t('cat.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Tipe</label>
+          <label className="block text-sm font-medium text-text-secondary mb-2">{t('cat.typeLabel')}</label>
           <div className="flex gap-2">
             {TYPE_OPTIONS.map((opt) => (
               <button
@@ -73,14 +75,14 @@ export function CreateCategorySheet({ open, onClose, onCreated }: CreateCategory
                   type === opt.value ? 'border-primary bg-primary/10 text-primary' : 'border-secondary bg-secondary text-text-secondary'
                 }`}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Pilih Ikon</label>
+          <label className="block text-sm font-medium text-text-secondary mb-2">{t('cat.iconLabel')}</label>
           <div className="grid grid-cols-4 gap-2">
             {CATEGORY_ICON_OPTIONS.map((iconName) => {
               const Icon = getIcon(iconName);
@@ -103,7 +105,7 @@ export function CreateCategorySheet({ open, onClose, onCreated }: CreateCategory
         {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Menyimpan...' : 'Simpan Kategori'}
+          {loading ? t('cat.saving') : t('cat.saveCategory')}
         </Button>
       </div>
     </Sheet>

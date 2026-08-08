@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -20,6 +21,7 @@ interface AddTransactionSheetProps {
 
 export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps) {
   const { wallets, profile, addTransaction, walletTypes, categories } = useApp();
+  const { t } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
   const formatWalletType = (type: string) => {
     const row = walletTypes.find((t) => t.id === type);
@@ -64,19 +66,19 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const handleSubmit = async () => {
     const amt = parseMoneyInput(amount);
     if (!amt) {
-      setError('Please enter an amount');
+      setError(t('tx.enterAmount'));
       return;
     }
     if (!walletId) {
-      setError('Please select a wallet');
+      setError(t('tx.selectWallet'));
       return;
     }
     if (category === 'transfer' && !targetWalletId) {
-      setError('Please select a target wallet');
+      setError(t('tx.selectTargetWallet'));
       return;
     }
     if (category === 'transfer' && walletId === targetWalletId) {
-      setError('Source and target wallets must be different');
+      setError(t('tx.differentWallets'));
       return;
     }
 
@@ -93,7 +95,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
           amount: amt,
           type: 'expense',
           category: 'transfer',
-          notes: notes.trim() || `Transfer to ${targetWalletName}`,
+          notes: notes.trim() || t('tx.transferTo', { name: targetWalletName }),
           spent_by: profile?.full_name ?? 'Me',
           transaction_date: `${transactionDate}T12:00:00.000Z`,
         });
@@ -104,7 +106,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
           amount: amt,
           type: 'income',
           category: 'transfer',
-          notes: notes.trim() || `Transfer from ${sourceWalletName}`,
+          notes: notes.trim() || t('tx.transferFrom', { name: sourceWalletName }),
           spent_by: profile?.full_name ?? 'Me',
           transaction_date: `${transactionDate}T12:00:00.000Z`,
         });
@@ -121,16 +123,16 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
       }
       reset();
       onClose();
-      showToast('Transaksi berhasil ditambahkan');
+      showToast(t('tx.addedToast'));
     } catch {
-      setError('Failed to save transaction');
+      setError(t('tx.failedSave'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Add Transaction">
+    <Sheet open={open} onClose={onClose} title={t('tx.addTitle')}>
       <div className="space-y-5">
         {/* Type Toggle */}
         <div className="flex gap-2">
@@ -141,7 +143,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
              }`}
           >
             <ArrowDownCircle className="w-5 h-5" />
-            Expense
+            {t('common.expense')}
           </button>
           <button
             onClick={() => setType('income')}
@@ -150,13 +152,13 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
              }`}
           >
             <ArrowUpCircle className="w-5 h-5" />
-            Income
+            {t('common.income')}
           </button>
         </div>
 
         {/* Amount */}
         <Input
-          label="Amount"
+          label={t('common.amount')}
           prefix={getCurrencySymbol(currency)}
           placeholder="0"
           inputMode="numeric"
@@ -167,7 +169,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
 
         {/* Wallet Selection */}
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Wallet</label>
+          <label className="block text-sm font-medium text-text-secondary mb-2">{t('common.wallet')}</label>
           <div className="grid grid-cols-2 gap-2">
             {wallets.map((w) => (
               <button
@@ -188,17 +190,17 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
               className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
             >
               <Plus className="w-4 h-4" />
-              <span className="text-sm font-semibold">Add New Wallet</span>
+              <span className="text-sm font-semibold">{t('tx.addNewWallet')}</span>
             </button>
           </div>
           {wallets.length === 0 && (
-            <p className="text-sm text-text-secondary mt-2">No wallets yet. Add one to start tracking transactions.</p>
+            <p className="text-sm text-text-secondary mt-2">{t('tx.noWalletsYet')}</p>
           )}
         </div>
 
         {/* Category */}
          <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Category</label>
+           <label className="block text-sm font-medium text-text-secondary mb-2">{t('common.category')}</label>
            <div className="grid grid-cols-4 gap-2">
              {categories
                .filter((cat) => cat.type === 'both' || cat.type === type)
@@ -227,8 +229,8 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                onClick={() => setShowAddCategory(true)}
                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
-               <Plus className="w-4 h-4" />
-               <span className="text-[10px] font-semibold text-center leading-tight">Category</span>
+                <Plus className="w-4 h-4" />
+                <span className="text-[10px] font-semibold text-center leading-tight">{t('tx.addCategory')}</span>
              </button>
            </div>
          </div>
@@ -237,9 +239,9 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         {/* Target Wallet (For Transfers) */}
         {category === 'transfer' && (
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">Target Wallet</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">{t('tx.targetWallet')}</label>
             {wallets.length < 2 ? (
-              <p className="text-sm text-text-secondary mt-2">You need at least another wallet to make a transfer.</p>
+              <p className="text-sm text-text-secondary mt-2">{t('tx.needTwoWallets')}</p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {wallets.filter(w => w.id !== walletId).map((w) => (
@@ -261,7 +263,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                   className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-primary/40 text-primary hover:border-primary hover:bg-primary/10 transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="text-sm font-semibold">Wallet</span>
+                  <span className="text-sm font-semibold">{t('tx.addWallet')}</span>
                 </button>
               </div>
             )}
@@ -269,7 +271,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         )}
 
         <Input
-          label="Date"
+          label={t('tx.date')}
           type="date"
           value={transactionDate}
           onChange={(e) => setTransactionDate(e.target.value)}
@@ -277,22 +279,22 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
 
         {/* Note */}
         <Input
-          label="Note (optional)"
-          placeholder="e.g., Groceries at Indomaret"
+          label={t('tx.noteOptional')}
+          placeholder={t('tx.notePlaceholder')}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
 
          {/* Spent By */}
          <div className="flex items-center gap-2">
-           <span className="text-sm text-text-secondary">Logged by:</span>
-           <Badge color="primary">{profile?.full_name ?? 'Me'}</Badge>
+           <span className="text-sm text-text-secondary">{t('tx.loggedBy')}</span>
+           <Badge color="primary">{profile?.full_name ?? t('common.me')}</Badge>
          </div>
  
          {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Saving...' : 'Save Transaction'}
+          {loading ? t('goals.saving') : t('tx.saveTransaction')}
         </Button>
       </div>
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />

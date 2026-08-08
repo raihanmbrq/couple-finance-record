@@ -1,73 +1,72 @@
 import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Check, Sun, Moon, Smartphone } from 'lucide-react';
 import type { AppearanceMode, ColorPreset } from '@/lib/types';
 
 interface AppearanceOption {
   id: AppearanceMode;
-  label: string;
+  labelKey: string;
   icon: typeof Sun;
 }
 
 const APPEARANCE_OPTIONS: AppearanceOption[] = [
-  { id: 'light', label: 'Light', icon: Sun },
-  { id: 'dark', label: 'Dark', icon: Moon },
-  { id: 'system', label: 'System Default', icon: Smartphone },
+  { id: 'light', labelKey: 'theme.light', icon: Sun },
+  { id: 'dark', labelKey: 'theme.dark', icon: Moon },
+  { id: 'system', labelKey: 'theme.system', icon: Smartphone },
 ];
-
-const APPEARANCE_LABELS: Record<AppearanceMode, string> = {
-  light: 'Light',
-  dark: 'Dark',
-  system: 'System Default',
-};
 
 interface PresetOption {
   id: ColorPreset;
-  label: string;
-  desc: string;
+  labelKey: string;
+  descKey: string;
   swatch: { bg: string; primary: string };
 }
 
 export const PRESET_OPTIONS: PresetOption[] = [
   {
     id: 'emerald',
-    label: 'Emerald Green',
-    desc: 'Nuansa dompet & keuangan',
+    labelKey: 'theme.preset.emerald',
+    descKey: 'theme.preset.emeraldDesc',
     swatch: { bg: '#F8FAFC', primary: '#10B981' },
   },
   {
     id: 'gold',
-    label: 'Amber Gold',
-    desc: 'Hangat & klasik',
+    labelKey: 'theme.preset.gold',
+    descKey: 'theme.preset.goldDesc',
     swatch: { bg: '#F8FAFC', primary: '#F59E0B' },
   },
   {
     id: 'rose',
-    label: 'Rose Pink',
-    desc: 'Hangat & romantis',
+    labelKey: 'theme.preset.rose',
+    descKey: 'theme.preset.roseDesc',
     swatch: { bg: '#F8FAFC', primary: '#FB7185' },
   },
   {
     id: 'slate',
-    label: 'Ocean Blue',
-    desc: 'Tenang & modern',
+    labelKey: 'theme.preset.slate',
+    descKey: 'theme.preset.slateDesc',
     swatch: { bg: '#F8FAFC', primary: '#3B82F6' },
   },
 ];
 
-const PRESET_LABELS: Record<ColorPreset, string> = {
-  emerald: 'Emerald Green',
-  gold: 'Amber Gold',
-  rose: 'Rose Pink',
-  slate: 'Ocean Blue',
-};
-
 export function getAppearanceLabel(mode: AppearanceMode): string {
-  return APPEARANCE_LABELS[mode];
+  const labels: Record<AppearanceMode, string> = {
+    light: 'theme.light',
+    dark: 'theme.dark',
+    system: 'theme.system',
+  };
+  return labels[mode];
 }
 
 export function getPresetLabel(preset: ColorPreset): string {
-  return PRESET_LABELS[preset];
+  const labels: Record<ColorPreset, string> = {
+    emerald: 'theme.preset.emerald',
+    gold: 'theme.preset.gold',
+    rose: 'theme.preset.rose',
+    slate: 'theme.preset.slate',
+  };
+  return labels[preset];
 }
 
 interface ThemeSettingsSheetProps {
@@ -77,14 +76,15 @@ interface ThemeSettingsSheetProps {
 
 export function ThemeSettingsSheet({ open, onClose }: ThemeSettingsSheetProps) {
   const { appearanceMode, colorPreset, setAppearanceMode, setColorPreset } = useTheme();
+  const { t } = useLanguage();
 
   return (
-    <Sheet open={open} onClose={onClose} title="Pilih Tema">
+    <Sheet open={open} onClose={onClose} title={t('theme.title')}>
       <div className="flex flex-col h-full max-h-[70vh]">
         <div className="flex-1 overflow-y-auto no-scrollbar -mx-5 px-5 py-3 space-y-6">
           {/* SECTION 1: Mode Tampilan */}
           <section>
-            <h3 className="text-sm font-bold text-text-primary mb-2">Mode Tampilan</h3>
+            <h3 className="text-sm font-bold text-text-primary mb-2">{t('theme.displayMode')}</h3>
             <div className="grid grid-cols-3 gap-2">
               {APPEARANCE_OPTIONS.map((opt) => {
                 const Icon = opt.icon;
@@ -100,7 +100,7 @@ export function ThemeSettingsSheet({ open, onClose }: ThemeSettingsSheetProps) {
                   >
                     <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />
                     <span className={`text-xs font-semibold ${isActive ? 'text-primary' : 'text-text-primary'}`}>
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </span>
                   </button>
                 );
@@ -110,15 +110,15 @@ export function ThemeSettingsSheet({ open, onClose }: ThemeSettingsSheetProps) {
 
           {/* SECTION 2: Warna Tema */}
           <section>
-            <h3 className="text-sm font-bold text-text-primary mb-2">Warna Tema</h3>
+            <h3 className="text-sm font-bold text-text-primary mb-2">{t('theme.colorTheme')}</h3>
             <div className="space-y-1">
-              {PRESET_OPTIONS.map((t) => {
-                const isActive = t.id === colorPreset;
+              {PRESET_OPTIONS.map((preset) => {
+                const isActive = preset.id === colorPreset;
                 return (
                   <button
-                    key={t.id}
+                    key={preset.id}
                     type="button"
-                    onClick={() => setColorPreset(t.id)}
+                    onClick={() => setColorPreset(preset.id)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all border-2 ${
                       isActive ? 'border-primary bg-primary/10' : 'border-transparent hover:bg-secondary'
                     }`}
@@ -126,16 +126,16 @@ export function ThemeSettingsSheet({ open, onClose }: ThemeSettingsSheetProps) {
                     <span className="flex items-center shrink-0">
                       <span
                         className="w-6 h-6 rounded-full border border-secondary flex items-center justify-center"
-                        style={{ backgroundColor: t.swatch.bg }}
+                        style={{ backgroundColor: preset.swatch.bg }}
                       >
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: t.swatch.primary }} />
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: preset.swatch.primary }} />
                       </span>
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className={`block font-semibold text-sm ${isActive ? 'text-primary' : 'text-text-primary'}`}>
-                        {t.label}
+                        {t(preset.labelKey)}
                       </span>
-                      <span className="block text-xs text-text-secondary truncate">{t.desc}</span>
+                      <span className="block text-xs text-text-secondary truncate">{t(preset.descKey)}</span>
                     </span>
                     {isActive && (
                       <span className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">

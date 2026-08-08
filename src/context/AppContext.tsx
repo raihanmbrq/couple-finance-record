@@ -711,7 +711,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteCategory = useCallback(async (id: string) => {
     const inUse = transactions.some(tx => tx.category === id);
     if (inUse) {
-      throw new Error('Kategori ini masih dipakai oleh transaksi. Pindahkan transaksi tersebut ke kategori lain terlebih dahulu.');
+      throw new Error('Kategori ini masih dipakai oleh transaksi. Pindahkan transaksi tersebut ke kategori lain terlebih dahulu. / This category is still used by a transaction. Move that transaction to another category first.');
     }
     if (mode === 'live') {
       const { error } = await supabase.from('categories').delete().eq('id', id);
@@ -987,8 +987,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const goal = goals.find(g => g.id === goalId);
     const wallet = wallets.find(w => w.id === walletId);
     if (!goal || !wallet) return;
-    if (amount <= 0) throw new Error('Jumlah deposit harus lebih dari 0.');
-    if (wallet.balance < amount) throw new Error('Saldo wallet tidak mencukupi.');
+    if (amount <= 0) throw new Error('Jumlah deposit harus lebih dari 0. / Deposit amount must be greater than 0.');
+    if (wallet.balance < amount) throw new Error('Saldo wallet tidak mencukupi. / Wallet balance is insufficient.');
 
     const now = new Date().toISOString();
     const nextBalance = wallet.balance - amount;

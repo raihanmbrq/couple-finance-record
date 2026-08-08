@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,6 +18,7 @@ interface AddWalletSheetProps {
 
 export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
   const { walletTypes, addWallet, profile } = useApp();
+  const { t } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
   const [name, setName] = useState('');
@@ -28,11 +30,11 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Please enter a wallet name');
+      setError(t('wallet.nameRequired'));
       return;
     }
     if (!type) {
-      setError('Please select a wallet type');
+      setError(t('wallet.typeRequired'));
       return;
     }
     setError('');
@@ -43,27 +45,27 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
       setBalance('');
       setType('');
       onClose();
-      showToast('Wallet berhasil ditambahkan');
+      showToast(t('wallet.addedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg || 'Failed to add wallet');
+      setError(msg || t('wallet.failedAdd'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Add Wallet">
+    <Sheet open={open} onClose={onClose} title={t('wallet.addNew')}>
       <div className="space-y-5">
         <Input
-          label="Wallet Name"
-          placeholder="e.g., BCA Joint Account"
+          label={t('wallet.nameLabel')}
+          placeholder={t('wallet.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
          <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Wallet Type</label>
+           <label className="block text-sm font-medium text-text-secondary mb-2">{t('wallet.walletType')}</label>
            <div className="grid grid-cols-2 gap-2">
              {walletTypes.map((t) => {
                const Icon = walletTypeIcon(t.icon);
@@ -84,14 +86,14 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
                onClick={() => setShowCreateType(true)}
                className="flex items-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
-               <Plus className="w-4 h-4" />
-               <span className="text-sm font-semibold">Wallet Type</span>
+                <Plus className="w-4 h-4" />
+                <span className="text-sm font-semibold">{t('wallet.typeWallet')}</span>
              </button>
            </div>
          </div>
 
         <Input
-          label="Initial Balance"
+          label={t('wallet.initialBalance')}
           prefix={getCurrencySymbol(currency)}
           placeholder="0"
           inputMode="numeric"
@@ -102,7 +104,7 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
         {error && <p className="text-sm text-expense">{error}</p>}
 
         <Button fullWidth onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Adding...' : 'Add Wallet'}
+          {loading ? t('wallet.adding') : t('wallet.addNew')}
         </Button>
       </div>
 

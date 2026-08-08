@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Home, ArrowLeftRight, PiggyBank, User, Plus } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export type TabKey = 'home' | 'transactions' | 'budget' | 'profile';
 
@@ -9,14 +10,14 @@ interface BottomNavProps {
   onAddClick: () => void;
 }
 
-const leftTabs: { key: TabKey; label: string; icon: typeof Home }[] = [
-  { key: 'home', label: 'Home', icon: Home },
-  { key: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+const leftTabs: { key: TabKey; labelKey: string; icon: typeof Home }[] = [
+  { key: 'home', labelKey: 'nav.home', icon: Home },
+  { key: 'transactions', labelKey: 'nav.transactions', icon: ArrowLeftRight },
 ];
 
-const rightTabs: { key: TabKey; label: string; icon: typeof Home }[] = [
-  { key: 'budget', label: 'Budget', icon: PiggyBank },
-  { key: 'profile', label: 'Profile', icon: User },
+const rightTabs: { key: TabKey; labelKey: string; icon: typeof Home }[] = [
+  { key: 'budget', labelKey: 'nav.budget', icon: PiggyBank },
+  { key: 'profile', labelKey: 'nav.profile', icon: User },
 ];
 
 function NavButton({ 
@@ -24,10 +25,11 @@ function NavButton({
   active, 
   onChange 
 }: { 
-  item: { key: TabKey; label: string; icon: typeof Home }; 
+  item: { key: TabKey; labelKey: string; icon: typeof Home }; 
   active: TabKey; 
   onChange: (t: TabKey) => void 
 }) {
+  const { t } = useLanguage();
   const isActive = active === item.key;
   const Icon = item.icon;
   return (
@@ -40,7 +42,7 @@ function NavButton({
          strokeWidth={isActive ? 2.5 : 2}
        />
        <span className={`text-[10px] font-semibold transition-colors duration-150 ${isActive ? 'text-primary' : 'text-text-secondary'}`}>
-         {item.label}
+          {t(item.labelKey)}
        </span>
     </button>
   );

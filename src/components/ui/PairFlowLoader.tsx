@@ -1,4 +1,7 @@
+import { useLanguage } from '@/context/LanguageContext';
+
 export function PairFlowLoader() {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <div className="relative h-20 w-20">
@@ -13,7 +16,7 @@ export function PairFlowLoader() {
       </div>
       <div className="text-center">
         <p className="text-lg font-bold text-text-primary">PairFlow</p>
-        <p className="text-sm text-text-secondary">Harmonize Your Cashflow, Together</p>
+        <p className="text-sm text-text-secondary">{t('loader.tagline')}</p>
       </div>
     </div>
   );

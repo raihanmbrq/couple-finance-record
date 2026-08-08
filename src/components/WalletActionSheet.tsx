@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -19,6 +20,7 @@ interface WalletActionSheetProps {
 
 export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetProps) {
   const { walletTypes, updateWallet, deleteWallet, profile } = useApp();
+  const { t } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
   const [name, setName] = useState('');
@@ -46,7 +48,7 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
   const handleSave = async () => {
     if (!wallet) return;
     if (!name.trim()) {
-      setError('Please enter a wallet name');
+      setError(t('wallet.nameRequired'));
       return;
     }
     setLoading(true);
@@ -58,9 +60,9 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
         balance: parseMoneyInput(balance),
       });
       onClose();
-      showToast('Wallet berhasil diupdate');
+      showToast(t('wallet.updatedToast'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update wallet');
+      setError(err instanceof Error ? err.message : t('wallet.failedUpdate'));
     } finally {
       setLoading(false);
     }
@@ -77,9 +79,9 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
     try {
       await deleteWallet(wallet.id);
       onClose();
-      showToast('Wallet berhasil dihapus');
+      showToast(t('wallet.deletedToast'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete wallet');
+      setError(err instanceof Error ? err.message : t('wallet.failedDelete'));
     } finally {
       setLoading(false);
     }
@@ -88,17 +90,17 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
   if (!wallet) return null;
 
   return (
-    <Sheet open={open} onClose={onClose} title="Wallet Details">
+    <Sheet open={open} onClose={onClose} title={t('wallet.detailsTitle')}>
       <div className="space-y-5">
         <Input
-          label="Wallet Name"
-          placeholder="e.g., Shared Savings"
+          label={t('wallet.nameLabel')}
+          placeholder={t('wallet.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
          <div>
-           <label className="block text-sm font-medium text-text-secondary mb-2">Tipe Wallet</label>
+           <label className="block text-sm font-medium text-text-secondary mb-2">{t('wallet.walletType')}</label>
            <div className="grid grid-cols-2 gap-2">
              {walletTypes.map((t) => {
                const Icon = walletTypeIcon(t.icon);
@@ -119,14 +121,14 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
                onClick={() => setShowCreateType(true)}
                className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-secondary text-text-secondary hover:border-primary hover:text-primary transition-all"
              >
-               <Plus className="w-4 h-4" />
-               <span className="text-sm font-semibold">Wallet Type</span>
+                <Plus className="w-4 h-4" />
+                <span className="text-sm font-semibold">{t('wallet.typeWallet')}</span>
              </button>
            </div>
          </div>
 
         <Input
-          label="Balance"
+          label={t('wallet.balance')}
           prefix={getCurrencySymbol(currency)}
           placeholder="0"
           inputMode="numeric"
@@ -138,12 +140,12 @@ export function WalletActionSheet({ wallet, open, onClose }: WalletActionSheetPr
 
         <div className="flex gap-2">
           <Button fullWidth variant="secondary" onClick={handleSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? t('wallet.saving') : t('wallet.saveChanges')}
           </Button>
         </div>
 
         <Button fullWidth variant="danger" onClick={handleDelete} disabled={loading || !canDelete}>
-          {confirmDelete ? 'Confirm Delete Wallet' : 'Delete Wallet'}
+          {confirmDelete ? t('wallet.confirmDelete') : t('wallet.deleteWallet')}
         </Button>
       </div>
 

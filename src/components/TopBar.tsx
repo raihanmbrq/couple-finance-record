@@ -1,13 +1,15 @@
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Users, User } from 'lucide-react';
 
 export function TopBar() {
   const { household, householdMembers, isDemo } = useApp();
+  const { t } = useLanguage();
 
   const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
   const statusText = isCircle
-    ? `Circle Mode — ${household?.name ?? 'Household'}`
-    : 'Single Mode';
+    ? t('topbar.circleMode', { name: household?.name ?? 'Household' })
+    : t('topbar.singleMode');
 
    return (
      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-lg border-b border-secondary safe-top">
@@ -20,7 +22,7 @@ export function TopBar() {
            <div>
              <h2 className="font-display font-bold text-base text-text-primary leading-tight">PairFlow</h2>
              {isDemo && (
-               <span className="text-[10px] font-semibold text-warning bg-warning/10 px-1.5 py-0.5 rounded">DEMO</span>
+             <span className="text-[10px] font-semibold text-warning bg-warning/10 px-1.5 py-0.5 rounded">{t('common.demo')}</span>
              )}
            </div>
          </div>

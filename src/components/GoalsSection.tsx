@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
@@ -26,6 +27,7 @@ export function GoalsSection() {
   const { goals, wallets, saveGoal, deleteGoal, depositToGoal, profile } = useApp();
   const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   // Create / Edit form
   const [showForm, setShowForm] = useState(false);
@@ -99,7 +101,7 @@ export function GoalsSection() {
         expected_return_rate: rate,
         monthly_contribution: pmt,
       });
-      showToast(editing ? 'Goal berhasil diperbarui' : 'Goal berhasil dibuat');
+      showToast(editing ? t('goals.updated') : t('goals.created'));
       setShowForm(false);
     } finally {
       setSaving(false);
@@ -111,9 +113,9 @@ export function GoalsSection() {
     try {
       await deleteGoal(deleteGoalTarget.id);
       setDeleteGoalTarget(null);
-      showToast('Goal berhasil dihapus', 'error');
+      showToast(t('goals.deleted'), 'error');
     } catch {
-      showToast('Gagal menghapus goal');
+      showToast(t('goals.deleteFailed'));
     }
   };
 
@@ -125,12 +127,12 @@ export function GoalsSection() {
     setDepositing(true);
     try {
       await depositToGoal(goal.id, depositWallet, amt);
-      showToast('Deposit berhasil ditambahkan');
+      showToast(t('goals.depositSuccess'));
       setDepositGoal(null);
       setDepositWallet('');
       setDepositAmount('');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Deposit gagal');
+      showToast(err instanceof Error ? err.message : t('goals.depositFailed'));
     } finally {
       setDepositing(false);
     }
@@ -139,7 +141,7 @@ export function GoalsSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-display font-extrabold text-2xl text-text-primary">Set Goals</h2>
+        <h2 className="font-display font-extrabold text-2xl text-text-primary">{t('goals.title')}</h2>
         <button
           onClick={openCreate}
           className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-card hover:bg-primary-hover active:scale-95 transition-all"
@@ -151,18 +153,18 @@ export function GoalsSection() {
       <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
         <PiggyBank className="w-4 h-4 text-primary shrink-0" />
         <p className="text-xs text-text-secondary">
-          Sinking fund untuk rencana besar — tabung rutin setiap bulan hingga target tercapai.
+          {t('goals.sinkingFundDesc')}
         </p>
       </div>
 
       {goals.length === 0 ? (
         <EmptyState
           icon={<PiggyBank className="w-7 h-7" />}
-          title="Belum ada tujuan keuangan"
-          description="Buat goal seperti 'Beli Mobil' atau 'Dana Darurat', lalu deposit dana dari wallet."
+          title={t('goals.emptyTitle')}
+          description={t('goals.emptyDesc')}
           action={<Button size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4 inline mr-1" />
-            Buat Tujuan
+            {t('goals.createBtn')}
           </Button>}
         />
       ) : (
@@ -180,7 +182,7 @@ export function GoalsSection() {
                       <p className="font-semibold text-sm text-text-primary truncate">{goal.title}</p>
                       <p className="text-xs text-text-secondary">
                         {goal.asset_category}
-                        {goal.expected_return_rate ? ` • Return ${goal.expected_return_rate}%/thn` : ''}
+                        {goal.expected_return_rate ? ` • ${t('goals.returnPerYear', { rate: goal.expected_return_rate })}` : ''}
                       </p>
                     </div>
                   </div>
@@ -188,14 +190,14 @@ export function GoalsSection() {
                     <button
                       onClick={() => openEdit(goal)}
                       className="p-1.5 rounded-lg text-text-secondary hover:bg-secondary hover:text-primary transition-colors"
-                      aria-label="Edit goal"
+                      aria-label={t('goals.editAria')}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setDeleteGoalTarget(goal)}
                       className="p-1.5 rounded-lg text-text-secondary hover:bg-expense/10 hover:text-expense transition-colors"
-                      aria-label="Delete goal"
+                      aria-label={t('goals.deleteAria')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -206,7 +208,7 @@ export function GoalsSection() {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-text-secondary">
-                    {formatMoney(goal.current_amount, currency)} dari {formatMoney(goal.target_amount, currency)}
+                    {formatMoney(goal.current_amount, currency)} {t('goals.of')} {formatMoney(goal.target_amount, currency)}
                   </span>
                   <span className="text-xs font-bold text-primary">{pct}%</span>
                 </div>
@@ -214,10 +216,10 @@ export function GoalsSection() {
                 <div className="flex items-center justify-between pt-2 border-t border-secondary">
                   <div className="text-xs space-y-0.5">
                     <p className="text-text-secondary">
-                      Target {formatDateShort(goal.target_date)} • {durationLabel(monthsBetween(new Date(), new Date(goal.target_date)))}
+                      {t('goals.target')} {formatDateShort(goal.target_date)} • {durationLabel(monthsBetween(new Date(), new Date(goal.target_date)))}
                     </p>
                     <p className="text-text-secondary">
-                      Estimasi tabungan: <span className="font-semibold text-text-primary">{formatMoney(goal.monthly_contribution, currency)}/bln</span>
+                      {t('goals.estimatedSavings')} <span className="font-semibold text-text-primary">{formatMoney(goal.monthly_contribution, currency)}{t('goals.perMonth')}</span>
                     </p>
                   </div>
                   <Button
@@ -226,7 +228,7 @@ export function GoalsSection() {
                     onClick={() => { setDepositGoal(goal); setDepositWallet(''); setDepositAmount(''); }}
                   >
                     <Wallet className="w-4 h-4 inline mr-1" />
-                    Add Money
+                    {t('goals.addMoney')}
                   </Button>
                 </div>
               </Card>
@@ -236,17 +238,17 @@ export function GoalsSection() {
       )}
 
       {/* Create / Edit Goal Sheet */}
-      <Sheet open={showForm} onClose={() => setShowForm(false)} title={editing ? 'Edit Goal' : 'Create Goals'}>
+      <Sheet open={showForm} onClose={() => setShowForm(false)} title={editing ? t('goals.edit') : t('goals.create')}>
         <div className="space-y-4">
           <Input
-            label="Goals"
-            placeholder="Beli Mobil Honda HR-V"
+            label={t('goals.nameLabel')}
+            placeholder={t('goals.namePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
           />
           <Input
-            label="Jumlah Target"
+            label={t('goals.targetLabel')}
             prefix={getCurrencySymbol(currency)}
             placeholder="150.000.000"
             inputMode="numeric"
@@ -255,13 +257,13 @@ export function GoalsSection() {
             className="text-xl font-bold"
           />
           <Input
-            label="Tanggal Target"
+            label={t('goals.dateLabel')}
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
           />
           <Select
-            label="Kategori Aset"
+            label={t('goals.categoryLabel')}
             value={category}
             onChange={(e) => setCategory(e.target.value as Goal['asset_category'])}
           >
@@ -273,7 +275,7 @@ export function GoalsSection() {
           {isInvestment && (
             <>
               <Input
-                label="Ekspektasi Return Pertahun (%)"
+                label={t('goals.returnLabel')}
                 type="number"
                 inputMode="decimal"
                 min="0"
@@ -281,22 +283,22 @@ export function GoalsSection() {
                 value={returnRate}
                 onChange={(e) => setReturnRate(e.target.value)}
               />
-              <p className="text-xs text-text-secondary -mt-2">Default 5% — gunakan untuk menghitung manfaat investasi.</p>
+              <p className="text-xs text-text-secondary -mt-2">{t('goals.defaultRateHint')}</p>
             </>
           )}
 
           <div className="rounded-xl bg-secondary/60 p-4 space-y-2">
-            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Ringkasan</p>
-            <SummaryRow label="Total Target" value={formatMoney(amount, currency)} />
-            <SummaryRow label="Durasi" value={durationLabel(months)} />
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">{t('goals.summary')}</p>
+            <SummaryRow label={t('goals.totalTarget')} value={formatMoney(amount, currency)} />
+            <SummaryRow label={t('goals.duration')} value={durationLabel(months)} />
             <SummaryRow
-              label="Aset"
-              value={isInvestment ? `${categoryLabel} (Return ${rate}%/thn)` : categoryLabel}
+              label={t('goals.asset')}
+              value={isInvestment ? t('goals.assetWithReturn', { label: categoryLabel, rate }) : categoryLabel}
             />
-            <SummaryRow label="Tabungan / Bulan" value={formatMoney(pmt, currency)} highlight />
+            <SummaryRow label={t('goals.savingsPerMonth')} value={formatMoney(pmt, currency)} highlight />
             {isInvestment && rate > 0 && (
               <p className="text-xs text-income font-medium">
-                Hemat {formatMoney(pmt0 - pmt, currency)}/bln dibanding tanpa return ({formatMoney(pmt0, currency)}/bln)
+                {t('goals.savingsVsNoReturn', { amount: formatMoney(pmt0 - pmt, currency), base: formatMoney(pmt0, currency) })}
               </p>
             )}
           </div>
@@ -306,7 +308,7 @@ export function GoalsSection() {
             onClick={handleSave}
             disabled={saving || !title.trim() || !amount || !targetDate}
           >
-            {saving ? 'Menyimpan...' : editing ? 'Simpan Perubahan' : 'Create Goals'}
+            {saving ? t('goals.saving') : editing ? t('goals.saveChanges') : t('goals.create')}
           </Button>
         </div>
       </Sheet>
@@ -315,21 +317,21 @@ export function GoalsSection() {
       <Sheet
         open={!!depositGoal}
         onClose={() => setDepositGoal(null)}
-        title={depositGoal ? `Deposit: ${depositGoal.title}` : 'Deposit'}
+        title={depositGoal ? t('goals.depositTitle', { title: depositGoal.title }) : t('goals.deposit')}
       >
         <div className="space-y-4">
           <Select
-            label="Dari Wallet"
+            label={t('goals.fromWallet')}
             value={depositWallet}
             onChange={(e) => setDepositWallet(e.target.value)}
           >
-            <option value="">Pilih Wallet</option>
+            <option value="">{t('goals.selectWallet')}</option>
             {wallets.map((w) => (
               <option key={w.id} value={w.id}>{w.name} — {formatMoney(w.balance, currency)}</option>
             ))}
           </Select>
           <Input
-            label="Jumlah Deposit"
+            label={t('goals.depositAmount')}
             prefix={getCurrencySymbol(currency)}
             placeholder="500.000"
             inputMode="numeric"
@@ -343,7 +345,7 @@ export function GoalsSection() {
             onClick={handleDeposit}
             disabled={depositing || !depositWallet || !parseMoneyInput(depositAmount)}
           >
-            {depositing ? 'Memproses...' : 'Konfirmasi Deposit'}
+            {depositing ? t('goals.processing') : t('goals.confirmDeposit')}
           </Button>
         </div>
       </Sheet>
@@ -355,9 +357,9 @@ export function GoalsSection() {
               <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
                 <Trash2 className="w-6 h-6 text-expense" />
               </div>
-              <h3 className="font-display font-bold text-lg text-text-primary">Hapus Goal?</h3>
+              <h3 className="font-display font-bold text-lg text-text-primary">{t('goals.deleteGoalTitle')}</h3>
               <p className="text-sm text-text-secondary">
-                Goal "{deleteGoalTarget.title}" akan dihapus.
+                {t('goals.deleteDesc', { title: deleteGoalTarget.title })}
               </p>
             </div>
             <div className="flex gap-2">
@@ -366,14 +368,14 @@ export function GoalsSection() {
                 onClick={() => setDeleteGoalTarget(null)}
                 className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all"
               >
-                Batal
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all"
               >
-                Hapus
+                {t('common.delete')}
               </button>
             </div>
           </div>

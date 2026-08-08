@@ -10,9 +10,11 @@ import { WalletTypeSettingsSheet } from '@/components/WalletTypeSettingsSheet';
 import { CategorySettingsSheet } from '@/components/CategorySettingsSheet';
 import { CurrencySettingsSheet } from '@/components/CurrencySettingsSheet';
 import { ThemeSettingsSheet, getAppearanceLabel, getPresetLabel } from '@/components/ThemeSettingsSheet';
+import { LanguageSettingsSheet } from '@/components/LanguageSettingsSheet';
 import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { getCurrencyInfo } from '@/lib/currencies';
-import { User, Mail, Users, LogOut, Copy, Check, X, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, Palette, ChevronRight, Loader2 } from 'lucide-react';
+import { User, Mail, Users, LogOut, Copy, Check, X, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, Palette, Languages, ChevronRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 export function ProfileScreen() {
@@ -29,6 +31,7 @@ export function ProfileScreen() {
   const [showCategories, setShowCategories] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
   const [showTheme, setShowTheme] = useState(false);
+  const [showLanguage, setShowLanguage] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -39,6 +42,7 @@ export function ProfileScreen() {
   const activeCurrency = profile?.currency ?? 'IDR';
   const activeCurrencyInfo = getCurrencyInfo(activeCurrency);
   const { appearanceMode, colorPreset } = useTheme();
+  const { language, t } = useLanguage();
 
   const handleCopy = () => {
     if (household?.invite_code) {
@@ -50,7 +54,7 @@ export function ProfileScreen() {
 
   const handleJoin = async () => {
     if (inviteCode.trim().length !== 6) {
-      setJoinError('Invite code must be 6 characters');
+      setJoinError(t('onboard.inviteInvalid'));
       return;
     }
 
@@ -59,14 +63,14 @@ export function ProfileScreen() {
     try {
       await joinHousehold(inviteCode.trim());
       setInviteCode('');
-      showToast('Berhasil bergabung ke circle.');
+      showToast(t('toast.joined'));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Permintaan gagal. Periksa koneksi Anda.';
+      const message = err instanceof Error ? err.message : t('toast.error');
       const normalizedMessage = message.includes('Circle ini sudah mencapai batas maksimal 10 anggota')
-        ? 'Circle ini sudah mencapai batas maksimal 10 anggota.'
+        ? t('profile.joinFull')
         : message.includes('Kode undangan tidak ditemukan')
-          ? 'Kode undangan tidak ditemukan. Periksa kembali 6 digit kode Anda.'
-          : 'Permintaan gagal. Periksa koneksi Anda.';
+          ? t('profile.joinNotFound')
+          : t('toast.error');
       setJoinError(normalizedMessage);
       showToast(normalizedMessage, 'error');
     } finally {
@@ -77,15 +81,15 @@ export function ProfileScreen() {
   const handleLeave = async () => {
     try {
       await leaveHousehold();
-      showToast('Anda keluar dari circle.');
+      showToast(t('toast.left'));
     } catch {
-      showToast('Permintaan gagal. Periksa koneksi Anda.', 'error');
+      showToast(t('toast.error'), 'error');
     }
   };
 
   const handleAvatarFileSelected = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      showToast('File harus berupa gambar.', 'error');
+      showToast(t('profile.avatarNotImage'), 'error');
       return;
     }
     setCropSource(URL.createObjectURL(file));
@@ -97,9 +101,9 @@ export function ProfileScreen() {
     try {
       await updateAvatar(file);
       setShowCrop(false);
-      showToast('Foto profil berhasil diperbarui!');
+      showToast(t('profile.avatarUpdated'));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Upload gagal. Periksa koneksi Anda.';
+      const message = err instanceof Error ? err.message : t('profile.avatarUploadFailed');
       showToast(message, 'error');
     } finally {
       setUploadingAvatar(false);
@@ -115,7 +119,7 @@ export function ProfileScreen() {
     if (!profile || !editingName) return;
     const trimmed = nameDraft.trim();
     if (!trimmed) {
-      showToast('Nama tidak boleh kosong.', 'error');
+      showToast(t('profile.nameEmpty'), 'error');
       return;
     }
     if (trimmed === profile.full_name) {
@@ -126,9 +130,9 @@ export function ProfileScreen() {
     try {
       await updateProfile({ full_name: trimmed });
       setEditingName(false);
-      showToast('Nama berhasil diperbarui.');
+      showToast(t('profile.nameUpdated'));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Gagal memperbarui nama.';
+      const message = err instanceof Error ? err.message : t('profile.nameUpdateFailed');
       showToast(message, 'error');
     } finally {
       setSavingName(false);
@@ -137,7 +141,7 @@ export function ProfileScreen() {
 
   return (
     <div className="px-5 py-5 space-y-5">
-      <h1 className="font-display font-extrabold text-2xl text-text-primary">Profile</h1>
+      <h1 className="font-display font-extrabold text-2xl text-text-primary">{t('profile.title')}</h1>
 
       {/* Profile Card */}
       <Card elevated className="p-5">
@@ -147,11 +151,11 @@ export function ProfileScreen() {
             onClick={() => setShowAvatarAction(true)}
             disabled={uploadingAvatar}
             className="relative shrink-0 disabled:opacity-60"
-            aria-label="Opsi foto profil"
+            aria-label={t('profile.avatarOptions')}
           >
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-display font-bold text-2xl overflow-hidden">
               {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Foto profil" className="w-full h-full object-cover" />
+                <img src={profile.avatar_url} alt={t('profile.avatarAlt')} className="w-full h-full object-cover" />
               ) : (
                 profile?.full_name?.charAt(0).toUpperCase() ?? 'U'
               )}
@@ -191,7 +195,7 @@ export function ProfileScreen() {
                 onClick={saveName}
                 disabled={savingName}
                 className="p-2 rounded-xl bg-primary/10 text-primary disabled:opacity-50"
-                aria-label="Simpan nama"
+                aria-label={t('profile.saveName')}
               >
                 {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               </button>
@@ -200,7 +204,7 @@ export function ProfileScreen() {
                 onClick={() => setEditingName(false)}
                 disabled={savingName}
                 className="p-2 rounded-xl bg-secondary text-text-secondary disabled:opacity-50"
-                aria-label="Batal ubah nama"
+                aria-label={t('profile.cancelEditName')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -210,7 +214,7 @@ export function ProfileScreen() {
               type="button"
               onClick={startEditName}
               className="p-2 rounded-xl bg-secondary text-text-secondary"
-              aria-label="Ubah nama"
+              aria-label={t('profile.editName')}
             >
               <Pencil className="w-4 h-4" />
             </button>
@@ -224,13 +228,13 @@ export function ProfileScreen() {
               {isCircle ? <Users className="w-5 h-5 text-warning" /> : <User className="w-5 h-5 text-primary" />}
             </div>
             <div className="flex-1">
-              <p className="text-xs text-text-secondary">Mode</p>
+              <p className="text-xs text-text-secondary">{t('profile.mode')}</p>
               <p className="font-semibold text-sm text-text-primary">
-                {isCircle ? `Circle Mode — ${household?.name}` : 'Single Mode'}
+                {isCircle ? t('topbar.circleMode', { name: household?.name ?? '' }) : t('topbar.singleMode')}
               </p>
             </div>
             {isCircle && (
-              <Badge color="primary">Connected</Badge>
+              <Badge color="primary">{t('profile.connected')}</Badge>
             )}
           </div>
         </div>
@@ -242,14 +246,14 @@ export function ProfileScreen() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-5 h-5 text-primary" />
-              <h3 className="font-display font-bold text-text-primary">Shared Space Invite</h3>
+              <h3 className="font-display font-bold text-text-primary">{t('profile.inviteTitle')}</h3>
             </div>
-            <p className="text-sm text-text-secondary">Share this code with your partner to join the same circle.</p>
+            <p className="text-sm text-text-secondary">{t('profile.inviteDesc')}</p>
           </div>
 
           {!showInviteCode ? (
             <Button fullWidth onClick={() => setShowInviteCode(true)}>
-              Show Invitation Code
+              {t('profile.inviteBtn')}
             </Button>
           ) : (
             <div className="flex items-center gap-3">
@@ -270,8 +274,8 @@ export function ProfileScreen() {
           {!isCircle && (
             <div className="space-y-3 pt-2 border-t border-secondary">
               <Input
-                label="Join with invitation code"
-                placeholder="6-Invitation Code"
+                label={t('profile.joinCodeLabel')}
+                placeholder={t('profile.joinCodePlaceholder')}
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 maxLength={6}
@@ -279,7 +283,7 @@ export function ProfileScreen() {
               />
               {joinError && <p className="text-sm text-expense">{joinError}</p>}
               <Button fullWidth onClick={handleJoin} disabled={joining}>
-                {joining ? 'Joining...' : 'Join Circle'}
+                {joining ? t('profile.joining') : t('profile.joinCircle')}
               </Button>
             </div>
           )}
@@ -289,7 +293,7 @@ export function ProfileScreen() {
       {householdMembers.length > 0 && (
         <Card className="p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-display font-bold text-text-primary">Circle Members</h3>
+            <h3 className="font-display font-bold text-text-primary">{t('profile.members')}</h3>
             <Badge color="primary">{householdMembers.length}/10</Badge>
           </div>
           <div className="space-y-3">
@@ -312,7 +316,7 @@ export function ProfileScreen() {
           </div>
           {isCircle && (
             <Button variant="danger" fullWidth onClick={handleLeave}>
-              Leave Circle
+              {t('profile.leaveCircle')}
             </Button>
           )}
         </Card>
@@ -349,8 +353,8 @@ export function ProfileScreen() {
           <div className="flex items-center gap-2.5">
             <Sparkles className="w-5 h-5 text-warning" />
             <div>
-              <p className="font-semibold text-sm text-warning">Demo Mode Active</p>
-              <p className="text-xs text-text-secondary">You're exploring with sample data. Sign out to use real auth.</p>
+              <p className="font-semibold text-sm text-warning">{t('profile.demoActive')}</p>
+              <p className="text-xs text-text-secondary">{t('profile.demoDesc')}</p>
             </div>
           </div>
         </Card>
@@ -367,8 +371,8 @@ export function ProfileScreen() {
             <Settings2 className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-sm text-text-primary">Kelola Tipe Wallet</p>
-            <p className="text-xs text-text-secondary">Tambah, ubah, atau hapus tipe wallet kustom</p>
+            <p className="font-semibold text-sm text-text-primary">{t('profile.manageWalletTypes')}</p>
+            <p className="text-xs text-text-secondary">{t('profile.manageWalletTypesDesc')}</p>
           </div>
         </button>
       </Card>
@@ -384,8 +388,8 @@ export function ProfileScreen() {
             <Receipt className="w-5 h-5 text-warning" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-sm text-text-primary">Kelola Kategori Transaksi</p>
-            <p className="text-xs text-text-secondary">Tambah, ubah, atau hapus kategori transaksi kustom</p>
+            <p className="font-semibold text-sm text-text-primary">{t('profile.manageCategories')}</p>
+            <p className="text-xs text-text-secondary">{t('profile.manageCategoriesDesc')}</p>
           </div>
         </button>
       </Card>
@@ -401,8 +405,8 @@ export function ProfileScreen() {
             <Coins className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-sm text-text-primary">Mata Uang / Currency</p>
-            <p className="text-xs text-text-secondary">Atur mata uang untuk menampilkan nominal</p>
+            <p className="font-semibold text-sm text-text-primary">{t('currency.manage')}</p>
+            <p className="text-xs text-text-secondary">{t('currency.desc')}</p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <span className="text-sm font-semibold text-text-primary">
@@ -424,12 +428,35 @@ export function ProfileScreen() {
             <Palette className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-sm text-text-primary">Tema Aplikasi / App Theme</p>
-            <p className="text-xs text-text-secondary">Pilih tampilan warna aplikasi</p>
+            <p className="font-semibold text-sm text-text-primary">{t('theme.manage')}</p>
+            <p className="text-xs text-text-secondary">{t('theme.desc')}</p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <span className="text-sm font-semibold text-text-primary">
-              {getAppearanceLabel(appearanceMode)} · {getPresetLabel(colorPreset)}
+              {t(getAppearanceLabel(appearanceMode))} · {t(getPresetLabel(colorPreset))}
+            </span>
+            <ChevronRight className="w-4 h-4 text-text-secondary" />
+          </div>
+        </button>
+      </Card>
+
+      {/* Language Settings */}
+      <Card className="p-4">
+        <button
+          type="button"
+          onClick={() => setShowLanguage(true)}
+          className="w-full flex items-center gap-3 text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Languages className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm text-text-primary">{t('language.manage')}</p>
+            <p className="text-xs text-text-secondary">{t('language.desc')}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-sm font-semibold text-text-primary">
+              {t(language === 'id' ? 'language.id' : 'language.en')}
             </span>
             <ChevronRight className="w-4 h-4 text-text-secondary" />
           </div>
@@ -439,7 +466,7 @@ export function ProfileScreen() {
       {/* Sign Out */}
       <Button variant="danger" fullWidth onClick={signOut}>
         <LogOut className="w-5 h-5 inline mr-2" />
-        Sign Out
+        {t('profile.signOut')}
       </Button>
 
       <AvatarActionSheet
@@ -468,13 +495,13 @@ export function ProfileScreen() {
             type="button"
             onClick={() => setShowAvatarView(false)}
             className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-            aria-label="Tutup"
+            aria-label={t('profile.close')}
           >
             <X className="w-5 h-5" />
           </button>
           <img
             src={profile.avatar_url}
-            alt="Foto profil"
+            alt={t('profile.avatarAlt')}
             className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
@@ -484,6 +511,7 @@ export function ProfileScreen() {
       <CategorySettingsSheet open={showCategories} onClose={() => setShowCategories(false)} />
       <CurrencySettingsSheet open={showCurrency} onClose={() => setShowCurrency(false)} />
       <ThemeSettingsSheet open={showTheme} onClose={() => setShowTheme(false)} />
+      <LanguageSettingsSheet open={showLanguage} onClose={() => setShowLanguage(false)} />
     </div>
   );
 }

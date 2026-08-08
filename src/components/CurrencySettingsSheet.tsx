@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/context/ToastContext';
 import { CURRENCIES, getCurrencyInfo } from '@/lib/currencies';
@@ -12,6 +13,7 @@ interface CurrencySettingsSheetProps {
 
 export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetProps) {
   const { profile, updateCurrency } = useApp();
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
@@ -37,17 +39,17 @@ export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetPr
     setSaving(true);
     try {
       await updateCurrency(code);
-      showToast('Mata uang berhasil diperbarui!');
+      showToast(t('currency.updatedToast'));
       onClose();
     } catch {
-      showToast('Gagal memperbarui mata uang. Coba lagi.', 'error');
+      showToast(t('currency.failedToast'), 'error');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Pilih Mata Uang">
+    <Sheet open={open} onClose={onClose} title={t('currency.title')}>
       <div className="flex flex-col h-full max-h-[70vh]">
         {/* Sticky Search Bar */}
         <div className="sticky top-0 z-10 -mx-5 px-5 pt-2 pb-3 bg-surface border-b border-secondary">
@@ -56,7 +58,7 @@ export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetPr
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari kode atau nama mata uang..."
+              placeholder={t('currency.searchPlaceholder')}
               className="input-field pl-11"
             />
           </div>
@@ -66,7 +68,7 @@ export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetPr
         <div className="flex-1 overflow-y-auto no-scrollbar -mx-5 px-5 py-3 space-y-1">
           {filteredCurrencies.length === 0 ? (
             <p className="text-sm text-text-secondary text-center py-8">
-              Mata uang tidak ditemukan.
+              {t('currency.notFound')}
             </p>
           ) : (
             filteredCurrencies.map((c) => {
@@ -104,7 +106,7 @@ export function CurrencySettingsSheet({ open, onClose }: CurrencySettingsSheetPr
 
         <div className="pt-3 -mx-5 px-5 border-t border-secondary">
           <p className="text-xs text-text-secondary">
-            Mata uang aktif: <span className="font-semibold text-text-primary">{activeCode} ({getCurrencyInfo(activeCode).symbol})</span>
+            {t('currency.active')}: <span className="font-semibold text-text-primary">{activeCode} ({getCurrencyInfo(activeCode).symbol})</span>
           </p>
         </div>
       </div>

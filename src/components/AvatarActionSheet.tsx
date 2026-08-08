@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Eye, ImagePlus } from 'lucide-react';
 
@@ -11,6 +12,7 @@ interface AvatarActionSheetProps {
 }
 
 export function AvatarActionSheet({ open, onClose, hasAvatar, onView, onFileSelected }: AvatarActionSheetProps) {
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,7 +23,7 @@ export function AvatarActionSheet({ open, onClose, hasAvatar, onView, onFileSele
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Foto Profil">
+    <Sheet open={open} onClose={onClose} title={t('avatar.title')}>
       <div className="space-y-2">
         {hasAvatar && (
           <button
@@ -36,8 +38,8 @@ export function AvatarActionSheet({ open, onClose, hasAvatar, onView, onFileSele
               <Eye className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm text-text-primary">Lihat Foto Profil</p>
-              <p className="text-xs text-text-secondary">Tampilkan foto profil secara penuh</p>
+              <p className="font-semibold text-sm text-text-primary">{t('avatar.viewPhoto')}</p>
+              <p className="text-xs text-text-secondary">{t('avatar.viewPhotoDesc')}</p>
             </div>
           </button>
         )}
@@ -50,8 +52,8 @@ export function AvatarActionSheet({ open, onClose, hasAvatar, onView, onFileSele
             <ImagePlus className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-sm text-text-primary">Ganti Foto Profil</p>
-            <p className="text-xs text-text-secondary">Pilih gambar dari perangkat, lalu atur crop</p>
+            <p className="font-semibold text-sm text-text-primary">{t('avatar.changePhoto')}</p>
+            <p className="text-xs text-text-secondary">{t('avatar.changePhotoDesc')}</p>
           </div>
         </button>
         <input

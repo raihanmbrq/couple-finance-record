@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import type { AppearanceMode, ColorPreset } from '@/lib/types';
 import { ToastProvider } from '@/context/ToastContext';
 import { Toaster } from '@/components/ui/Toaster';
@@ -79,15 +80,25 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function BridgeWithLang() {
+  const { profile } = useApp();
+
   return (
-    <ToastProvider>
-      <AppProvider>
+    <LanguageProvider userLanguage={profile?.language}>
+      <ToastProvider>
         <ThemeProvider>
           <AppContent />
           <Toaster />
         </ThemeProvider>
-      </AppProvider>
-    </ToastProvider>
+      </ToastProvider>
+    </LanguageProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <BridgeWithLang />
+    </AppProvider>
   );
 }

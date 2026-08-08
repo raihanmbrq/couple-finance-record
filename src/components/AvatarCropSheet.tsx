@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Cropper, { type Area } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
@@ -86,6 +87,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area, rotation = 0): P
 }
 
 export function AvatarCropSheet({ open, onClose, imageSrc, onSave }: AvatarCropSheetProps) {
+  const { t } = useLanguage();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -113,14 +115,14 @@ export function AvatarCropSheet({ open, onClose, imageSrc, onSave }: AvatarCropS
       const file = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
       await onSave(file);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan foto profil.');
+      setError(err instanceof Error ? err.message : t('avatar.cropFailed'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Atur Crop Foto">
+    <Sheet open={open} onClose={onClose} title={t('avatar.cropTitle')}>
       <div className="space-y-4">
         <div className="relative h-72 rounded-2xl overflow-hidden bg-black">
           {imageSrc && (
@@ -142,7 +144,7 @@ export function AvatarCropSheet({ open, onClose, imageSrc, onSave }: AvatarCropS
 
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-text-secondary w-12 shrink-0">Zoom</span>
+            <span className="text-xs font-medium text-text-secondary w-12 shrink-0">{t('common.zoom')}</span>
             <input
               type="range"
               min={1}
@@ -154,7 +156,7 @@ export function AvatarCropSheet({ open, onClose, imageSrc, onSave }: AvatarCropS
             />
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-text-secondary w-12 shrink-0">Rotate</span>
+            <span className="text-xs font-medium text-text-secondary w-12 shrink-0">{t('common.rotate')}</span>
             <input
               type="range"
               min={0}
@@ -174,10 +176,10 @@ export function AvatarCropSheet({ open, onClose, imageSrc, onSave }: AvatarCropS
           {saving ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Menyimpan...
+              {t('avatar.saving')}
             </span>
           ) : (
-            'Simpan Foto Profil'
+            t('avatar.savePhoto')
           )}
         </Button>
       </div>

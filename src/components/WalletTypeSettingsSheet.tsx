@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,6 +16,7 @@ interface WalletTypeSettingsSheetProps {
 
 export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsSheetProps) {
   const { walletTypes, updateWalletType, deleteWalletType } = useApp();
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -22,7 +24,7 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const customTypes = walletTypes.filter((t) => !t.is_system);
+  const customTypes = walletTypes.filter((wt) => !wt.is_system);
 
   const startEdit = (id: string, name: string, icon: string) => {
     setEditingId(id);
@@ -38,7 +40,7 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
 
   const saveEdit = async (id: string) => {
     if (!editName.trim()) {
-      setError('Nama tipe wallet wajib diisi');
+      setError(t('wallet.typeNameRequired'));
       return;
     }
     setError('');
@@ -48,10 +50,10 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
       if (editIcon) updates.icon = editIcon;
       await updateWalletType(id, updates);
       setEditingId(null);
-      showToast('Tipe wallet berhasil diperbarui');
+      showToast(t('wallet.typeUpdatedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg || 'Gagal memperbarui tipe wallet');
+      setError(msg || t('wallet.typeFailedUpdate'));
     } finally {
       setSaving(false);
     }
@@ -60,40 +62,40 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
   const handleDelete = async (id: string) => {
     try {
       await deleteWalletType(id);
-      showToast('Tipe wallet berhasil dihapus');
+      showToast(t('wallet.typeDeletedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg || 'Gagal menghapus tipe wallet');
+      setError(msg || t('wallet.typeFailedDelete'));
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Kelola Tipe Wallet">
+    <Sheet open={open} onClose={onClose} title={t('wallet.manageTypesTitle')}>
       <div className="space-y-4">
         {customTypes.length === 0 && (
           <p className="text-sm text-text-secondary text-center py-6">
-            Belum ada tipe wallet kustom. Buat lewat form tambah/edit wallet.
+            {t('wallet.noCustomTypes')}
           </p>
         )}
 
-        {customTypes.map((t) => {
-          const Icon = WALLET_ICON_MAP[t.icon] ?? WALLET_ICON_MAP.Wallet;
+        {customTypes.map((wt) => {
+          const Icon = WALLET_ICON_MAP[wt.icon] ?? WALLET_ICON_MAP.Wallet;
           return (
             <div
-              key={t.id}
-              className={editingId === t.id ? 'space-y-3' : 'p-3 rounded-xl border border-secondary bg-secondary space-y-3'}
+              key={wt.id}
+              className={editingId === wt.id ? 'space-y-3' : 'p-3 rounded-xl border border-secondary bg-secondary space-y-3'}
             >
-              {editingId === t.id ? (
+              {editingId === wt.id ? (
                 <div className="space-y-5">
                   <Input
-                    label="Nama Tipe Wallet"
-                    placeholder="misal Dana Darurat, Voucher"
+                    label={t('wallet.typeNameLabel')}
+                    placeholder={t('wallet.typeNamePlaceholder')}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                   />
 
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">Pilih Ikon</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">{t('cat.iconLabel')}</label>
                     <div className="grid grid-cols-4 gap-2">
                       {ICON_OPTIONS.map(({ name: iconName, icon: IconOption }) => {
                         const isActive = editIcon === iconName;
@@ -117,29 +119,29 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
 
                   {error && <p className="text-sm text-expense">{error}</p>}
 
-                  <Button fullWidth onClick={() => saveEdit(t.id)} disabled={saving}>
-                    {saving ? 'Menyimpan...' : 'Simpan Tipe Wallet'}
+                  <Button fullWidth onClick={() => saveEdit(wt.id)} disabled={saving}>
+                    {saving ? t('wallet.saving') : t('wallet.saveType')}
                   </Button>
                   <Button fullWidth variant="secondary" onClick={cancelEdit}>
-                    Batal
+                    {t('common.cancel')}
                   </Button>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-3">
                     <Icon className="w-5 h-5 text-white shrink-0" />
-                    <span className="flex-1 text-sm font-medium text-text-primary">{t.name}</span>
+                    <span className="flex-1 text-sm font-medium text-text-primary">{wt.name}</span>
                     <button
-                      onClick={() => startEdit(t.id, t.name, t.icon)}
+                      onClick={() => startEdit(wt.id, wt.name, wt.icon)}
                       className="p-2 rounded-lg text-text-secondary hover:bg-secondary-hover"
-                      aria-label="Ubah"
+                      aria-label={t('wallet.editType')}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => handleDelete(wt.id)}
                       className="p-2 rounded-lg text-expense hover:bg-expense/10"
-                      aria-label="Hapus"
+                      aria-label={t('common.delete')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -151,7 +153,7 @@ export function WalletTypeSettingsSheet({ open, onClose }: WalletTypeSettingsShe
         })}
 
         <Button fullWidth variant="secondary" onClick={onClose}>
-          Tutup
+          {t('common.close')}
         </Button>
       </div>
     </Sheet>

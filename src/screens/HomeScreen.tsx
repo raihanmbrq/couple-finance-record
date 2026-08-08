@@ -1,4 +1,5 @@
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Card } from '@/components/ui/Card';
 import { formatMoney, formatMoneyShort, formatRelative } from '@/lib/format';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
@@ -17,11 +18,12 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 function SliderArrow({ position, disabled, onClick }: { position: 'left' | 'right'; disabled: boolean; onClick: () => void }) {
+  const { t } = useLanguage();
   const Icon = position === 'left' ? ChevronLeft : ChevronRight;
   return (
     <button
       type="button"
-      aria-label={position === 'left' ? 'Lihat slide sebelumnya' : 'Lihat slide berikutnya'}
+      aria-label={position === 'left' ? t('home.prevSlide') : t('home.nextSlide')}
       disabled={disabled}
       onClick={onClick}
       className={`hidden sm:flex absolute top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-white border border-secondary shadow-card text-text-primary disabled:opacity-40 disabled:pointer-events-none ${position === 'left' ? '-left-3' : '-right-3'}`}
@@ -32,6 +34,7 @@ function SliderArrow({ position, disabled, onClick }: { position: 'left' | 'righ
 }
 
 function SliderDots({ count, active, onSelect }: { count: number; active: number; onSelect: (i: number) => void }) {
+  const { t } = useLanguage();
   if (count <= 1) return null;
   return (
     <div className="flex justify-center gap-1.5 pt-3">
@@ -39,7 +42,7 @@ function SliderDots({ count, active, onSelect }: { count: number; active: number
         <button
           key={i}
           type="button"
-          aria-label={`Ke slide ${i + 1}`}
+          aria-label={t('home.goToSlide', { n: i + 1 })}
           onClick={() => onSelect(i)}
           className={`h-2 rounded-full transition-all duration-300 ${i === active ? 'w-5 bg-primary' : 'w-2 bg-secondary'}`}
         />
@@ -49,6 +52,7 @@ function SliderDots({ count, active, onSelect }: { count: number; active: number
 }
 
 function AddWalletCard({ onClick }: { onClick: () => void }) {
+  const { t } = useLanguage();
   return (
     <button
       type="button"
@@ -58,7 +62,7 @@ function AddWalletCard({ onClick }: { onClick: () => void }) {
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
         <Plus className="w-5 h-5 text-primary" />
       </div>
-      <p className="text-xs font-semibold">Add New Wallet</p>
+      <p className="text-xs font-semibold">{t('home.addNewWallet')}</p>
     </button>
   );
 }
@@ -69,7 +73,7 @@ export function HomeScreen() {
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
-  const [timeFilter, setTimeFilter] = useState<'1 Bulan Penuh' | 'Last 30 Days' | 'Last 7 Days' | 'Todays'>('1 Bulan Penuh');
+  const [timeFilter, setTimeFilter] = useState<'fullMonth' | 'last30Days' | 'last7Days' | 'today'>('fullMonth');
   const now = new Date();
   
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -84,7 +88,8 @@ export function HomeScreen() {
   const walletRef = useRef<HTMLDivElement>(null);
 
   const selectedMonthDate = new Date(`${selectedMonth}-01T00:00:00`);
-  const monthName = selectedMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const { t, language } = useLanguage();
+  const monthName = selectedMonthDate.toLocaleString(language === 'id' ? 'id-ID' : 'en-US', { month: 'long', year: 'numeric' });
 
   const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
 
@@ -128,7 +133,7 @@ export function HomeScreen() {
           const expenseStr = formatMoneyShort(monthExpenseFor(member.user_id), currency);
           return {
             key: member.user_id,
-            label: isMe ? 'My Total Balance' : memberName(member),
+            label: isMe ? t('home.myTotalBalance') : memberName(member),
             balance,
             incomeStr,
             expenseStr,
@@ -136,7 +141,7 @@ export function HomeScreen() {
         })
       : [{
           key: profile?.id ?? 'me',
-          label: 'My Total Balance',
+          label: t('home.myTotalBalance'),
           balance: totalBalance,
           incomeStr: formatMoneyShort(allIncome, currency),
           expenseStr: formatMoneyShort(allExpense, currency),
@@ -146,7 +151,7 @@ export function HomeScreen() {
   const walletSlides =
     sortedMemberWalletGroups.length > 0
       ? sortedMemberWalletGroups.flatMap(({ member, wallets: memberWallets }) => {
-          const baseLabel = member.user_id === profile?.id ? 'Dompet Saya' : `Dompet ${memberName(member)}`;
+          const baseLabel = member.user_id === profile?.id ? t('home.myWallets') : t('home.theirWallets', { name: memberName(member) });
           const isMe = member.user_id === profile?.id;
           if (memberWallets.length === 0) {
             return [{ key: member.user_id, label: baseLabel, wallets: memberWallets, empty: true, showAddCard: isMe }];
@@ -163,12 +168,12 @@ export function HomeScreen() {
       : myWalletChunks.length > 0
         ? myWalletChunks.map((cw, i) => ({
             key: `me-${i}`,
-            label: myWalletChunks.length > 1 ? `Dompet Saya (${i + 1}/${myWalletChunks.length})` : 'Dompet Saya',
+            label: myWalletChunks.length > 1 ? `${t('home.myWallets')} (${i + 1}/${myWalletChunks.length})` : t('home.myWallets'),
             wallets: cw,
             empty: false,
             showAddCard: i === myWalletChunks.length - 1,
           }))
-        : [{ key: 'me-empty', label: 'Dompet Saya', wallets: [], empty: true, showAddCard: true }];
+        : [{ key: 'me-empty', label: t('home.myWallets'), wallets: [], empty: true, showAddCard: true }];
 
   const scrollBalanceTo = (idx: number) => {
     const el = balanceRef.current;
@@ -191,17 +196,17 @@ export function HomeScreen() {
     if (t.category === 'transfer') return false;
     const txDate = new Date(t.transaction_date || t.created_at);
     
-    if (timeFilter === '1 Bulan Penuh') {
+    if (timeFilter === 'fullMonth') {
       return txDate.getMonth() === selectedMonthDate.getMonth() && txDate.getFullYear() === selectedMonthDate.getFullYear();
-    } else if (timeFilter === 'Last 30 Days') {
+    } else if (timeFilter === 'last30Days') {
       const diffTime = now.getTime() - txDate.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays >= 0 && diffDays <= 30;
-    } else if (timeFilter === 'Last 7 Days') {
+    } else if (timeFilter === 'last7Days') {
       const diffTime = now.getTime() - txDate.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays >= 0 && diffDays <= 7;
-    } else if (timeFilter === 'Todays') {
+    } else if (timeFilter === 'today') {
       return txDate.getDate() === now.getDate() && txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
     }
     return false;
@@ -241,21 +246,21 @@ export function HomeScreen() {
                 <Card elevated className="bg-total-balance border-0 text-white p-5">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-text-secondary-dark text-sm font-medium">{slide.label}</span>
-                    {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">DEMO</span>}
+                    {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">{t('common.demo')}</span>}
                   </div>
                   <p className="font-display font-extrabold text-3xl mb-4">{formatMoney(slide.balance, currency)}</p>
                   <div className="flex gap-3">
                     <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <ArrowUpRight className="w-4 h-4 text-income-dark shrink-0" />
-                        <span className="text-xs text-text-secondary-dark truncate">Income</span>
+                        <span className="text-xs text-text-secondary-dark truncate">{t('home.income')}</span>
                       </div>
                       <p className={`font-bold truncate ${slide.incomeStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{slide.incomeStr}</p>
                     </div>
                     <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <ArrowDownRight className="w-4 h-4 text-expense-dark shrink-0" />
-                        <span className="text-xs text-text-secondary-dark truncate">Expense</span>
+                        <span className="text-xs text-text-secondary-dark truncate">{t('home.expense')}</span>
                       </div>
                       <p className={`font-bold truncate ${slide.expenseStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{slide.expenseStr}</p>
                     </div>
@@ -277,7 +282,7 @@ export function HomeScreen() {
       {/* Wallets Slider */}
       <div>
         <div className="mb-3">
-          <h3 className="font-display font-bold text-text-primary">My Wallets</h3>
+          <h3 className="font-display font-bold text-text-primary">{t('home.myWallets')}</h3>
         </div>
         <div className="relative">
           <div
@@ -341,9 +346,9 @@ export function HomeScreen() {
       {/* Expense Breakdown */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-bold text-text-primary">Expense Breakdown</h3>
+          <h3 className="font-display font-bold text-text-primary">{t('home.expenseBreakdown')}</h3>
           <div className="flex items-center gap-2">
-            {timeFilter === '1 Bulan Penuh' && (
+            {timeFilter === 'fullMonth' && (
               <div className="relative w-8 h-8 flex items-center justify-center bg-secondary border border-secondary rounded-lg hover:border-primary/50 transition-colors">
                 <Calendar className="w-4 h-4 text-text-secondary" />
                 <input
@@ -360,10 +365,10 @@ export function HomeScreen() {
                 onChange={(e) => setTimeFilter(e.target.value as typeof timeFilter)}
                 className="appearance-none bg-secondary border border-secondary text-text-secondary text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
               >
-                <option value="1 Bulan Penuh">{monthName}</option>
-                <option value="Last 30 Days">Last 30 Days</option>
-                <option value="Last 7 Days">Last 7 Days</option>
-                <option value="Todays">Todays</option>
+                <option value="fullMonth">{monthName}</option>
+                <option value="last30Days">{t('home.last30Days')}</option>
+                <option value="last7Days">{t('home.last7Days')}</option>
+                <option value="today">{t('home.today')}</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-text-secondary absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -371,7 +376,7 @@ export function HomeScreen() {
         </div>
         <Card className="p-1">
           {breakdownData.length === 0 ? (
-            <p className="text-sm text-text-secondary text-center py-6">No expenses for this period</p>
+            <p className="text-sm text-text-secondary text-center py-6">{t('home.noExpenses')}</p>
           ) : (
             <div className="divide-y divide-secondary">
               {breakdownData.map((item) => {
@@ -415,10 +420,10 @@ export function HomeScreen() {
 
       {/* Recent Activity */}
       <div>
-        <h3 className="font-display font-bold text-text-primary mb-3">Recent Activity</h3>
+        <h3 className="font-display font-bold text-text-primary mb-3">{t('home.recentActivity')}</h3>
         <Card className="divide-y divide-secondary">
           {recentTx.length === 0 ? (
-            <p className="text-sm text-text-secondary text-center py-6">No transactions yet</p>
+            <p className="text-sm text-text-secondary text-center py-6">{t('home.noTransactions')}</p>
           ) : (
             recentTx.map((tx) => {
               const cat = getCategory(tx.category);

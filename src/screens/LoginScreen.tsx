@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Wallet, Mail, Lock, User, Sparkles, ArrowRight } from 'lucide-react';
 
 export function LoginScreen() {
+  const { t } = useLanguage();
   const { signIn, signUp, enterDemo, loading, error } = useApp();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -16,11 +18,11 @@ export function LoginScreen() {
     e.preventDefault();
     setLocalError('');
     if (!email || !password) {
-      setLocalError('Please fill in all fields');
+      setLocalError(t('login.fillAll'));
       return;
     }
     if (isSignUp && !fullName) {
-      setLocalError('Please enter your name');
+      setLocalError(t('login.enterName'));
       return;
     }
     try {
@@ -44,7 +46,7 @@ export function LoginScreen() {
            <Wallet className="w-10 h-10 text-white" strokeWidth={2.5} />
          </div>
          <h1 className="font-display font-extrabold text-3xl text-text-primary mb-1">PairFlow</h1>
-         <p className="text-sm text-text-secondary">Track finances together, effortlessly</p>
+          <p className="text-sm text-text-secondary">{t('login.tagline')}</p>
        </div>
  
        {/* Form Card */}
@@ -54,34 +56,34 @@ export function LoginScreen() {
              onClick={() => setIsSignUp(false)}
              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${!isSignUp ? 'bg-surface text-primary shadow-soft' : 'text-text-secondary'}`}
            >
-             Sign In
+              {t('login.signIn')}
            </button>
            <button
              onClick={() => setIsSignUp(true)}
              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${isSignUp ? 'bg-surface text-primary shadow-soft' : 'text-text-secondary'}`}
            >
-             Sign Up
+              {t('login.signUp')}
            </button>
          </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <Input
-              label="Full Name"
-              placeholder="Andi Pratama"
+              label={t('login.fullName')}
+              placeholder={t('login.namePlaceholder')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
           )}
           <Input
-            label="Email"
+            label={t('login.email')}
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('login.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           <Input
-            label="Password"
+            label={t('login.password')}
             type="password"
             placeholder="••••••••"
             value={password}
@@ -95,7 +97,7 @@ export function LoginScreen() {
            )}
 
           <Button type="submit" fullWidth disabled={loading}>
-            {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+            {loading ? t('login.pleaseWait') : isSignUp ? t('login.createAccount') : t('login.signIn')}
           </Button>
         </form>
 
@@ -107,12 +109,12 @@ export function LoginScreen() {
          className="mt-6 mx-auto flex items-center gap-2 px-5 py-3 rounded-xl text-primary font-semibold border-2 border-primary/30 border-dashed hover:bg-primary/10 active:bg-primary/20 transition-colors"
        >
          <Sparkles className="w-5 h-5" />
-         Try Demo Mode
+          {t('login.tryDemo')}
          <ArrowRight className="w-4 h-4" />
        </button>
  
        <p className="text-center text-xs text-text-secondary/80 mt-6">
-         By continuing you agree to our Terms & Privacy Policy
+          {t('login.terms')}
        </p>
     </div>
   );

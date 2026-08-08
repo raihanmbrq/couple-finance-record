@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,20 +14,15 @@ interface CategorySettingsSheetProps {
   onClose: () => void;
 }
 
-const TYPE_LABELS: Record<TransactionCategoryType, string> = {
-  expense: 'Expense',
-  income: 'Income',
-  both: 'Both',
-};
-
-const TYPE_OPTIONS: { value: TransactionCategoryType; label: string }[] = [
-  { value: 'expense', label: 'Expense' },
-  { value: 'income', label: 'Income' },
-  { value: 'both', label: 'Both' },
+const TYPE_OPTIONS: { value: TransactionCategoryType; labelKey: string }[] = [
+  { value: 'expense', labelKey: 'cat.typeExpense' },
+  { value: 'income', labelKey: 'cat.typeIncome' },
+  { value: 'both', labelKey: 'cat.typeBoth' },
 ];
 
 export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetProps) {
   const { categories, updateCategory, deleteCategory } = useApp();
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -52,7 +48,7 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
 
   const saveEdit = async (id: string) => {
     if (!editName.trim()) {
-      setError('Nama kategori wajib diisi');
+      setError(t('cat.nameRequired'));
       return;
     }
     setError('');
@@ -63,10 +59,10 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
       if (editIcon) updates.icon = editIcon;
       await updateCategory(id, updates);
       setEditingId(null);
-      showToast('Kategori berhasil diperbarui');
+      showToast(t('cat.updatedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg || 'Gagal memperbarui kategori');
+      setError(msg || t('cat.failedUpdate'));
     } finally {
       setSaving(false);
     }
@@ -75,19 +71,19 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
   const handleDelete = async (id: string) => {
     try {
       await deleteCategory(id);
-      showToast('Kategori berhasil dihapus');
+      showToast(t('cat.deletedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      setError(msg || 'Gagal menghapus kategori');
+      setError(msg || t('cat.failedDelete'));
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Kelola Kategori Transaksi">
+    <Sheet open={open} onClose={onClose} title={t('cat.manageTitle')}>
       <div className="space-y-4">
         {customCategories.length === 0 && (
           <p className="text-sm text-text-secondary text-center py-6">
-            Belum ada kategori kustom. Buat lewat tombol "+ Add Category" di form transaksi.
+            {t('cat.noCustom')}
           </p>
         )}
 
@@ -101,14 +97,14 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
               {editingId === c.id ? (
                 <div className="space-y-5">
                   <Input
-                    label="Nama Kategori"
-                    placeholder="misal Makan Siang, Gaji Bonus"
+                    label={t('cat.nameLabel')}
+                    placeholder={t('cat.namePlaceholder')}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                   />
 
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">Tipe</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">{t('cat.typeLabel')}</label>
                     <div className="flex gap-2">
                       {TYPE_OPTIONS.map((opt) => (
                         <button
@@ -119,14 +115,14 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
                             editType === opt.value ? 'border-primary bg-primary/10 text-primary' : 'border-secondary bg-secondary text-text-secondary'
                           }`}
                         >
-                          {opt.label}
+                          {t(opt.labelKey)}
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">Pilih Ikon</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">{t('cat.iconLabel')}</label>
                     <div className="grid grid-cols-4 gap-2">
                       {CATEGORY_ICON_OPTIONS.map((iconName) => {
                         const IconOption = getIcon(iconName);
@@ -152,10 +148,10 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
                   {error && <p className="text-sm text-expense">{error}</p>}
 
                   <Button fullWidth onClick={() => saveEdit(c.id)} disabled={saving}>
-                    {saving ? 'Menyimpan...' : 'Simpan Kategori'}
+                    {saving ? t('cat.saving') : t('cat.saveCategory')}
                   </Button>
                   <Button fullWidth variant="secondary" onClick={cancelEdit}>
-                    Batal
+                    {t('common.cancel')}
                   </Button>
                 </div>
               ) : (
@@ -165,19 +161,19 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{c.name}</p>
-                    <p className="text-xs text-text-secondary">{TYPE_LABELS[c.type]}</p>
+                    <p className="text-xs text-text-secondary">{TYPE_OPTIONS.find((o) => o.value === c.type) ? t(TYPE_OPTIONS.find((o) => o.value === c.type)!.labelKey) : c.type}</p>
                   </div>
                   <button
                     onClick={() => startEdit(c.id, c.name, c.type, c.icon)}
                     className="p-2 rounded-lg text-text-secondary hover:bg-secondary-hover"
-                    aria-label="Ubah"
+                    aria-label={t('cat.editCategory')}
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(c.id)}
                     className="p-2 rounded-lg text-expense hover:bg-expense/10"
-                    aria-label="Hapus"
+                    aria-label={t('common.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -188,7 +184,7 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
         })}
 
         <Button fullWidth variant="secondary" onClick={onClose}>
-          Tutup
+          {t('common.close')}
         </Button>
       </div>
     </Sheet>
