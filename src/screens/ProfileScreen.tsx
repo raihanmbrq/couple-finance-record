@@ -11,10 +11,11 @@ import { CategorySettingsSheet } from '@/components/CategorySettingsSheet';
 import { CurrencySettingsSheet } from '@/components/CurrencySettingsSheet';
 import { ThemeSettingsSheet, getAppearanceLabel, getPresetLabel } from '@/components/ThemeSettingsSheet';
 import { LanguageSettingsSheet } from '@/components/LanguageSettingsSheet';
+import { ExportReportSheet } from '@/components/ExportReportSheet';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getCurrencyInfo } from '@/lib/currencies';
-import { User, Mail, Users, LogOut, Copy, Check, X, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, Palette, Languages, ChevronRight, Loader2 } from 'lucide-react';
+import { User, Mail, Users, LogOut, Copy, Check, X, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Coins, Palette, Languages, ChevronRight, Loader2, FileDown } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 export function ProfileScreen() {
@@ -32,6 +33,7 @@ export function ProfileScreen() {
   const [showCurrency, setShowCurrency] = useState(false);
   const [showTheme, setShowTheme] = useState(false);
   const [showLanguage, setShowLanguage] = useState(false);
+  const [showExportReport, setShowExportReport] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -377,6 +379,24 @@ export function ProfileScreen() {
         </button>
       </Card>
 
+      {/* Export Report */}
+      <Card className="p-4">
+        <button
+          type="button"
+          onClick={() => setShowExportReport(true)}
+          className="w-full flex items-center gap-3 text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <FileDown className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm text-text-primary">{t('profile.exportReport')}</p>
+            <p className="text-xs text-text-secondary">{t('profile.exportReportDesc')}</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-text-secondary" />
+        </button>
+      </Card>
+
       {/* Category Settings */}
       <Card className="p-4">
         <button
@@ -512,6 +532,7 @@ export function ProfileScreen() {
       <CurrencySettingsSheet open={showCurrency} onClose={() => setShowCurrency(false)} />
       <ThemeSettingsSheet open={showTheme} onClose={() => setShowTheme(false)} />
       <LanguageSettingsSheet open={showLanguage} onClose={() => setShowLanguage(false)} />
+      <ExportReportSheet open={showExportReport} onClose={() => setShowExportReport(false)} />
     </div>
   );
 }

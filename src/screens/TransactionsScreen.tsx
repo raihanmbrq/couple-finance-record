@@ -7,9 +7,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
+import { ExportReportSheet } from '@/components/ExportReportSheet';
 import { getCategory } from '@/lib/types';
 import { formatDate, formatMoney, formatRelative } from '@/lib/format';
-import { Plus, Search, Filter, TrendingUp, TrendingDown, Receipt, X } from 'lucide-react';
+import { Plus, Search, Filter, TrendingUp, TrendingDown, Receipt, X, FileDown } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 
 export function TransactionsScreen() {
@@ -21,6 +22,7 @@ export function TransactionsScreen() {
   const [filterWallet, setFilterWallet] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
 
   const walletMap = useMemo(() => {
@@ -67,6 +69,16 @@ export function TransactionsScreen() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="font-display font-extrabold text-2xl text-text-primary">{t('tx.title')}</h1>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowExport(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 active:bg-primary/30 transition-colors"
+          >
+            <FileDown className="w-4 h-4" />
+            {t('report.exportBtnShort')}
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -217,6 +229,7 @@ export function TransactionsScreen() {
 
       <AddTransactionSheet open={showAdd} onClose={() => setShowAdd(false)} />
       <EditTransactionSheet open={Boolean(editingTransaction)} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
+      <ExportReportSheet open={showExport} onClose={() => setShowExport(false)} />
     </div>
   );
 }
