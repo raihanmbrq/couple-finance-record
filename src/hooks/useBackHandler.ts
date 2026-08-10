@@ -40,7 +40,10 @@ export function useBackHandler(isOpen: boolean, onClose: () => void) {
     }
 
     attachGlobalListener();
-    const cb = () => onCloseRef.current();
+    const cb = () => {
+      registered.current = false; // back button already popped history, skip effect cleanup
+      onCloseRef.current();
+    };
     callbackRef.current = cb;
     window.history.pushState(null, '');
     handlerStack.push(cb);
