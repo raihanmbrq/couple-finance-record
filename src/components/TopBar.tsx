@@ -16,9 +16,7 @@ export function TopBar() {
        <div className="px-5 py-3.5 flex items-center justify-between">
          {/* Logo */}
          <div className="flex items-center gap-2.5">
-           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-             <img src="/icons/icon-512.png" alt="PairFlow logo" className="w-5 h-5 object-contain" />
-           </div>
+            <img src="/icons/icon-512.png" alt="PairFlow logo" className="w-9 h-9 rounded-xl object-contain" />
            <div>
              <h2 className="font-display font-bold text-base text-text-primary leading-tight">PairFlow</h2>
              {isDemo && (
