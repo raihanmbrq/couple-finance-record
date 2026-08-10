@@ -67,8 +67,18 @@ export default {
         'slide-up': 'slideUp 0.25s ease-out',
         'fade-in': 'fadeIn 0.2s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
+        'slide-in-right': 'slideInRight 0.25s ease-out forwards',
+        'slide-out-right': 'slideOutRight 0.25s ease-out forwards',
       },
       keyframes: {
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        slideOutRight: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
         pulse: {
           '0%, 100%': {
             transform: 'scale(0.8)',
