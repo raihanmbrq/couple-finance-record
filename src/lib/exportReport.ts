@@ -115,7 +115,7 @@ export function downloadExcelReport(options: ReportOptions) {
     [L.netCashflow, netCashflow],
     [],
     [L.category, L.amount, L.percentage],
-    ...categoryBreakdown.map((row) => [row.category, row.total, `${row.percentage}%`]),
+    ...categoryBreakdown.map((row) => [catName(row.category), row.total, `${row.percentage}%`]),
   ];
 
   const detailRows: (string | number)[][] = [
@@ -201,7 +201,7 @@ export async function downloadPDFReport(options: ReportOptions) {
     totalIncome,
     totalExpense,
     netCashflow,
-    categoryBreakdown,
+    categoryBreakdown: categoryBreakdown.map((row) => ({ ...row, category: catName(row.category) })),
     rows: pdfRows,
     labels: L,
     formatAmount: (n: number) => formatMoney(n, currency),
