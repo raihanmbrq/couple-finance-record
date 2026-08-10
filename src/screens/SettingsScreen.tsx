@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useBackHandler } from '@/hooks/useBackHandler';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
@@ -32,6 +33,16 @@ export function SettingsScreen({ open, onClose }: SettingsScreenProps) {
   const { profile } = useApp();
   
   const [isExiting, setIsExiting] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsExiting(false);
+      onClose();
+    }, 250);
+  }, [onClose]);
+
+  useBackHandler(open, handleClose);
   const [showWalletTypes, setShowWalletTypes] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
@@ -40,14 +51,6 @@ export function SettingsScreen({ open, onClose }: SettingsScreenProps) {
   const [showExportReport, setShowExportReport] = useState(false);
 
   if (!open && !isExiting) return null;
-
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      setIsExiting(false);
-      onClose();
-    }, 250);
-  };
 
   const activeCurrency = profile?.currency ?? 'IDR';
   const activeCurrencyInfo = getCurrencyInfo(activeCurrency);

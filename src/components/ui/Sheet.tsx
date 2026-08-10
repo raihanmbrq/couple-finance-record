@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import { useBackHandler } from '../../hooks/useBackHandler';
 
 interface SheetProps {
   open: boolean;
@@ -10,6 +11,8 @@ interface SheetProps {
 }
 
 export function Sheet({ open, onClose, title, children }: SheetProps) {
+  useBackHandler(open, onClose);
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
