@@ -28,7 +28,22 @@ export function TopBar() {
          {/* Household Status */}
          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-secondary">
             {isCircle ? (
-             <Users className="w-4 h-4 text-primary" />
+             <div className="flex -space-x-1.5">
+               {householdMembers.slice(0, 3).map((m) => (
+                 <div key={m.user_id} className="w-5 h-5 rounded-full bg-primary/20 border border-surface overflow-hidden flex items-center justify-center">
+                   {m.profile?.avatar_url ? (
+                     <img src={m.profile.avatar_url} alt={m.profile?.full_name || 'Member'} className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-[8px] font-bold text-primary">{(m.profile?.full_name || 'M').charAt(0).toUpperCase()}</span>
+                   )}
+                 </div>
+               ))}
+               {householdMembers.length > 3 && (
+                 <div className="w-5 h-5 rounded-full bg-primary/10 border border-surface flex items-center justify-center">
+                   <span className="text-[8px] font-bold text-primary">+{householdMembers.length - 3}</span>
+                 </div>
+               )}
+             </div>
            ) : (
              <User className="w-4 h-4 text-text-secondary" />
            )}

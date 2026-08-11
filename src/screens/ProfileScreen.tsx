@@ -289,8 +289,12 @@ export function ProfileScreen() {
               const displayName = memberProfile?.full_name || memberProfile?.email || 'Member';
               return (
                 <div key={member.user_id} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center font-bold text-text-primary">
-                    {displayName.charAt(0).toUpperCase()}
+                  <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center font-bold text-text-primary overflow-hidden">
+                    {memberProfile?.avatar_url ? (
+                      <img src={memberProfile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      displayName.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-text-primary truncate">{displayName}</p>
