@@ -5,9 +5,10 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/context/ToastContext';
-import { CATEGORY_ICON_OPTIONS, type TransactionCategoryType } from '@/lib/types';
+import { CATEGORY_ICON_OPTIONS, type TransactionCategoryType, type TransactionCategory } from '@/lib/types';
 import { getIcon } from '@/lib/icons';
-import { Pencil, Trash2 } from 'lucide-react';
+import { CreateCategorySheet } from '@/components/CreateCategorySheet';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 
 interface CategorySettingsSheetProps {
   open: boolean;
@@ -30,6 +31,9 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
   const [editIcon, setEditIcon] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<TransactionCategory | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const customCategories = categories.filter((c) => !c.is_system);
 
@@ -68,19 +72,36 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteCategory(id);
+      await deleteCategory(deleteTarget.id);
+      setDeleteTarget(null);
       showToast(t('cat.deletedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       setError(msg || t('cat.failedDelete'));
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <Sheet open={open} onClose={onClose} title={t('cat.manageTitle')}>
       <div className="space-y-4">
+        {/* Permanent entry point: always visible */}
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-primary/40 text-primary hover:border-primary hover:bg-primary/5 transition-all text-left"
+        >
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Plus className="w-5 h-5 text-primary" />
+          </div>
+          <span className="text-sm font-semibold">{t('cat.addNewCategory')}</span>
+        </button>
+
         {customCategories.length === 0 && (
           <p className="text-sm text-text-secondary text-center py-6">
             {t('cat.noCustom')}
@@ -171,7 +192,7 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(c.id)}
+                    onClick={() => setDeleteTarget(c)}
                     className="p-2 rounded-lg text-expense hover:bg-expense/10"
                     aria-label={t('common.delete')}
                   >
@@ -187,6 +208,46 @@ export function CategorySettingsSheet({ open, onClose }: CategorySettingsSheetPr
           {t('common.close')}
         </Button>
       </div>
+
+      <CreateCategorySheet
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => {}}
+      />
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-expense" />
+              </div>
+              <h3 className="font-display font-bold text-lg text-text-primary">{t('cat.deleteTitle')}</h3>
+              <p className="text-sm text-text-secondary">
+                {t('cat.deleteCatDesc', { name: deleteTarget.name })}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all disabled:opacity-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all disabled:opacity-50"
+              >
+                {t('common.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sheet>
   );
 }
