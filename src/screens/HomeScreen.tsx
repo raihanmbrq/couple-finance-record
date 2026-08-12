@@ -8,7 +8,7 @@ import { useState, useRef } from 'react';
 import { getIcon } from '@/lib/icons';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
-import { WalletActionSheet } from '@/components/WalletActionSheet';
+import { WalletDetailsSheet } from '@/components/WalletDetailsSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -461,7 +461,7 @@ export function HomeScreen() {
       </div>
 
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
-      <WalletActionSheet wallet={activeWallet} open={Boolean(activeWallet)} onClose={() => setActiveWallet(null)} />
+      <WalletDetailsSheet wallet={activeWallet} open={Boolean(activeWallet)} onClose={() => setActiveWallet(null)} />
       <EditTransactionSheet open={Boolean(editingTransaction)} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
     </div>
   );

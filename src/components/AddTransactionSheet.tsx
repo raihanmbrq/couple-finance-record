@@ -32,7 +32,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [walletId, setWalletId] = useState('');
-  const [targetWalletId, setTargetWalletId] = useState('');
+
   const [category, setCategory] = useState('food');
   const [notes, setNotes] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
@@ -58,7 +58,6 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
     setAmount('');
     setCategory('food');
     setNotes('');
-    setTargetWalletId('');
     setTransactionDate(new Date().toISOString().slice(0, 10));
     setError('');
   };
@@ -73,54 +72,18 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
       setError(t('tx.selectWallet'));
       return;
     }
-    if (category === 'transfer' && !targetWalletId) {
-      setError(t('tx.selectTargetWallet'));
-      return;
-    }
-    if (category === 'transfer' && walletId === targetWalletId) {
-      setError(t('tx.differentWallets'));
-      return;
-    }
-
     setError('');
     setLoading(true);
     try {
-      if (category === 'transfer') {
-        const sourceWalletName = wallets.find(w => w.id === walletId)?.name ?? 'Unknown';
-        const targetWalletName = wallets.find(w => w.id === targetWalletId)?.name ?? 'Unknown';
-
-        // Expense from source wallet
-        await addTransaction({
-          wallet_id: walletId,
-          amount: amt,
-          type: 'expense',
-          category: 'transfer',
-          notes: notes.trim() || t('tx.transferTo', { name: targetWalletName }),
-          spent_by: profile?.full_name ?? 'Me',
-          transaction_date: `${transactionDate}T12:00:00.000Z`,
-        });
-
-        // Income to target wallet
-        await addTransaction({
-          wallet_id: targetWalletId,
-          amount: amt,
-          type: 'income',
-          category: 'transfer',
-          notes: notes.trim() || t('tx.transferFrom', { name: sourceWalletName }),
-          spent_by: profile?.full_name ?? 'Me',
-          transaction_date: `${transactionDate}T12:00:00.000Z`,
-        });
-      } else {
-        await addTransaction({
-          wallet_id: walletId,
-          amount: amt,
-          type,
-          category,
-          notes: notes.trim() || null,
-          spent_by: profile?.full_name ?? 'Me',
-          transaction_date: `${transactionDate}T12:00:00.000Z`,
-        });
-      }
+      await addTransaction({
+        wallet_id: walletId,
+        amount: amt,
+        type,
+        category,
+        notes: notes.trim() || null,
+        spent_by: profile?.full_name ?? 'Me',
+        transaction_date: `${transactionDate}T12:00:00.000Z`,
+      });
       reset();
       onClose();
       showToast(t('tx.addedToast'));
@@ -235,40 +198,6 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
            </div>
          </div>
 
-
-        {/* Target Wallet (For Transfers) */}
-        {category === 'transfer' && (
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">{t('tx.targetWallet')}</label>
-            {wallets.length < 2 ? (
-              <p className="text-sm text-text-secondary mt-2">{t('tx.needTwoWallets')}</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {wallets.filter(w => w.id !== walletId).map((w) => (
-                  <button
-                    key={w.id}
-                    type="button"
-                    onClick={() => setTargetWalletId(w.id)}
-                    className={`p-3 rounded-xl text-left transition-all border-2 ${
-                      targetWalletId === w.id ? 'border-primary bg-primary/10' : 'border-secondary bg-secondary'
-                    }`}
-                  >
-                    <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
-                    <p className="text-xs text-text-secondary">{formatWalletType(w.type)}</p>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setShowAddWallet(true)}
-                  className="flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-primary/40 text-primary hover:border-primary hover:bg-primary/10 transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span className="text-sm font-semibold">{t('tx.addWallet')}</span>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
 
         <Input
           label={t('tx.date')}
