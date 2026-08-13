@@ -204,7 +204,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .from('household_members')
         .select('id, user_id, household_id, role, created_at, profile:profiles(*)')
         .eq('household_id', householdId);
-      const members = (memberRows as unknown as HouseholdMember[]) ?? [];
+      let members = (memberRows as unknown as HouseholdMember[]) ?? [];
+
+      // Fallback: if household_members returned empty (e.g. trigger didn't
+      // create the row), derive members directly from the profiles table.
+      if (members.length === 0 && householdId) {
+        const { data: profileRows } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('household_id', householdId);
+        if (profileRows && profileRows.length > 0) {
+          members = profileRows.map((p: Profile) => ({
+            id: p.id,
+            user_id: p.id,
+            household_id: householdId,
+            role: (p.id === userId ? 'owner' : 'member') as 'owner' | 'member',
+            created_at: p.created_at,
+            profile: p,
+          }));
+        }
+      }
+
       setHouseholdMembers(members);
 
       const { data: wt } = await supabase
