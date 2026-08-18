@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { formatMoney, formatMoneyShort, formatRelative } from '@/lib/format';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
 import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { getIcon } from '@/lib/icons';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
@@ -180,18 +180,76 @@ export function HomeScreen() {
           }))
         : [{ key: 'me-empty', label: t('home.myWallets'), wallets: [], empty: true, showAddCard: true }];
 
-  const scrollBalanceTo = (idx: number) => {
+  const balanceKey = balanceSlides.map((s) => s.key).join(',');
+  const lastBalanceKey = useRef('');
+
+  useEffect(() => {
     const el = balanceRef.current;
-    if (!el) return;
-    const bounded = Math.min(Math.max(0, idx), balanceSlides.length - 1);
-    el.scrollTo({ left: bounded * el.clientWidth, behavior: 'smooth' });
+    if (!el || balanceSlides.length <= 1) return;
+    
+    if (lastBalanceKey.current !== balanceKey) {
+      const init = () => {
+        if (el.clientWidth > 0) {
+          el.style.scrollBehavior = 'auto';
+          el.scrollLeft = el.clientWidth;
+          el.style.scrollBehavior = '';
+          setBalanceIdx(0);
+          lastBalanceKey.current = balanceKey;
+        }
+      };
+      
+      const ob = new ResizeObserver(() => {
+        init();
+        if (lastBalanceKey.current === balanceKey) {
+          ob.disconnect();
+        }
+      });
+      ob.observe(el);
+      return () => ob.disconnect();
+    }
+  }, [balanceKey, balanceSlides.length]);
+
+  const walletKey = walletSlides.map((s) => s.key).join(',');
+  const lastWalletKey = useRef('');
+
+  useEffect(() => {
+    const el = walletRef.current;
+    if (!el || walletSlides.length <= 1) return;
+    
+    if (lastWalletKey.current !== walletKey) {
+      const init = () => {
+        if (el.clientWidth > 0) {
+          el.style.scrollBehavior = 'auto';
+          el.scrollLeft = el.clientWidth;
+          el.style.scrollBehavior = '';
+          setWalletIdx(0);
+          lastWalletKey.current = walletKey;
+        }
+      };
+      
+      const ob = new ResizeObserver(() => {
+        init();
+        if (lastWalletKey.current === walletKey) {
+          ob.disconnect();
+        }
+      });
+      ob.observe(el);
+      return () => ob.disconnect();
+    }
+  }, [walletKey, walletSlides.length]);
+
+  const scrollBalanceTo = (targetIdx: number) => {
+    const el = balanceRef.current;
+    if (!el || balanceSlides.length <= 1) return;
+    const domIdx = targetIdx + 1;
+    el.scrollTo({ left: domIdx * el.clientWidth, behavior: 'smooth' });
   };
 
-  const scrollWalletTo = (idx: number) => {
+  const scrollWalletTo = (targetIdx: number) => {
     const el = walletRef.current;
-    if (!el) return;
-    const bounded = Math.min(Math.max(0, idx), walletSlides.length - 1);
-    el.scrollTo({ left: bounded * el.clientWidth, behavior: 'smooth' });
+    if (!el || walletSlides.length <= 1) return;
+    const domIdx = targetIdx + 1;
+    el.scrollTo({ left: domIdx * el.clientWidth, behavior: 'smooth' });
   };
 
   const recentTx = transactions.slice(0, 5);
@@ -232,6 +290,22 @@ export function HomeScreen() {
     }))
     .sort((a, b) => b.amount - a.amount);
 
+  const renderedBalanceSlides = balanceSlides.length > 1
+    ? [
+        { ...balanceSlides[balanceSlides.length - 1], key: `${balanceSlides[balanceSlides.length - 1].key}-clone-last` },
+        ...balanceSlides,
+        { ...balanceSlides[0], key: `${balanceSlides[0].key}-clone-first` },
+      ]
+    : balanceSlides;
+
+  const renderedWalletSlides = walletSlides.length > 1
+    ? [
+        { ...walletSlides[walletSlides.length - 1], key: `${walletSlides[walletSlides.length - 1].key}-clone-last` },
+        ...walletSlides,
+        { ...walletSlides[0], key: `${walletSlides[0].key}-clone-first` },
+      ]
+    : walletSlides;
+
   return (
     <div className="px-5 py-5 space-y-5">
       {/* Total Balance Hero Slider */}
@@ -241,12 +315,26 @@ export function HomeScreen() {
             ref={balanceRef}
             onScroll={(e) => {
               const el = e.currentTarget;
-              const idx = Math.round(el.scrollLeft / el.clientWidth);
-              setBalanceIdx(Math.min(Math.max(0, idx), balanceSlides.length - 1));
+              if (balanceSlides.length <= 1) return;
+              const rounded = Math.round(el.scrollLeft / el.clientWidth);
+              const active = (rounded - 1 + balanceSlides.length) % balanceSlides.length;
+              setBalanceIdx(active);
+
+              if (Math.abs(el.scrollLeft - rounded * el.clientWidth) < 1) {
+                if (rounded === 0) {
+                  el.style.scrollBehavior = 'auto';
+                  el.scrollLeft = balanceSlides.length * el.clientWidth;
+                  el.style.scrollBehavior = '';
+                } else if (rounded === balanceSlides.length + 1) {
+                  el.style.scrollBehavior = 'auto';
+                  el.scrollLeft = 1 * el.clientWidth;
+                  el.style.scrollBehavior = '';
+                }
+              }
             }}
             className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
           >
-            {balanceSlides.map((slide) => (
+            {renderedBalanceSlides.map((slide) => (
               <div key={slide.key} className="w-full shrink-0 snap-start">
                 <Card elevated className="bg-total-balance border-0 text-white p-5">
                   <div className="flex items-center justify-between mb-1">
@@ -276,8 +364,8 @@ export function HomeScreen() {
           </div>
           {balanceSlides.length > 1 && (
             <>
-              <SliderArrow position="left" disabled={balanceIdx === 0} onClick={() => scrollBalanceTo(balanceIdx - 1)} />
-              <SliderArrow position="right" disabled={balanceIdx === balanceSlides.length - 1} onClick={() => scrollBalanceTo(balanceIdx + 1)} />
+              <SliderArrow position="left" disabled={false} onClick={() => scrollBalanceTo(balanceIdx - 1)} />
+              <SliderArrow position="right" disabled={false} onClick={() => scrollBalanceTo(balanceIdx + 1)} />
               <SliderDots count={balanceSlides.length} active={balanceIdx} onSelect={scrollBalanceTo} />
             </>
           )}
@@ -294,12 +382,26 @@ export function HomeScreen() {
             ref={walletRef}
             onScroll={(e) => {
               const el = e.currentTarget;
-              const idx = Math.round(el.scrollLeft / el.clientWidth);
-              setWalletIdx(Math.min(Math.max(0, idx), walletSlides.length - 1));
+              if (walletSlides.length <= 1) return;
+              const rounded = Math.round(el.scrollLeft / el.clientWidth);
+              const active = (rounded - 1 + walletSlides.length) % walletSlides.length;
+              setWalletIdx(active);
+
+              if (Math.abs(el.scrollLeft - rounded * el.clientWidth) < 1) {
+                if (rounded === 0) {
+                  el.style.scrollBehavior = 'auto';
+                  el.scrollLeft = walletSlides.length * el.clientWidth;
+                  el.style.scrollBehavior = '';
+                } else if (rounded === walletSlides.length + 1) {
+                  el.style.scrollBehavior = 'auto';
+                  el.scrollLeft = 1 * el.clientWidth;
+                  el.style.scrollBehavior = '';
+                }
+              }
             }}
             className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
           >
-            {walletSlides.map((slide) => (
+            {renderedWalletSlides.map((slide) => (
               <div key={slide.key} className="w-full shrink-0 snap-start">
                 <Card className="p-4">
                   <p className="text-xs font-semibold text-text-secondary mb-3">{slide.label}</p>
@@ -340,8 +442,8 @@ export function HomeScreen() {
           </div>
           {walletSlides.length > 1 && (
             <>
-              <SliderArrow position="left" disabled={walletIdx === 0} onClick={() => scrollWalletTo(walletIdx - 1)} />
-              <SliderArrow position="right" disabled={walletIdx === walletSlides.length - 1} onClick={() => scrollWalletTo(walletIdx + 1)} />
+              <SliderArrow position="left" disabled={false} onClick={() => scrollWalletTo(walletIdx - 1)} />
+              <SliderArrow position="right" disabled={false} onClick={() => scrollWalletTo(walletIdx + 1)} />
               <SliderDots count={walletSlides.length} active={walletIdx} onSelect={scrollWalletTo} />
             </>
           )}
