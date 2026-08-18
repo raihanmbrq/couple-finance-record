@@ -3,13 +3,15 @@ import { useLanguage } from '@/context/LanguageContext';
 import { Card } from '@/components/ui/Card';
 import { formatMoney, formatMoneyShort, formatRelative } from '@/lib/format';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
-import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { getIcon } from '@/lib/icons';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { WalletDetailsSheet } from '@/components/WalletDetailsSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
+import { CustomMonthPicker } from '@/components/ui/CustomMonthPicker';
+import { CustomSelectSheet } from '@/components/ui/CustomSelectSheet';
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -81,6 +83,9 @@ export function HomeScreen() {
     const m = String(now.getMonth() + 1).padStart(2, '0');
     return `${y}-${m}`;
   });
+
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [timeFilterOpen, setTimeFilterOpen] = useState(false);
 
   const [balanceIdx, setBalanceIdx] = useState(0);
   const [walletIdx, setWalletIdx] = useState(0);
@@ -349,29 +354,21 @@ export function HomeScreen() {
           <h3 className="font-display font-bold text-text-primary">{t('home.expenseBreakdown')}</h3>
           <div className="flex items-center gap-2">
             {timeFilter === 'fullMonth' && (
-              <div className="relative w-8 h-8 flex items-center justify-center bg-secondary border border-secondary rounded-lg hover:border-primary/50 transition-colors">
-                <Calendar className="w-4 h-4 text-text-secondary" />
-                <input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-              </div>
-            )}
-            <div className="relative">
-              <select
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value as typeof timeFilter)}
-                className="appearance-none bg-secondary border border-secondary text-text-secondary text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+              <button
+                onClick={() => setMonthPickerOpen(true)}
+                className="w-10 h-10 flex items-center justify-center bg-secondary/50 border border-secondary/30 rounded-xl hover:border-primary/50 hover:bg-secondary active:scale-95 transition-all text-text-primary min-h-[44px]"
+                aria-label="Select month"
               >
-                <option value="fullMonth">{monthName}</option>
-                <option value="last30Days">{t('home.last30Days')}</option>
-                <option value="last7Days">{t('home.last7Days')}</option>
-                <option value="today">{t('home.today')}</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-text-secondary absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+                <CalendarIcon className="w-4.5 h-4.5 text-primary" />
+              </button>
+            )}
+            <button
+              onClick={() => setTimeFilterOpen(true)}
+              className="flex items-center gap-1.5 bg-secondary/50 border border-secondary/30 text-text-primary text-xs font-semibold py-2.5 px-3 rounded-xl hover:bg-secondary hover:border-primary/30 transition-all select-none min-h-[44px]"
+            >
+              <span>{timeFilter === 'fullMonth' ? monthName : t(`home.${timeFilter}`)}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-text-secondary stroke-[2.5px]" />
+            </button>
           </div>
         </div>
         <Card className="p-1">
@@ -463,6 +460,27 @@ export function HomeScreen() {
       <AddWalletSheet open={showAddWallet} onClose={() => setShowAddWallet(false)} />
       <WalletDetailsSheet wallet={activeWallet} open={Boolean(activeWallet)} onClose={() => setActiveWallet(null)} />
       <EditTransactionSheet open={Boolean(editingTransaction)} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
+
+      <CustomMonthPicker
+        value={selectedMonth}
+        onChange={setSelectedMonth}
+        open={monthPickerOpen}
+        onClose={() => setMonthPickerOpen(false)}
+      />
+
+      <CustomSelectSheet
+        title={t('common.type')}
+        open={timeFilterOpen}
+        onClose={() => setTimeFilterOpen(false)}
+        value={timeFilter}
+        onChange={(val) => setTimeFilter(val as typeof timeFilter)}
+        options={[
+          { value: 'fullMonth', label: monthName },
+          { value: 'last30Days', label: t('home.last30Days') },
+          { value: 'last7Days', label: t('home.last7Days') },
+          { value: 'today', label: t('home.today') },
+        ]}
+      />
     </div>
   );
 }

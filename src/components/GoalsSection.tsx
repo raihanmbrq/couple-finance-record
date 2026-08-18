@@ -9,10 +9,11 @@ import { Input, Select } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ASSET_CATEGORIES, type Goal } from '@/lib/types';
-import { formatMoney, formatMoneyInput, parseMoneyInput, formatDateShort } from '@/lib/format';
+import { formatMoney, formatMoneyInput, parseMoneyInput, formatDateShort, formatDate } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { calculateMonthlyContribution, durationLabel, monthsBetween } from '@/lib/goalMath';
 import { PiggyBank, Plus, Trash2, Wallet, Pencil } from 'lucide-react';
+import { CustomDateRangePicker } from '@/components/ui/CustomDateRangePicker';
 
 function SummaryRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
@@ -34,7 +35,9 @@ export function GoalsSection() {
   const [editing, setEditing] = useState<Goal | null>(null);
   const [title, setTitle] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
+  const [startDate, setStartDate] = useState('');
   const [targetDate, setTargetDate] = useState('');
+  const [dateRangePickerOpen, setDateRangePickerOpen] = useState(false);
   const [category, setCategory] = useState<Goal['asset_category']>('Tabungan Biasa');
   const [returnRate, setReturnRate] = useState('5');
   const [saving, setSaving] = useState(false);
@@ -50,9 +53,14 @@ export function GoalsSection() {
   const rate = isInvestment ? (parseFloat(returnRate.replace(',', '.')) || 0) : 0;
   const amount = parseMoneyInput(targetAmount);
   const months = useMemo(() => {
-    if (!targetDate) return 0;
-    return monthsBetween(new Date(), new Date(targetDate));
-  }, [targetDate]);
+    if (!targetDate || !startDate) return 0;
+    return monthsBetween(new Date(startDate), new Date(targetDate));
+  }, [startDate, targetDate]);
+
+  const formattedRange = useMemo(() => {
+    if (!startDate || !targetDate) return t('goals.dateLabel');
+    return `${formatDate(startDate)} - ${formatDate(targetDate)}`;
+  }, [startDate, targetDate, t]);
 
   const pmt = calculateMonthlyContribution({
     targetAmount: amount,
@@ -72,6 +80,7 @@ export function GoalsSection() {
     setEditing(null);
     setTitle('');
     setTargetAmount('');
+    setStartDate(new Date().toISOString().slice(0, 10));
     setTargetDate('');
     setCategory('Tabungan Biasa');
     setReturnRate('5');
@@ -82,10 +91,16 @@ export function GoalsSection() {
     setEditing(goal);
     setTitle(goal.title);
     setTargetAmount(formatMoneyInput(goal.target_amount, currency));
+    setStartDate(goal.created_at ? goal.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10));
     setTargetDate(goal.target_date.slice(0, 10));
     setCategory(goal.asset_category);
     setReturnRate(goal.expected_return_rate ? String(goal.expected_return_rate) : '5');
     setShowForm(true);
+  };
+
+  const handleDateRangeChange = (start: string, end: string) => {
+    setStartDate(start);
+    setTargetDate(end);
   };
 
   const handleSave = async () => {
@@ -256,12 +271,24 @@ export function GoalsSection() {
             onChange={(e) => setTargetAmount(e.target.value)}
             className="text-xl font-bold"
           />
-          <Input
-            label={t('goals.dateLabel')}
-            type="date"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">{t('goals.dateLabel')}</label>
+            <CustomDateRangePicker
+              startDate={startDate}
+              endDate={targetDate}
+              onChange={handleDateRangeChange}
+              open={dateRangePickerOpen}
+              onClose={() => setDateRangePickerOpen(false)}
+            />
+            <button
+              type="button"
+              onClick={() => setDateRangePickerOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-secondary/50 border border-secondary/35 rounded-xl hover:border-primary/50 transition-all font-medium text-sm text-text-primary min-h-[48px]"
+            >
+              <span>{formattedRange}</span>
+              <span className="text-primary font-bold text-xs">Change</span>
+            </button>
+          </div>
           <Select
             label={t('goals.categoryLabel')}
             value={category}

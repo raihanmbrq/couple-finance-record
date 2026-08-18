@@ -13,6 +13,7 @@ import { getCurrencySymbol } from '@/lib/currencies';
 import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
+import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
 
 interface AddTransactionSheetProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
   const [category, setCategory] = useState('food');
   const [notes, setNotes] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAddWallet, setShowAddWallet] = useState(false);
@@ -199,12 +201,23 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
          </div>
 
 
-        <Input
-          label={t('tx.date')}
-          type="date"
-          value={transactionDate}
-          onChange={(e) => setTransactionDate(e.target.value)}
-        />
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">{t('tx.date')}</label>
+          <CustomDatePicker
+            value={transactionDate}
+            onChange={setTransactionDate}
+            open={datePickerOpen}
+            onClose={() => setDatePickerOpen(false)}
+          />
+          <button
+            type="button"
+            onClick={() => setDatePickerOpen(true)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-secondary/50 border border-secondary/35 rounded-xl hover:border-primary/50 transition-all font-medium text-sm text-text-primary min-h-[48px]"
+          >
+            <span>{transactionDate || t('tx.date')}</span>
+            <span className="text-primary font-bold text-xs">Change</span>
+          </button>
+        </div>
 
         {/* Note */}
         <Input

@@ -11,6 +11,7 @@ import { type Wallet, type HouseholdMember } from '@/lib/types';
 import { ArrowDown, ArrowUp, ChevronDown, Plus } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
+import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
 
 interface WalletTransferSheetProps {
   open: boolean;
@@ -30,6 +31,7 @@ export function WalletTransferSheet({ open, onClose, sourceWalletId, destWalletI
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showSrcPicker, setShowSrcPicker] = useState(false);
@@ -277,12 +279,23 @@ export function WalletTransferSheet({ open, onClose, sourceWalletId, destWalletI
         />
 
         {/* Date */}
-        <Input
-          label={t('transfer.date')}
-          type="date"
-          value={transactionDate}
-          onChange={(e) => setTransactionDate(e.target.value)}
-        />
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">{t('transfer.date')}</label>
+          <CustomDatePicker
+            value={transactionDate}
+            onChange={setTransactionDate}
+            open={datePickerOpen}
+            onClose={() => setDatePickerOpen(false)}
+          />
+          <button
+            type="button"
+            onClick={() => setDatePickerOpen(true)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-secondary/50 border border-secondary/35 rounded-xl hover:border-primary/50 transition-all font-medium text-sm text-text-primary min-h-[48px]"
+          >
+            <span>{transactionDate || t('transfer.date')}</span>
+            <span className="text-primary font-bold text-xs">Change</span>
+          </button>
+        </div>
 
         {/* Note */}
         <Input
