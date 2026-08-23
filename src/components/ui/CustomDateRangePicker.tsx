@@ -9,10 +9,12 @@ interface CustomDateRangePickerProps {
   onChange: (start: string, end: string) => void;
   open: boolean;
   onClose: () => void;
+  presetMode?: 'months' | 'recent';
+  onApply?: () => void;
 }
 
-export function CustomDateRangePicker({ startDate, endDate, onChange, open, onClose }: CustomDateRangePickerProps) {
-  const { language } = useLanguage();
+export function CustomDateRangePicker({ startDate, endDate, onChange, open, onClose, presetMode = 'months', onApply }: CustomDateRangePickerProps) {
+  const { language, t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(() => {
     return startDate ? new Date(startDate) : new Date();
   });
@@ -83,6 +85,15 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
     }
   };
 
+  const shiftDateKey = (key: string, delta: number) => {
+    const d = new Date(`${key}T00:00:00`);
+    d.setDate(d.getDate() + delta);
+    return formatDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+
+  const now = new Date();
+  const todayKey = formatDateStr(now.getFullYear(), now.getMonth(), now.getDate());
+
   const applyPreset = (monthsCount: number) => {
     const baseDate = startDate ? new Date(startDate) : new Date();
     const startStr = formatDateStr(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
@@ -98,6 +109,7 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
     onChange('', '');
   };
 
+  // Month-based presets (default mode, used e.g. by GoalsSection).
   const chips = [
     { label: language === 'en' ? '1 Month' : '1 Bulan', value: 1 },
     { label: language === 'en' ? '3 Months' : '3 Bulan', value: 3 },
@@ -106,10 +118,22 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
     { label: language === 'en' ? '5 Years' : '5 Tahun', value: 60 },
   ];
 
-  const getActivePreset = () => {
+  // Recent-range presets anchored to today (used by the Transactions filter).
+  const recentPresets = [
+    { key: 'today', label: t('tx.today'), start: todayKey, end: todayKey },
+    { key: 'last7', label: t('home.last7Days'), start: shiftDateKey(todayKey, -6), end: todayKey },
+    { key: 'thisMonth', label: t('tx.thisMonth'), start: `${todayKey.slice(0, 7)}-01`, end: todayKey },
+    { key: 'last30', label: t('home.last30Days'), start: shiftDateKey(todayKey, -29), end: todayKey },
+  ];
+
+  const getActivePreset = (): number | string => {
     if (!startDate || !endDate) return 'custom';
+    if (presetMode === 'recent') {
+      const match = recentPresets.find((p) => p.start === startDate && p.end === endDate);
+      return match ? match.key : 'custom';
+    }
     const start = new Date(startDate);
-    
+
     for (const c of chips) {
       const expectedEnd = new Date(start);
       expectedEnd.setMonth(start.getMonth() + c.value);
@@ -171,20 +195,37 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
       <div className="space-y-4 pb-3">
         {/* Preset Chips */}
         <div className="flex flex-wrap gap-2 justify-center">
-          {chips.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => applyPreset(c.value)}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-95 ${
-                activePreset === c.value
-                  ? 'bg-primary text-white shadow-soft'
-                  : 'bg-secondary/50 text-text-primary hover:bg-secondary'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+          {presetMode === 'recent' ? (
+            recentPresets.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => onChange(p.start, p.end)}
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-95 ${
+                  activePreset === p.key
+                    ? 'bg-primary text-white shadow-soft'
+                    : 'bg-secondary/50 text-text-primary hover:bg-secondary'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))
+          ) : (
+            chips.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => applyPreset(c.value)}
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-95 ${
+                  activePreset === c.value
+                    ? 'bg-primary text-white shadow-soft'
+                    : 'bg-secondary/50 text-text-primary hover:bg-secondary'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))
+          )}
           <button
             type="button"
             onClick={handleCustomChip}
@@ -194,7 +235,7 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
                 : 'bg-secondary/50 text-text-primary hover:bg-secondary'
             }`}
           >
-            {language === 'en' ? 'Custom' : 'Kustom'}
+            {t('tx.custom')}
           </button>
         </div>
 
@@ -292,7 +333,10 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
 
         {/* Done Button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            onApply?.();
+            onClose();
+          }}
           disabled={!startDate || !endDate}
           className="w-full btn-primary min-h-[48px] py-3.5 flex items-center justify-center font-bold text-sm shadow-soft rounded-xl transition-all"
         >

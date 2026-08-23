@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/Input';
 import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { walletTypeIcon } from '@/lib/walletIcons';
+import { getSaveTimeWalletIcon } from '@/lib/walletIconDetect';
+import { WALLET_BRAND_MAP } from '@/lib/walletBrands';
+import { WalletBrandIcon } from '@/components/ui/WalletBrandIcon';
 import { type Wallet } from '@/lib/types';
-import { Plus, Pencil, ArrowRightLeft, ArrowDownToLine, Trash2 } from 'lucide-react';
+import { Plus, Pencil, ArrowRightLeft, ArrowDownToLine } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { CreateWalletTypeSheet } from '@/components/CreateWalletTypeSheet';
 import { WalletTransferSheet } from '@/components/WalletTransferSheet';
@@ -81,6 +84,7 @@ export function WalletDetailsSheet({ wallet: walletProp, open, onClose }: Wallet
         name: name.trim(),
         type,
         balance: parseMoneyInput(balance),
+        icon: getSaveTimeWalletIcon(name.trim(), type),
       });
       setView('details');
       showToast(t('wallet.updatedToast'));
@@ -118,15 +122,21 @@ export function WalletDetailsSheet({ wallet: walletProp, open, onClose }: Wallet
         <div className="space-y-5">
           {/* Wallet Info Header */}
           <div className="flex items-center gap-4 p-4 bg-secondary/50 rounded-2xl">
-            {WalletIcon && (
+            {wallet.icon && WALLET_BRAND_MAP[wallet.icon] ? (
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <WalletIcon className="w-7 h-7 text-primary" />
+                <WalletBrandIcon brand={wallet.icon} className="w-9 h-9 object-contain" />
               </div>
+            ) : (
+              WalletIcon && (
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <WalletIcon className="w-7 h-7 text-primary" />
+                </div>
+              )
             )}
             <div className="min-w-0 flex-1">
               <p className="font-display font-bold text-lg text-text-primary truncate">{wallet.name}</p>
               <p className="text-sm text-text-secondary font-medium mb-1">{typeRow?.name ?? wallet.type}</p>
-              <p className="font-display font-bold text-xl text-primary">{formatMoney(wallet.balance, currency)}</p>
+              <p className="font-display font-bold text-xl text-primary tabular-nums">{formatMoney(wallet.balance, currency)}</p>
             </div>
           </div>
 

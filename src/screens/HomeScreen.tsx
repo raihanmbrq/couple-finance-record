@@ -2,16 +2,20 @@ import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card } from '@/components/ui/Card';
 import { formatMoney, formatMoneyShort, formatRelative } from '@/lib/format';
+import { getCurrencySymbol } from '@/lib/currencies';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
-import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { getIcon } from '@/lib/icons';
 import { walletTypeIcon } from '@/lib/walletIcons';
+import { WALLET_BRAND_MAP } from '@/lib/walletBrands';
+import { WalletBrandIcon } from '@/components/ui/WalletBrandIcon';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { WalletDetailsSheet } from '@/components/WalletDetailsSheet';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 import { CustomMonthPicker } from '@/components/ui/CustomMonthPicker';
 import { CustomSelectSheet } from '@/components/ui/CustomSelectSheet';
+import { MonthlyActivityCalendar } from '@/components/MonthlyActivityCalendar';
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -69,7 +73,7 @@ function AddWalletCard({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function HomeScreen() {
+export function HomeScreen({ onOpenDate }: { onOpenDate?: (date: string) => void }) {
   const { wallets, transactions, profile, isDemo, householdMembers, walletTypes, categories } = useApp();
   const currency = profile?.currency ?? 'IDR';
   const [showAddWallet, setShowAddWallet] = useState(false);
@@ -86,6 +90,43 @@ export function HomeScreen() {
 
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [timeFilterOpen, setTimeFilterOpen] = useState(false);
+
+  // Persisted privacy preferences: hide balance amounts per section (default hidden)
+  const readHiddenPref = (key: string) => {
+    try {
+      const v = localStorage.getItem(key);
+      return v === null ? true : v === 'true';
+    } catch {
+      return true;
+    }
+  };
+
+  const persistHiddenPref = (key: string, value: boolean) => {
+    try {
+      localStorage.setItem(key, String(value));
+    } catch {
+      /* ignore storage errors */
+    }
+  };
+
+  const [isBalanceHidden, setIsBalanceHidden] = useState(() => readHiddenPref('pairflow_hide_balance'));
+  const [isWalletHidden, setIsWalletHidden] = useState(() => readHiddenPref('pairflow_wallet_hidden'));
+
+  const toggleBalanceHidden = () => {
+    setIsBalanceHidden((prev) => {
+      const next = !prev;
+      persistHiddenPref('pairflow_hide_balance', next);
+      return next;
+    });
+  };
+
+  const toggleWalletHidden = () => {
+    setIsWalletHidden((prev) => {
+      const next = !prev;
+      persistHiddenPref('pairflow_wallet_hidden', next);
+      return next;
+    });
+  };
 
   const [balanceIdx, setBalanceIdx] = useState(0);
   const [walletIdx, setWalletIdx] = useState(0);
@@ -113,6 +154,8 @@ export function HomeScreen() {
   );
 
   const memberName = (m: HouseholdMember) => m.profile?.full_name || m.profile?.email?.split('@')[0] || 'Member';
+
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] || 'User';
 
   // This month's income/expense
   const monthTx = transactions.filter(t => {
@@ -308,6 +351,26 @@ export function HomeScreen() {
 
   return (
     <div className="px-5 py-5 space-y-5">
+      {/* Dashboard Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display font-bold text-2xl text-text-primary">{t('home.dashboard')}</h1>
+          <p className="text-sm text-text-secondary mt-0.5 truncate">{t('home.greeting', { name: firstName })}</p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleBalanceHidden}
+          aria-label={isBalanceHidden ? t('home.showBalance') : t('home.hideBalance')}
+          className="w-10 h-10 shrink-0 flex items-center justify-center bg-secondary/50 border border-secondary/30 rounded-xl hover:border-primary/50 hover:bg-secondary active:scale-95 transition-all text-text-primary"
+        >
+          {isBalanceHidden ? (
+            <EyeOff className="w-5 h-5 text-amber-600" />
+          ) : (
+            <Eye className="w-5 h-5 text-text-secondary" />
+          )}
+        </button>
+      </div>
+
       {/* Total Balance Hero Slider */}
       {balanceSlides.length > 0 && (
         <div className="relative">
@@ -341,21 +404,23 @@ export function HomeScreen() {
                     <span className="text-text-secondary-dark text-sm font-medium">{slide.label}</span>
                     {isDemo && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">{t('common.demo')}</span>}
                   </div>
-                  <p className="font-display font-extrabold text-3xl mb-4">{formatMoney(slide.balance, currency)}</p>
+                  <p className="font-display font-extrabold text-3xl mb-4 tabular-nums">
+                    {isBalanceHidden ? `${getCurrencySymbol(currency)} ••••••••` : formatMoney(slide.balance, currency)}
+                  </p>
                   <div className="flex gap-3">
                     <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <ArrowUpRight className="w-4 h-4 text-income-dark shrink-0" />
                         <span className="text-xs text-text-secondary-dark truncate">{t('home.income')}</span>
                       </div>
-                      <p className={`font-bold truncate ${slide.incomeStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{slide.incomeStr}</p>
+                      <p className={`font-bold tabular-nums truncate ${(isBalanceHidden ? '••••••••' : slide.incomeStr).length > 13 ? 'text-xs' : 'text-sm'}`}>{isBalanceHidden ? '••••••••' : slide.incomeStr}</p>
                     </div>
                     <div className="flex-1 bg-white/10 rounded-xl p-3 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <ArrowDownRight className="w-4 h-4 text-expense-dark shrink-0" />
                         <span className="text-xs text-text-secondary-dark truncate">{t('home.expense')}</span>
                       </div>
-                      <p className={`font-bold truncate ${slide.expenseStr.length > 13 ? 'text-xs' : 'text-sm'}`}>{slide.expenseStr}</p>
+                      <p className={`font-bold tabular-nums truncate ${(isBalanceHidden ? '••••••••' : slide.expenseStr).length > 13 ? 'text-xs' : 'text-sm'}`}>{isBalanceHidden ? '••••••••' : slide.expenseStr}</p>
                     </div>
                   </div>
                 </Card>
@@ -375,7 +440,21 @@ export function HomeScreen() {
       {/* Wallets Slider */}
       <div>
         <div className="mb-3">
-          <h3 className="font-display font-bold text-text-primary">{t('home.myWallets')}</h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-display font-bold text-text-primary">{t('home.myWallets')}</h3>
+            <button
+              type="button"
+              onClick={toggleWalletHidden}
+              aria-label={isWalletHidden ? t('home.showBalance') : t('home.hideBalance')}
+              className="w-9 h-9 shrink-0 flex items-center justify-center bg-secondary/50 border border-secondary/30 rounded-xl hover:border-primary/50 hover:bg-secondary active:scale-95 transition-all text-text-primary"
+            >
+              {isWalletHidden ? (
+                <EyeOff className="w-4.5 h-4.5 text-amber-600" />
+              ) : (
+                <Eye className="w-4.5 h-4.5 text-text-secondary" />
+              )}
+            </button>
+          </div>
         </div>
         <div className="relative">
           <div
@@ -423,11 +502,15 @@ export function HomeScreen() {
                           >
                             <Card className="p-4 overflow-hidden">
                               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                                <Icon className="w-5 h-5 text-primary" />
+                                {wallet.icon && WALLET_BRAND_MAP[wallet.icon] ? (
+                                  <WalletBrandIcon brand={wallet.icon} className="w-6 h-6 object-contain" />
+                                ) : (
+                                  <Icon className="w-5 h-5 text-primary" />
+                                )}
                               </div>
                               <p className="text-xs text-text-secondary font-medium mb-0.5 truncate">{wallet.name}</p>
-                              <p className="font-display font-bold text-text-primary truncate text-xs">
-                                {formatMoneyShort(wallet.balance, currency)}
+                              <p className="font-display font-bold text-text-primary truncate text-xs tabular-nums">
+                                {isWalletHidden ? '••••••••' : formatMoneyShort(wallet.balance, currency)}
                               </p>
                             </Card>
                           </button>
@@ -493,7 +576,7 @@ export function HomeScreen() {
                         <p className="font-semibold text-sm text-text-primary truncate pr-2">
                           {dynCat?.name || catInfo?.label || item.category}
                         </p>
-                        <p className="font-bold text-sm text-text-primary">
+                        <p className="font-bold text-sm text-text-primary tabular-nums">
                           {formatMoneyShort(item.amount, currency)}
                         </p>
                       </div>
@@ -516,6 +599,9 @@ export function HomeScreen() {
           )}
         </Card>
       </div>
+
+      {/* Monthly Activity Calendar */}
+      <MonthlyActivityCalendar onSelectDate={onOpenDate ?? (() => {})} />
 
       {/* Recent Activity */}
       <div>
@@ -548,7 +634,7 @@ export function HomeScreen() {
                     <p className="text-[10px] text-text-secondary/70 truncate">{formatRelative(tx.created_at)}</p>
                   </div>
                   <div className="shrink-0 flex items-center">
-                    <p className={`font-bold ${formatMoneyShort(tx.amount, currency).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-income' : 'text-text-primary'}`}>
+                    <p className={`font-bold tabular-nums ${formatMoneyShort(tx.amount, currency).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-income' : 'text-text-primary'}`}>
                       {isIncome ? '+' : '-'}{formatMoneyShort(tx.amount, currency)}
                     </p>
                   </div>

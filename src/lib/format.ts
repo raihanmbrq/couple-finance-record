@@ -39,6 +39,35 @@ export function parseMoneyInput(value: string): number {
   return digits ? parseInt(digits, 10) : 0;
 }
 
+// Ultra-compact Indonesian shorthand for tight UI slots (calendar badges, etc.).
+// IDR: 429000 -> "429RB", 15000 -> "15RB", 2200000 -> "2.2JT", 1.5e9 -> "1.5M".
+// Non-IDR: falls back to locale compact notation.
+export function formatMoneyCompact(amount: number, currency: string = 'IDR'): string {
+  const info = getCurrencyInfo(currency);
+  const absAmount = Math.abs(amount);
+
+  if (info.code === 'IDR') {
+    const trimZero = (s: string) => (s.endsWith('.0') ? s.slice(0, -2) : s);
+    if (absAmount >= 1_000_000_000) {
+      return `${trimZero((absAmount / 1_000_000_000).toFixed(1))}M`;
+    }
+    if (absAmount >= 1_000_000) {
+      return `${trimZero((absAmount / 1_000_000).toFixed(1))}JT`;
+    }
+    if (absAmount >= 1_000) {
+      return `${Math.round(absAmount / 1_000)}RB`;
+    }
+    return `${Math.round(absAmount)}`;
+  }
+
+  return new Intl.NumberFormat(info.locale, {
+    style: 'currency',
+    currency: info.code,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
+
 export function formatMoneyInput(amount: number, currency: string = 'IDR'): string {
   if (!amount) return '';
   const info = getCurrencyInfo(currency);
@@ -79,6 +108,16 @@ export function formatDateShort(date: string | Date): string {
     month: '2-digit',
     year: 'numeric',
   }).format(d);
+}
+
+export function formatDateRange(start: string, end: string): string {
+  const fmt = (date: string) =>
+    new Intl.DateTimeFormat('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(`${date}T00:00:00`));
+  return `${fmt(start)} - ${fmt(end)}`;
 }
 
 export function formatTime(date: string | Date): string {

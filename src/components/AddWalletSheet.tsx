@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { formatMoneyInput, parseMoneyInput } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { walletTypeIcon } from '@/lib/walletIcons';
+import { getSaveTimeWalletIcon } from '@/lib/walletIconDetect';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { CreateWalletTypeSheet } from '@/components/CreateWalletTypeSheet';
@@ -40,7 +41,7 @@ export function AddWalletSheet({ open, onClose }: AddWalletSheetProps) {
     setError('');
     setLoading(true);
     try {
-      await addWallet(name.trim(), type, parseMoneyInput(balance));
+      await addWallet(name.trim(), type, parseMoneyInput(balance), getSaveTimeWalletIcon(name.trim(), type));
       setName('');
       setBalance('');
       setType('');

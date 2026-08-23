@@ -45,12 +45,13 @@ export default {
         },
         'income': '#86EFAC',
         'expense': '#FCA5A5',
+        'expense-dark': 'rgb(var(--color-expense-dark) / <alpha-value>)',
         'warning': '#FDE68A',
         'total-balance': 'rgb(var(--color-total-balance) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Figtree"', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Figtree"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       borderRadius: {
         '2xl': '1rem',

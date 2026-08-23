@@ -36,7 +36,7 @@ interface AppState {
   joinHousehold: (inviteCode: string) => Promise<void>;
   leaveHousehold: () => Promise<void>;
   // Wallets
-  addWallet: (name: string, type: Wallet['type'], balance: number) => Promise<Wallet>;
+  addWallet: (name: string, type: Wallet['type'], balance: number, icon?: string | null) => Promise<Wallet>;
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
   deleteWallet: (id: string) => Promise<void>;
   addCustomWalletType: (name: string, icon: string) => Promise<WalletTypeRow>;
@@ -535,7 +535,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setProfile({ ...profile, household_id: null, role: 'single' });
   }, [loadLiveData, mode, profile]);
 
-  const addWallet = useCallback(async (name: string, type: Wallet['type'], balance: number) => {
+  const addWallet = useCallback(async (name: string, type: Wallet['type'], balance: number, icon?: string | null) => {
     let hh = household;
 
     // If user has no household (single-user case), create a personal household
@@ -581,6 +581,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       name,
       type,
       balance,
+      icon: icon ?? null,
       owner_role: null,
       created_at: new Date().toISOString(),
     };
@@ -592,6 +593,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         name,
         type,
         balance,
+        icon: icon ?? null,
       }).select().single();
       if (error) throw error;
       const inserted = (data as Wallet) ?? newWallet;
@@ -763,6 +765,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         notes: tx.notes,
         spent_by: tx.spent_by,
         transaction_date: tx.transaction_date,
+        receipt_url: tx.receipt_url ?? null,
       });
       if (error) throw error;
 
@@ -828,6 +831,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           notes: updatedTransaction.notes,
           spent_by: updatedTransaction.spent_by,
           transaction_date: updatedTransaction.transaction_date,
+          receipt_url: updatedTransaction.receipt_url ?? null,
         })
         .eq('id', id);
       if (error) throw error;

@@ -19,7 +19,7 @@ function SummaryRow({ label, value, highlight = false }: { label: string; value:
   return (
     <div className="flex items-center justify-between">
       <span className="text-xs text-text-secondary">{label}</span>
-      <span className={`text-sm font-semibold ${highlight ? 'text-primary' : 'text-text-primary'}`}>{value}</span>
+      <span className={`text-sm font-semibold tabular-nums ${highlight ? 'text-primary' : 'text-text-primary'}`}>{value}</span>
     </div>
   );
 }
@@ -222,7 +222,7 @@ export function GoalsSection() {
                 <ProgressBar value={goal.current_amount} max={goal.target_amount} />
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-text-secondary">
+                  <span className="text-xs text-text-secondary tabular-nums">
                     {formatMoney(goal.current_amount, currency)} {t('goals.of')} {formatMoney(goal.target_amount, currency)}
                   </span>
                   <span className="text-xs font-bold text-primary">{pct}%</span>
@@ -234,7 +234,7 @@ export function GoalsSection() {
                       {t('goals.target')} {formatDateShort(goal.target_date)} • {durationLabel(monthsBetween(new Date(), new Date(goal.target_date)))}
                     </p>
                     <p className="text-text-secondary">
-                      {t('goals.estimatedSavings')} <span className="font-semibold text-text-primary">{formatMoney(goal.monthly_contribution, currency)}{t('goals.perMonth')}</span>
+                      {t('goals.estimatedSavings')} <span className="font-semibold text-text-primary tabular-nums">{formatMoney(goal.monthly_contribution, currency)}{t('goals.perMonth')}</span>
                     </p>
                   </div>
                   <Button

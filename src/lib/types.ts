@@ -55,6 +55,7 @@ export interface Wallet {
   name: string;
   type: string;
   balance: number;
+  icon?: string | null;
   owner_role?: UserRole | null;
   created_at: string;
 }
@@ -71,6 +72,7 @@ export interface Transaction {
   notes?: string | null;
   spent_by: string;
   transaction_date: string;
+  receipt_url?: string | null;
   created_at: string;
 }
 

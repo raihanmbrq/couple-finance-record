@@ -14,6 +14,7 @@ import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2 } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
 import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
+import { ReceiptAttachButton } from '@/components/ReceiptAttachButton';
 
 interface EditTransactionSheetProps {
   open: boolean;
@@ -31,6 +32,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
   const [walletId, setWalletId] = useState('');
   const [category, setCategory] = useState('food');
   const [notes, setNotes] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,6 +56,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
     setWalletId(transaction.wallet_id);
     setCategory(transaction.category);
     setNotes(transaction.notes ?? '');
+    setReceiptUrl(transaction.receipt_url ?? null);
     setTransactionDate(transaction.transaction_date.slice(0, 10));
     setError('');
   }, [open, transaction]);
@@ -102,6 +105,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
         notes: notes.trim() || null,
         spent_by: profile?.full_name ?? transaction.spent_by,
         transaction_date: `${transactionDate}T12:00:00.000Z`,
+        receipt_url: receiptUrl,
       });
       showToast(t('tx.updatedToast'));
       window.setTimeout(() => {
@@ -140,15 +144,24 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
           </button>
         </div>
 
-        <Input
-          label={t('common.amount')}
-          prefix={getCurrencySymbol(currency)}
-          placeholder="0"
-          inputMode="numeric"
-          value={formatMoneyInput(parseMoneyInput(amount), currency)}
-          onChange={(e) => setAmount(e.target.value)}
-          className="text-2xl font-bold"
-        />
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <Input
+              label={t('common.amount')}
+              prefix={getCurrencySymbol(currency)}
+              placeholder="0"
+              inputMode="numeric"
+              value={formatMoneyInput(parseMoneyInput(amount), currency)}
+              onChange={(e) => setAmount(e.target.value)}
+              className="text-2xl font-bold"
+            />
+          </div>
+          <ReceiptAttachButton
+            receiptUrl={receiptUrl}
+            onUpload={(url) => setReceiptUrl(url)}
+            onRemove={() => setReceiptUrl(null)}
+          />
+        </div>
 
         <fieldset className="space-y-2">
           <div className="flex items-center justify-between mb-2">

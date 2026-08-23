@@ -14,6 +14,7 @@ import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
 import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
+import { ReceiptAttachButton } from '@/components/ReceiptAttachButton';
 
 interface AddTransactionSheetProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
 
   const [category, setCategory] = useState('food');
   const [notes, setNotes] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,6 +62,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
     setAmount('');
     setCategory('food');
     setNotes('');
+    setReceiptUrl(null);
     setTransactionDate(new Date().toISOString().slice(0, 10));
     setError('');
   };
@@ -85,6 +88,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
         notes: notes.trim() || null,
         spent_by: profile?.full_name ?? 'Me',
         transaction_date: `${transactionDate}T12:00:00.000Z`,
+        receipt_url: receiptUrl,
       });
       reset();
       onClose();
@@ -121,16 +125,25 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
           </button>
         </div>
 
-        {/* Amount */}
-        <Input
-          label={t('common.amount')}
-          prefix={getCurrencySymbol(currency)}
-          placeholder="0"
-          inputMode="numeric"
-          value={formatMoneyInput(parseMoneyInput(amount), currency)}
-          onChange={(e) => setAmount(e.target.value)}
-          className="text-2xl font-bold"
-        />
+        {/* Amount + Receipt Attachment */}
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <Input
+              label={t('common.amount')}
+              prefix={getCurrencySymbol(currency)}
+              placeholder="0"
+              inputMode="numeric"
+              value={formatMoneyInput(parseMoneyInput(amount), currency)}
+              onChange={(e) => setAmount(e.target.value)}
+              className="text-2xl font-bold"
+            />
+          </div>
+          <ReceiptAttachButton
+            receiptUrl={receiptUrl}
+            onUpload={(url) => setReceiptUrl(url)}
+            onRemove={() => setReceiptUrl(null)}
+          />
+        </div>
 
         {/* Wallet Selection */}
         <div>

@@ -22,6 +22,7 @@ function AppContent() {
     return (localStorage.getItem('activeTab') as TabKey) || 'home';
   });
   const [showAddTx, setShowAddTx] = useState(false);
+  const [txDateFilter, setTxDateFilter] = useState<string | null>(null);
 
   const isAuthenticated = Boolean(profile);
 
@@ -66,8 +67,15 @@ function AppContent() {
         onAddClick={() => setShowAddTx(true)}
       >
         <TopBar />
-        {activeTab === 'home' && <HomeScreen />}
-        {activeTab === 'transactions' && <TransactionsScreen />}
+        {activeTab === 'home' && (
+          <HomeScreen onOpenDate={(d) => {
+            setTxDateFilter(d);
+            setActiveTab('transactions');
+          }} />
+        )}
+        {activeTab === 'transactions' && (
+          <TransactionsScreen dateFilter={txDateFilter} onDateFilterConsumed={() => setTxDateFilter(null)} />
+        )}
         {activeTab === 'budget' && <BudgetScreen />}
         {activeTab === 'profile' && <ProfileScreen />}
       </AppShell>
