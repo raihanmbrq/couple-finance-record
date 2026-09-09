@@ -6,6 +6,12 @@ import { formatMoneyCompact } from '@/lib/format';
 
 interface MonthlyActivityCalendarProps {
   onSelectDate: (dateKey: string) => void;
+  /** Optional year override (defaults to the current year). */
+  year?: number;
+  /** Optional month override, 0-based (defaults to the current month). */
+  month?: number;
+  /** Hide the built-in heading when the parent card already renders its own title + month picker. */
+  hideHeader?: boolean;
 }
 
 // Monday-first weekday labels per language (id: SN SL RB KM JM SB MG).
@@ -17,55 +23,57 @@ const WEEKDAY_LABELS: Record<string, string[]> = {
 const localDayKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-export function MonthlyActivityCalendar({ onSelectDate }: MonthlyActivityCalendarProps) {
+export function MonthlyActivityCalendar({ onSelectDate, year, month, hideHeader = false }: MonthlyActivityCalendarProps) {
   const { transactions, profile } = useApp();
   const { t, language } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
 
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const viewYear = year ?? now.getFullYear();
+  const viewMonth = month ?? now.getMonth();
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
-  // Current month heading, e.g. "AUGUST 2026"
-  const monthLabel = new Date(year, month, 1)
+  // Month heading, e.g. "AUGUST 2026"
+  const monthLabel = new Date(viewYear, viewMonth, 1)
     .toLocaleString(locale, { month: 'long', year: 'numeric' })
     .toUpperCase();
 
-  // Daily expense totals (excludes transfers) for the current month
+  // Daily expense totals (excludes transfers) for the viewed month
   const dailyTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const tx of transactions) {
       if (tx.type !== 'expense' || tx.category === 'transfer') continue;
       const d = new Date(tx.transaction_date || tx.created_at);
-      if (d.getMonth() !== month || d.getFullYear() !== year) continue;
+      if (d.getMonth() !== viewMonth || d.getFullYear() !== viewYear) continue;
       const key = localDayKey(d);
       totals[key] = (totals[key] || 0) + tx.amount;
     }
     return totals;
-  }, [transactions, month, year]);
+  }, [transactions, viewMonth, viewYear]);
 
   // Days that have any recorded transaction (for highlighted background)
   const activeDays = useMemo(() => {
     const days = new Set<string>();
     for (const tx of transactions) {
       const d = new Date(tx.transaction_date || tx.created_at);
-      if (d.getMonth() !== month || d.getFullYear() !== year) continue;
+      if (d.getMonth() !== viewMonth || d.getFullYear() !== viewYear) continue;
       days.add(localDayKey(d));
     }
     return days;
-  }, [transactions, month, year]);
+  }, [transactions, viewMonth, viewYear]);
 
-  const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const leadingBlanks = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const todayKey = localDayKey(now);
 
   return (
     <div>
-      <div className="mb-3">
-        <h3 className="font-display font-bold text-xl text-text-primary">{t('home.monthlyActivity')}</h3>
-        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mt-0.5">{monthLabel}</p>
-      </div>
+      {!hideHeader && (
+        <div className="mb-3">
+          <h3 className="font-display font-bold text-xl text-text-primary">{t('home.monthlyActivity')}</h3>
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mt-0.5">{monthLabel}</p>
+        </div>
+      )}
       <Card className="p-4">
         <div className="grid grid-cols-7 gap-1 mb-2">
           {WEEKDAY_LABELS[language]?.map((label) => (
@@ -80,7 +88,7 @@ export function MonthlyActivityCalendar({ onSelectDate }: MonthlyActivityCalenda
           ))}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1;
-            const date = new Date(year, month, day);
+            const date = new Date(viewYear, viewMonth, day);
             const key = localDayKey(date);
             const total = dailyTotals[key] || 0;
             const isToday = key === todayKey;

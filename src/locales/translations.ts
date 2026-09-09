@@ -28,7 +28,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'common.you': 'kamu',
     'nav.home': 'Beranda',
     'nav.transactions': 'Transaksi',
-    'nav.budget': 'Anggaran',
+    'nav.budget': 'Anggaran dan Tujuan',
     'nav.profile': 'Profil',
     'topbar.circleMode': 'Mode Circle — {name}',
     'topbar.singleMode': 'Mode Single',
@@ -441,6 +441,107 @@ export const translations: Record<Language, Record<string, string>> = {
     'transfer.to': 'Transfer ke {name}',
     'transfer.from': 'Transfer dari {name}',
     'transfer.insufficientBalance': 'Saldo dompet asal tidak mencukupi',
+
+    // ══ Desktop Dashboard v2 — Global Date Filter ══
+    'filter.thisMonth': 'Bulan Ini',
+    'filter.last30': '30 Hari Terakhir',
+    'filter.thisYear': 'Tahun Ini',
+    'filter.customRange': 'Rentang Kustom',
+    'filter.periodLabel': 'Periode Waktu',
+    'filter.from': 'Dari',
+    'filter.to': 'Sampai',
+    'filter.customApply': 'Terapkan Rentang',
+
+    // ══ Desktop Dashboard v2 — Overview ══
+    'overview.title': 'Ringkasan Dashboard',
+    'overview.monthlyActivity': 'Aktivitas Bulan Ini',
+    'overview.monthlyActivitySub': 'Kalender aktivitas pengeluaran harian',
+
+    // ══ Desktop Dashboard v2 — Metric Cards ══
+    'metric.income': 'Total Pemasukan',
+    'metric.incomeSub': 'Pemasukan tercatat',
+    'metric.expense': 'Total Pengeluaran',
+    'metric.expenseSub': 'Pengeluaran tercatat',
+    'metric.net': 'Arus Kas Bersih',
+    'metric.netSub': 'Rasio Pemasukan - Pengeluaran',
+
+    // ══ Desktop Dashboard v2 — Charts ══
+    'chart.cashflowTitle': 'Grafik Tren Arus Kas',
+    'chart.cashflowSub': 'Lintasan pemasukan vs pengeluaran',
+    'chart.cashflowMonthlySub': 'Pemasukan vs pengeluaran per bulan',
+    'chart.categoryTitle': 'Alokasi Kategori',
+    'chart.categorySub': 'Rincian pengeluaran per kategori',
+    'chart.spouseTitle': 'Rasio Kontribusi Pasangan',
+    'chart.spouseSub': 'Proporsi pengeluaran per pasangan',
+
+    // ══ Desktop Dashboard v2 — Spending Anomaly Banner ══
+    'anomaly.spikeTitle': 'Pengeluaran {category} naik {pct}% dibanding bulan lalu',
+    'anomaly.spikeBody': 'Naik {amount} lebih banyak dari bulan lalu. Tinjau transaksi {category} terakhir.',
+    'anomaly.netPositiveTitle': 'Arus kas positif!',
+    'anomaly.netPositiveBody': 'Kamu punya {amount} tersedia untuk Financial Goals.',
+    'anomaly.netNegativeTitle': 'Pengeluaran melebihi pemasukan',
+    'anomaly.netNegativeBody': 'Kamu mengeluarkan {amount} lebih banyak dari penghasilan pada periode ini.',
+    'anomaly.balancedTitle': 'Kamu on-track — pengeluaran seimbang',
+    'anomaly.balancedBody': 'Tidak ada lonjakan kategori terdeteksi pada periode ini.',
+    'anomaly.noDataTitle': 'Belum ada aktivitas untuk dianalisis',
+
+    // ══ Desktop Dashboard v2 — Member Breakdown ══
+    'memberBreakdown.title': 'Siapa Belanja Apa?',
+    'memberBreakdown.subtitle': 'Aktivitas anggota circle pada periode ini',
+    'memberBreakdown.empty': 'Belum ada pengeluaran anggota pada periode ini.',
+    'memberBreakdown.topSpend': 'Pengeluaran teratas',
+    'memberBreakdown.noSpend': 'Belum ada kategori teratas',
+    'memberBreakdown.shareLabel': 'Porsi',
+
+    // ══ Desktop Dashboard v2 — Monthly Health Summary ══
+    'health.title': 'Ringkasan Kesehatan Bulanan',
+    'health.spend': 'Pengeluaran',
+    'health.vsLastMonth': 'dibanding bulan lalu',
+    'health.noPrevMonth': 'Belum ada pengeluaran bulan lalu',
+    'health.income': 'Pemasukan',
+    'health.net': 'Bersih',
+    'health.noCategory': 'Belum ada data kategori',
+    'health.txCount': 'transaksi',
+
+    // ══ Desktop Dashboard v2 — Analytics ══
+    'analytics.title': 'Analisis Keuangan Interaktif',
+    'analytics.monthlyActivity': 'Aktivitas Bulan Ini',
+    'analytics.monthlyActivitySub': 'Ringkasan aktivitas harian via kalender',
+    'analytics.categoryTableTitle': 'Rincian Pengeluaran per Kategori',
+    'analytics.txCount': 'Jml Transaksi',
+    'analytics.totalSpent': 'Total Pengeluaran',
+    'analytics.share': '% Porsi',
+    'analytics.emptyTable': 'Tidak ada data pengeluaran pada periode ini.',
+
+    // ══ Desktop Dashboard v2 — Top Expenses ══
+    'topExpenses.title': '5 Pengeluaran Tertinggi',
+    'topExpenses.subtitle': 'Transaksi individu terbesar pada periode ini',
+    'topExpenses.empty': 'Tidak ada pengeluaran pada periode ini.',
+
+    // ══ Desktop Dashboard v2 — Command Palette ══
+    'palette.placeholder': 'Ketik perintah atau cari transaksi…',
+    'palette.hint': 'Aksi cepat & navigasi',
+    'palette.groupActions': 'Aksi Cepat',
+    'palette.groupNav': 'Navigasi',
+    'palette.groupTx': 'Transaksi',
+    'palette.addTx': 'Tambah Transaksi',
+    'palette.addTxHint': 'Buka form tambah cepat',
+    'palette.exportExcel': 'Ekspor Excel (.xlsx)',
+    'palette.exportPdf': 'Unduh PDF E-Statement',
+    'palette.navigateHint': 'Buka halaman',
+    'palette.nav.overview': 'Ringkasan Dashboard',
+    'palette.nav.analytics': 'Analitik',
+    'palette.nav.transactions': 'Grid Data Transaksi',
+    'palette.nav.budgets-goals': 'Anggaran & Goals',
+    'palette.nav.bulk-import-export': 'Pusat Impor & Ekspor',
+    'palette.nav.circle-members': 'Anggota Circle',
+    'palette.kbdNavigate': 'Navigasi',
+    'palette.kbdSelect': 'Pilih',
+    'palette.kbdToggle': 'Buka-Tutup',
+    'palette.exportExcelDone': 'Laporan Excel diunduh',
+    'palette.exportPdfDone': 'PDF e-statement diunduh',
+    'palette.exportError': 'Ekspor gagal — coba lagi.',
+    'palette.noResults': 'Tidak ada perintah atau transaksi yang cocok.',
   },
   en: {
     'common.cancel': 'Cancel',
@@ -467,7 +568,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'common.you': 'you',
     'nav.home': 'Home',
     'nav.transactions': 'Transactions',
-    'nav.budget': 'Budget',
+    'nav.budget': 'Budget and Goals',
     'nav.profile': 'Profile',
     'topbar.circleMode': 'Circle Mode — {name}',
     'topbar.singleMode': 'Single Mode',
@@ -880,6 +981,107 @@ export const translations: Record<Language, Record<string, string>> = {
     'transfer.to': 'Transfer to {name}',
     'transfer.from': 'Transfer from {name}',
     'transfer.insufficientBalance': 'Source wallet balance is insufficient',
+
+    // ══ Desktop Dashboard v2 — Global Date Filter ══
+    'filter.thisMonth': 'This Month',
+    'filter.last30': 'Last 30 Days',
+    'filter.thisYear': 'This Year',
+    'filter.customRange': 'Custom Range',
+    'filter.periodLabel': 'Time Period',
+    'filter.from': 'From',
+    'filter.to': 'To',
+    'filter.customApply': 'Apply Range',
+
+    // ══ Desktop Dashboard v2 — Overview ══
+    'overview.title': 'Dashboard Overview',
+    'overview.monthlyActivity': 'Monthly Activity',
+    'overview.monthlyActivitySub': 'Calendar view of daily expense activity',
+
+    // ══ Desktop Dashboard v2 — Metric Cards ══
+    'metric.income': 'Total Income',
+    'metric.incomeSub': 'Logged inflow',
+    'metric.expense': 'Total Expenses',
+    'metric.expenseSub': 'Logged outflow',
+    'metric.net': 'Net Cashflow',
+    'metric.netSub': 'Income - Expenses ratio',
+
+    // ══ Desktop Dashboard v2 — Charts ══
+    'chart.cashflowTitle': 'Cashflow Trend Chart',
+    'chart.cashflowSub': 'Income vs Expense trajectory over time',
+    'chart.cashflowMonthlySub': 'Income vs Expense by month',
+    'chart.categoryTitle': 'Category Allocation',
+    'chart.categorySub': 'Expense breakdown by category',
+    'chart.spouseTitle': 'Spouse Contribution Ratio',
+    'chart.spouseSub': 'Proportional spending per partner',
+
+    // ══ Desktop Dashboard v2 — Spending Anomaly Banner ══
+    'anomaly.spikeTitle': '{category} spending increased by {pct}% compared to last month',
+    'anomaly.spikeBody': "That's {amount} more than last month. Review your recent {category} transactions.",
+    'anomaly.netPositiveTitle': 'Positive Net Cashflow!',
+    'anomaly.netPositiveBody': 'You have {amount} available for Financial Goals.',
+    'anomaly.netNegativeTitle': 'Expenses exceeded income',
+    'anomaly.netNegativeBody': 'You spent {amount} more than you earned this period.',
+    'anomaly.balancedTitle': 'You are on track — spending is balanced',
+    'anomaly.balancedBody': 'No category spikes detected for this period.',
+    'anomaly.noDataTitle': 'No activity to analyze yet',
+
+    // ══ Desktop Dashboard v2 — Member Breakdown ══
+    'memberBreakdown.title': 'Who Spends What?',
+    'memberBreakdown.subtitle': 'Circle member activity this period',
+    'memberBreakdown.empty': 'No member expenses recorded in this period.',
+    'memberBreakdown.topSpend': 'Top spend:',
+    'memberBreakdown.noSpend': 'No top category yet',
+    'memberBreakdown.shareLabel': 'Share',
+
+    // ══ Desktop Dashboard v2 — Monthly Health Summary ══
+    'health.title': 'Monthly Health Summary',
+    'health.spend': 'Spending',
+    'health.vsLastMonth': 'vs last month',
+    'health.noPrevMonth': 'No spending recorded last month',
+    'health.income': 'Income',
+    'health.net': 'Net',
+    'health.noCategory': 'No category data yet',
+    'health.txCount': 'transactions',
+
+    // ══ Desktop Dashboard v2 — Analytics ══
+    'analytics.title': 'Interactive Financial Analytics',
+    'analytics.monthlyActivity': 'Monthly Activity',
+    'analytics.monthlyActivitySub': 'Daily calendar activity recap',
+    'analytics.categoryTableTitle': 'Category Detailed Expenses',
+    'analytics.txCount': 'Tx Count',
+    'analytics.totalSpent': 'Total Spent',
+    'analytics.share': '% Share',
+    'analytics.emptyTable': 'No expense data found for this period.',
+
+    // ══ Desktop Dashboard v2 — Top Expenses ══
+    'topExpenses.title': 'Top 5 Highest Expenses',
+    'topExpenses.subtitle': 'Largest individual transactions this period',
+    'topExpenses.empty': 'No expenses recorded in this period.',
+
+    // ══ Desktop Dashboard v2 — Command Palette ══
+    'palette.placeholder': 'Type a command or search transactions…',
+    'palette.hint': 'Quick actions & navigation',
+    'palette.groupActions': 'Quick Actions',
+    'palette.groupNav': 'Navigate To',
+    'palette.groupTx': 'Transactions',
+    'palette.addTx': 'Add Transaction',
+    'palette.addTxHint': 'Open the quick-add sheet',
+    'palette.exportExcel': 'Export Excel (.xlsx)',
+    'palette.exportPdf': 'Download PDF E-Statement',
+    'palette.navigateHint': 'Go to page',
+    'palette.nav.overview': 'Dashboard Overview',
+    'palette.nav.analytics': 'Analytics',
+    'palette.nav.transactions': 'Transactions Data Grid',
+    'palette.nav.budgets-goals': 'Budgets & Goals',
+    'palette.nav.bulk-import-export': 'Import & Export Center',
+    'palette.nav.circle-members': 'Circle Members',
+    'palette.kbdNavigate': 'Navigate',
+    'palette.kbdSelect': 'Select',
+    'palette.kbdToggle': 'Toggle',
+    'palette.exportExcelDone': 'Excel report downloaded',
+    'palette.exportPdfDone': 'PDF e-statement downloaded',
+    'palette.exportError': 'Export failed — please try again.',
+    'palette.noResults': 'No matching commands or transactions.',
   },
 };
 
