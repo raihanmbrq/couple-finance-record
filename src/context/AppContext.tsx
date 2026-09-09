@@ -248,11 +248,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { data: w } = await supabase
         .from('wallets')
         .select('*')
-        .eq('household_id', householdId);
+        .eq('household_id', householdId)
+        .is('archived_at', null);
       const walletRows = (w as Wallet[]) ?? [];
       setWallets(walletRows);
 
-      const walletIds = walletRows.map((wallet) => wallet.id);
+      // Include archived (deleted) wallet ids when loading transactions so
+      // history created before a wallet was deleted stays visible.
+      const { data: allWalletRows } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('household_id', householdId);
+      const walletIds = ((allWalletRows ?? []) as { id: string }[]).map((row) => row.id);
       let txRows: Transaction[] = [];
       if (walletIds.length > 0) {
         const { data: tx } = await supabase
@@ -614,17 +621,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   const deleteWallet = useCallback(async (id: string) => {
-    const walletTransactions = transactions.filter((tx) => tx.wallet_id === id);
-    if (walletTransactions.length > 0) {
-      throw new Error('This wallet has linked transactions. Delete those transactions first.');
-    }
+    // Snapshot the wallet name onto its transactions first so the history
+    // keeps showing the wallet name after the wallet is deleted. The wallet
+    // itself is soft-deleted (archived) so existing FK/RLS rules and the
+    // transaction records remain intact in live mode.
+    const target = wallets.find((w) => w.id === id);
+    const walletName = target?.name ?? null;
 
     if (mode === 'live') {
-      const { error } = await supabase.from('wallets').delete().eq('id', id);
-      if (error) throw error;
+      if (walletName) {
+        const { error: txErr } = await supabase
+          .from('transactions')
+          .update({ wallet_name: walletName })
+          .eq('wallet_id', id)
+          .is('wallet_name', null);
+        if (txErr) throw txErr;
+      }
+      const { error: walletErr } = await supabase
+        .from('wallets')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', id);
+      if (walletErr) throw walletErr;
     }
+
+    setTransactions(prev => prev.map((tx) =>
+      tx.wallet_id === id ? { ...tx, wallet_name: walletName ?? tx.wallet_name } : tx,
+    ));
     setWallets(prev => prev.filter(w => w.id !== id));
-  }, [mode, transactions]);
+  }, [mode, wallets]);
 
   const addCustomWalletType = useCallback(async (name: string, icon: string): Promise<WalletTypeRow> => {
     const createdAt = new Date().toISOString();
@@ -743,14 +767,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [mode, transactions]);
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, 'id' | 'created_at'>) => {
+    const targetWallet = wallets.find(w => w.id === tx.wallet_id);
     const newTx: Transaction = {
       ...tx,
       id: crypto.randomUUID(),
+      wallet_name: targetWallet?.name ?? tx.wallet_name ?? null,
       transaction_date: tx.transaction_date || new Date().toISOString(),
       created_at: new Date().toISOString(),
     };
 
-    const targetWallet = wallets.find(w => w.id === tx.wallet_id);
     const nextWalletBalance = targetWallet
       ? targetWallet.balance + (tx.type === 'income' ? tx.amount : -tx.amount)
       : tx.amount;
@@ -764,6 +789,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         category: tx.category,
         notes: tx.notes,
         spent_by: tx.spent_by,
+        wallet_name: newTx.wallet_name,
         transaction_date: tx.transaction_date,
         receipt_url: tx.receipt_url ?? null,
       });
@@ -817,6 +843,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       transaction_date: updates.transaction_date ?? currentTx.transaction_date,
       wallet_id: walletId,
       user_id: updates.user_id ?? currentTx.user_id,
+      wallet_name: nextWallet?.name ?? currentTx.wallet_name,
     };
 
     if (mode === 'live') {
@@ -830,6 +857,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           category: updatedTransaction.category,
           notes: updatedTransaction.notes,
           spent_by: updatedTransaction.spent_by,
+          wallet_name: updatedTransaction.wallet_name,
           transaction_date: updatedTransaction.transaction_date,
           receipt_url: updatedTransaction.receipt_url ?? null,
         })
@@ -1026,6 +1054,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       category: 'goals',
       notes: `Deposit ke Goal: ${goal.title}`,
       spent_by: profile?.full_name ?? 'Me',
+      wallet_name: wallet.name,
       transaction_date: now,
       created_at: now,
     };
@@ -1040,6 +1069,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         category: newTx.category,
         notes: newTx.notes,
         spent_by: newTx.spent_by,
+        wallet_name: newTx.wallet_name,
         transaction_date: newTx.transaction_date,
       });
       if (txErr) throw txErr;

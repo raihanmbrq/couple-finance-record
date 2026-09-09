@@ -71,6 +71,7 @@ export interface Transaction {
   category: string;
   notes?: string | null;
   spent_by: string;
+  wallet_name?: string | null;
   transaction_date: string;
   receipt_url?: string | null;
   created_at: string;

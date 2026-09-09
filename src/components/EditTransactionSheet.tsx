@@ -192,6 +192,12 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
           {selectedWallet && (
             <p className="text-xs text-text-secondary mt-2">{t('tx.currentBalance')}: {formatMoney(selectedWallet.balance, currency)}</p>
           )}
+          {!selectedWallet && transaction && (
+            <div className="p-3 rounded-xl bg-secondary/50 border border-dashed border-secondary">
+              <p className="font-semibold text-sm text-text-primary truncate">{transaction.wallet_name ?? t('wallet.title')}</p>
+              <p className="text-xs text-text-secondary mt-1">{t('tx.walletDeletedNote')}</p>
+            </div>
+          )}
         </fieldset>
 
         <fieldset className="space-y-2">

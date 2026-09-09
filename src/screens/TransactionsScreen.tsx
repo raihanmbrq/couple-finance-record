@@ -15,7 +15,7 @@ import { WALLET_BRAND_MAP } from '@/lib/walletBrands';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { getCategory, type Wallet } from '@/lib/types';
 import { formatDate, formatDateRange, formatMoney } from '@/lib/format';
-import { Search, Receipt, X, FileDown, Calendar, ChevronDown, Wallet as WalletIcon, Tags, Pencil, Trash2 } from 'lucide-react';
+import { Search, Receipt, X, FileDown, Calendar, ChevronDown, Wallet as WalletIcon, Tags, Users, Pencil, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { TransactionDetailSheet } from '@/components/TransactionDetailSheet';
@@ -75,18 +75,21 @@ function walletIconNode(w: Wallet) {
 }
 
 export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateFilter?: string | null; onDateFilterConsumed?: () => void }) {
-  const { transactions, wallets, categories, householdMembers, profile, deleteTransaction } = useApp();
+  const { transactions, wallets, categories, householdMembers, household, profile, deleteTransaction } = useApp();
   const { t } = useLanguage();
   const { showToast } = useToast();
   const currency = profile?.currency ?? 'IDR';
+  const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
   const [filterWallet, setFilterWallet] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterLoggedBy, setFilterLoggedBy] = useState('all');
   const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const [dateRangeDraft, setDateRangeDraft] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const [showWalletSheet, setShowWalletSheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
+  const [showLoggedBySheet, setShowLoggedBySheet] = useState(false);
   const [showDateSheet, setShowDateSheet] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<(typeof transactions)[number] | null>(null);
@@ -106,6 +109,17 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
     const map = new Map(wallets.map(w => [w.id, w]));
     return map;
   }, [wallets]);
+
+  // Resolve a wallet's display name. Falls back to the name snapshot stored on
+  // the transaction so history keeps its wallet label even after the wallet
+  // was deleted (archived) and is no longer part of the wallets list.
+  const resolveWalletName = (walletId: string): string | null => {
+    if (!walletId) return null;
+    const w = walletMap.get(walletId);
+    if (w) return w.name;
+    const tx = transactions.find((t) => t.wallet_id === walletId);
+    return tx?.wallet_name ?? null;
+  };
 
   const walletOptions = useMemo(() => {
     // Only show wallets that have at least one transaction.
@@ -162,6 +176,39 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
     return opts;
   }, [categories, transactions, t]);
 
+  const loggedByOptions = useMemo(() => {
+    const opts: FilterOption[] = [
+      { value: 'all', label: t('tx.allPeople'), icon: <Users className="w-5 h-5 text-text-secondary" /> },
+    ];
+    const seen = new Set<string>();
+    const memberByFullName = new Map(
+      householdMembers.map((m) => [m.profile?.full_name, m] as [string | undefined, typeof m]),
+    );
+    for (const tx of transactions) {
+      const name = tx.spent_by;
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      const member = memberByFullName.get(name);
+      opts.push({
+        value: name,
+        label: name,
+        icon: (
+          <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+            {member?.profile?.avatar_url ? (
+              <img src={member.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xs font-bold text-text-secondary">{name.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+        ),
+        badge: name === profile?.full_name ? (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">{t('common.me')}</span>
+        ) : undefined,
+      });
+    }
+    return opts;
+  }, [transactions, householdMembers, profile, t]);
+
   const filtered = useMemo(() => {
     return transactions.filter(tx => {
       if (dateRange.start && dateRange.end) {
@@ -170,6 +217,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
       }
       if (filterWallet !== 'all' && tx.wallet_id !== filterWallet) return false;
       if (filterCategory !== 'all' && tx.category !== filterCategory) return false;
+      if (filterLoggedBy !== 'all' && tx.spent_by !== filterLoggedBy) return false;
       if (search) {
         const q = search.toLowerCase();
         const matchesNote = tx.notes?.toLowerCase().includes(q);
@@ -179,10 +227,10 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
       }
       return true;
     });
-  }, [transactions, filterWallet, filterCategory, search, dateRange]);
+  }, [transactions, filterWallet, filterCategory, filterLoggedBy, search, dateRange]);
 
   const hasDateFilter = Boolean(dateRange.start && dateRange.end);
-  const hasActiveFilters = filterWallet !== 'all' || filterCategory !== 'all' || search !== '' || hasDateFilter;
+  const hasActiveFilters = filterWallet !== 'all' || filterCategory !== 'all' || filterLoggedBy !== 'all' || search !== '' || hasDateFilter;
 
   const dateLabel = useMemo(() => {
     const { start, end } = dateRange;
@@ -222,6 +270,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
   const clearFilters = () => {
     setFilterWallet('all');
     setFilterCategory('all');
+    setFilterLoggedBy('all');
     setSearch('');
     setDateRange({ start: null, end: null });
   };
@@ -254,11 +303,11 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
         />
       </div>
 
-      {/* Filter pills */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-5 px-5">
+      {/* Filter pills (wrap so every filter stays visible without side-scrolling) */}
+      <div className="flex flex-wrap items-center gap-2">
         <FilterPill
           icon={WalletIcon}
-          label={filterWallet === 'all' ? t('tx.allWallets') : (walletMap.get(filterWallet)?.name ?? t('tx.allWallets'))}
+          label={filterWallet === 'all' ? t('tx.allWallets') : (resolveWalletName(filterWallet) ?? t('tx.allWallets'))}
           active={filterWallet !== 'all'}
           onClick={() => setShowWalletSheet(true)}
         />
@@ -268,6 +317,14 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
           active={filterCategory !== 'all'}
           onClick={() => setShowCategorySheet(true)}
         />
+        {isCircle && (
+          <FilterPill
+            icon={Users}
+            label={filterLoggedBy === 'all' ? t('tx.allPeople') : filterLoggedBy}
+            active={filterLoggedBy !== 'all'}
+            onClick={() => setShowLoggedBySheet(true)}
+          />
+        )}
         <FilterPill
           icon={Calendar}
           label={dateLabel}
@@ -320,6 +377,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
                     const dynCat = categories.find((c) => c.id === tx.category);
                     const Icon = getIcon(dynCat?.icon ?? cat?.icon ?? 'CircleDot');
                     const wallet = walletMap.get(tx.wallet_id);
+                    const walletName = wallet?.name ?? tx.wallet_name ?? null;
                     const isIncome = tx.type === 'income';
                     return (
                       <button
@@ -336,7 +394,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-text-primary truncate">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {wallet && <span className="text-xs text-text-secondary">{wallet.name}</span>}
+                            {walletName && <span className="text-xs text-text-secondary">{walletName}</span>}
                           </div>
                           <Badge color="secondary" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
                         </div>
@@ -390,7 +448,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
             onEdit={(tx) => { setDetailTransaction(null); setEditingTransaction(tx); }}
             onDelete={(tx) => { setDetailTransaction(null); setDeletingTransaction(tx); }}
             currency={currency}
-            walletName={wallet?.name ?? null}
+            walletName={wallet?.name ?? detailTransaction.wallet_name ?? null}
             categoryName={dynCat?.name ?? cat?.label ?? detailTransaction.category}
             categoryIcon={Icon}
           />
@@ -453,6 +511,16 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
         onChange={(val) => setFilterCategory(val)}
         options={categoryOptions}
       />
+      {isCircle && (
+        <CustomSelectSheet
+          title={t('tx.filterLoggedByTitle')}
+          open={showLoggedBySheet}
+          onClose={() => setShowLoggedBySheet(false)}
+          value={filterLoggedBy}
+          onChange={(val) => setFilterLoggedBy(val)}
+          options={loggedByOptions}
+        />
+      )}
       <CustomDateRangePicker
         presetMode="recent"
         startDate={dateRangeDraft.start ?? ''}

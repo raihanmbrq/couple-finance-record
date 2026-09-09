@@ -11,7 +11,7 @@ import { getSaveTimeWalletIcon } from '@/lib/walletIconDetect';
 import { WALLET_BRAND_MAP } from '@/lib/walletBrands';
 import { WalletBrandIcon } from '@/components/ui/WalletBrandIcon';
 import { type Wallet } from '@/lib/types';
-import { Plus, Pencil, ArrowRightLeft, ArrowDownToLine } from 'lucide-react';
+import { Plus, Pencil, ArrowRightLeft, ArrowDownToLine, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { CreateWalletTypeSheet } from '@/components/CreateWalletTypeSheet';
 import { WalletTransferSheet } from '@/components/WalletTransferSheet';
@@ -25,7 +25,7 @@ interface WalletDetailsSheetProps {
 type View = 'details' | 'edit';
 
 export function WalletDetailsSheet({ wallet: walletProp, open, onClose }: WalletDetailsSheetProps) {
-  const { walletTypes, updateWallet, deleteWallet, profile, wallets } = useApp();
+  const { walletTypes, updateWallet, deleteWallet, profile, wallets, transactions } = useApp();
   const { t } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
   const { showToast } = useToast();
@@ -63,6 +63,11 @@ export function WalletDetailsSheet({ wallet: walletProp, open, onClose }: Wallet
   const canDelete = useMemo(() => {
     return wallet && wallet.name.length > 0;
   }, [wallet]);
+
+  const linkedTxCount = useMemo(() => {
+    if (!wallet) return 0;
+    return transactions.filter((tx) => tx.wallet_id === wallet.id).length;
+  }, [wallet, transactions]);
 
   const typeRow = useMemo(() => {
     if (!wallet) return null;
@@ -180,6 +185,15 @@ export function WalletDetailsSheet({ wallet: walletProp, open, onClose }: Wallet
           <Button fullWidth variant="danger" onClick={handleDelete} disabled={loading || !canDelete}>
             {confirmDelete ? t('wallet.confirmDelete') : t('wallet.deleteWallet')}
           </Button>
+
+          {confirmDelete && linkedTxCount > 0 && (
+            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-warning/10 border border-warning/30">
+              <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <p className="text-xs font-medium text-text-secondary leading-relaxed">
+                {t('wallet.deleteHasTxWarning', { count: linkedTxCount })}
+              </p>
+            </div>
+          )}
 
           {error && <p className="text-sm text-expense text-center">{error}</p>}
         </div>
