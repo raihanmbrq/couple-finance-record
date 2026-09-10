@@ -3,7 +3,7 @@ import { DesktopSidebar, type DesktopTabKey } from '@/components/desktop/Desktop
 import { DesktopHeader } from '@/components/desktop/DesktopHeader';
 import { SettingsSubPanel } from '@/components/desktop/SettingsSubPanel';
 import { CommandPalette } from '@/components/desktop/CommandPalette';
-import { AddTransactionSheet } from '@/components/AddTransactionSheet';
+import { DesktopAddTransactionModal } from '@/screens/desktop/DesktopAddTransactionModal';
 import { FinanceDateRangeProvider } from '@/context/FinanceDateRangeContext';
 
 import { DesktopOverviewScreen } from '@/screens/desktop/DesktopOverviewScreen';
@@ -62,7 +62,11 @@ export const DesktopDashboardLayout: React.FC = () => {
           />
 
           {/* Scrollable Viewport Content Container */}
-          <main className="flex-1 min-h-0 overflow-y-auto p-8 max-w-7xl w-full mx-auto space-y-6">
+          <main
+            data-testid="desktop-dashboard-main"
+            tabIndex={-1}
+            className="flex-1 min-h-0 overflow-y-auto p-8 max-w-7xl w-full mx-auto space-y-6 focus:outline-none"
+          >
             {activeTab === 'overview' && (
               <DesktopOverviewScreen onOpenCommandPalette={openPalette} />
             )}
@@ -84,8 +88,8 @@ export const DesktopDashboardLayout: React.FC = () => {
         />
 
         {/* Modals & Slide-in Panels */}
-        <AddTransactionSheet
-          open={showAddTransaction}
+        <DesktopAddTransactionModal
+          isOpen={showAddTransaction}
           onClose={() => setShowAddTransaction(false)}
         />
 
