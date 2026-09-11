@@ -27,7 +27,9 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+  // No fallback to `options[0]`: an empty/unmatched value must show the
+  // placeholder (e.g. "Please select a wallet") instead of a fake selection.
+  const selectedOption = options.find((opt) => opt.value === value);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -48,7 +50,9 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
       >
         <div className="flex items-center gap-2 truncate">
           {selectedOption?.icon && <selectedOption.icon className="w-3.5 h-3.5 text-accent shrink-0" />}
-          <span className="truncate">{selectedOption?.label || placeholder}</span>
+          <span className={`truncate ${selectedOption ? '' : 'text-text-muted'}`}>
+            {selectedOption?.label || placeholder}
+          </span>
         </div>
         <ChevronDown className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>

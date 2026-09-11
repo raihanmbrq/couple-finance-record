@@ -10,6 +10,7 @@ import {
   Target,
   FileSpreadsheet as FileIcon,
   Users2,
+  Wallet,
   ArrowUp,
   ArrowDown,
   CornerDownLeft,
@@ -45,6 +46,7 @@ type CommandItem = {
 
 const NAV_TABS: { tab: DesktopTabKey; icon: React.ElementType }[] = [
   { tab: 'overview', icon: LayoutDashboard },
+  { tab: 'wallets', icon: Wallet },
   { tab: 'analytics', icon: BarChart3 },
   { tab: 'transactions', icon: TableProperties },
   { tab: 'budgets-goals', icon: Target },
@@ -81,6 +83,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     t(`palette.nav.${tab}`) ||
     ({
       overview: 'Dashboard Overview',
+      wallets: 'Wallet Management',
       analytics: 'Analytics',
       transactions: 'Transactions Data Grid',
       'budgets-goals': 'Budgets & Goals',

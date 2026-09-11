@@ -7,6 +7,7 @@ import { DesktopAddTransactionModal } from '@/screens/desktop/DesktopAddTransact
 import { FinanceDateRangeProvider } from '@/context/FinanceDateRangeContext';
 
 import { DesktopOverviewScreen } from '@/screens/desktop/DesktopOverviewScreen';
+import { DesktopWalletsWorkspace } from '@/screens/desktop/DesktopWalletsWorkspace';
 import { DesktopAnalyticsScreen } from '@/screens/desktop/DesktopAnalyticsScreen';
 import { DesktopTransactionsScreen } from '@/screens/desktop/DesktopTransactionsScreen';
 import { DesktopBudgetsGoalsScreen } from '@/screens/desktop/DesktopBudgetsGoalsScreen';
@@ -69,6 +70,9 @@ export const DesktopDashboardLayout: React.FC = () => {
           >
             {activeTab === 'overview' && (
               <DesktopOverviewScreen onOpenCommandPalette={openPalette} />
+            )}
+            {activeTab === 'wallets' && (
+              <DesktopWalletsWorkspace onViewAllTransactions={() => handleTabChange('transactions')} />
             )}
             {activeTab === 'analytics' && <DesktopAnalyticsScreen />}
             {activeTab === 'transactions' && <DesktopTransactionsScreen />}

@@ -9,12 +9,14 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Heart
+  Heart,
+  Wallet
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 export type DesktopTabKey = 
   | 'overview' 
+  | 'wallets'
   | 'analytics' 
   | 'transactions' 
   | 'budgets-goals' 
@@ -40,6 +42,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   const navItems: { id: DesktopTabKey; label: string; icon: React.ElementType; testId: string }[] = [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard, testId: 'sidebar-link-overview' },
+    { id: 'wallets', label: t('nav.wallets') || 'Wallets', icon: Wallet, testId: 'sidebar-link-wallets' },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, testId: 'sidebar-link-analytics' },
     { id: 'transactions', label: 'Transactions', icon: TableProperties, testId: 'sidebar-link-transactions' },
     { id: 'budgets-goals', label: t('nav.budget') || 'Budget and Goals', icon: Target, testId: 'sidebar-link-budgets-goals' },
