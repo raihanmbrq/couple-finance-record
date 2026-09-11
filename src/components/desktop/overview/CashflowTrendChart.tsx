@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFinanceDateRange } from '@/context/FinanceDateRangeContext';
-import { formatMoneyShort } from '@/lib/format';
+import { formatMoneyCompact, formatMoneyShort } from '@/lib/format';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -80,7 +80,7 @@ export const CashflowTrendChart: React.FC = () => {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
@@ -97,7 +97,10 @@ export const CashflowTrendChart: React.FC = () => {
                 tickLine={false} 
                 stroke="var(--text-muted)" 
                 fontSize={10} 
-                tickFormatter={(val) => formatMoneyShort(val, currency)}
+                width={48}
+                tickMargin={6}
+                axisLine={false}
+                tickFormatter={(val) => formatMoneyCompact(Number(val) || 0, currency)}
               />
               <Tooltip 
                 formatter={(val: any) => [formatMoneyShort(Number(val) || 0, currency), '']}

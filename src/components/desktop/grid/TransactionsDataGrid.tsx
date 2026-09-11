@@ -22,7 +22,18 @@ import {
   ZoomIn
 } from 'lucide-react';
 
-export const TransactionsDataGrid: React.FC = () => {
+interface TransactionsDataGridProps {
+  dateFilter?: string | null;
+  onDateFilterConsumed?: () => void;
+}
+
+const localDayKey = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
+  dateFilter,
+  onDateFilterConsumed,
+}) => {
   const { transactions, wallets, categories, householdMembers, deleteTransaction, profile } = useApp();
   const currency = profile?.currency || 'IDR';
 
@@ -50,6 +61,13 @@ export const TransactionsDataGrid: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedMember, setSelectedMember] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!dateFilter) return;
+    setSelectedDate(dateFilter);
+    onDateFilterConsumed?.();
+  }, [dateFilter, onDateFilterConsumed]);
 
   // Sorting state
   const [sortColumn, setSortColumn] = useState<'date' | 'amount' | 'category'>('date');
@@ -125,9 +143,14 @@ export const TransactionsDataGrid: React.FC = () => {
         return false;
       }
 
+      if (selectedDate) {
+        const txDate = localDayKey(new Date(tx.transaction_date || tx.created_at));
+        if (txDate !== selectedDate) return false;
+      }
+
       return true;
     });
-  }, [transactions, searchQuery, selectedWallet, selectedCategory, selectedMember, selectedType]);
+  }, [transactions, searchQuery, selectedWallet, selectedCategory, selectedMember, selectedType, selectedDate]);
 
   // Sorting Logic
   const sortedTransactions = useMemo(() => {
@@ -276,7 +299,19 @@ export const TransactionsDataGrid: React.FC = () => {
             testId="grid-filter-category"
           />
 
-          {(selectedWallet !== 'all' || selectedCategory !== 'all' || selectedMember !== 'all' || selectedType !== 'all' || searchQuery) && (
+          {selectedDate && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-accent/30 bg-accent/10 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/15"
+              title="Clear date filter"
+            >
+              <span>Date: {formatDate(`${selectedDate}T00:00:00`)}</span>
+              <X className="w-3 h-3" />
+            </button>
+          )}
+
+          {(selectedWallet !== 'all' || selectedCategory !== 'all' || selectedMember !== 'all' || selectedType !== 'all' || searchQuery || selectedDate) && (
             <button
               onClick={() => {
                 setSelectedWallet('all');
@@ -284,6 +319,7 @@ export const TransactionsDataGrid: React.FC = () => {
                 setSelectedMember('all');
                 setSelectedType('all');
                 setSearchQuery('');
+                setSelectedDate(null);
               }}
               className="px-2.5 py-1.5 text-[11px] text-rose-500 hover:bg-rose-500/10 rounded-xl font-medium transition-colors cursor-pointer"
             >

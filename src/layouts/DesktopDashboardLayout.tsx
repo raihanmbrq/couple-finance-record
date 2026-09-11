@@ -26,6 +26,7 @@ export const DesktopDashboardLayout: React.FC = () => {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [transactionDateFilter, setTransactionDateFilter] = useState<string | null>(null);
 
   const handleTabChange = (tab: DesktopTabKey) => {
     setActiveTab(tab);
@@ -40,6 +41,11 @@ export const DesktopDashboardLayout: React.FC = () => {
 
   const openPalette = () => setPaletteOpen(true);
   const closePalette = () => setPaletteOpen(false);
+
+  const handleOpenTransactionsForDate = (dateKey: string) => {
+    setTransactionDateFilter(dateKey);
+    handleTabChange('transactions');
+  };
 
   return (
     <FinanceDateRangeProvider>
@@ -69,13 +75,18 @@ export const DesktopDashboardLayout: React.FC = () => {
             className="flex-1 min-h-0 overflow-y-auto p-8 max-w-7xl w-full mx-auto space-y-6 focus:outline-none"
           >
             {activeTab === 'overview' && (
-              <DesktopOverviewScreen onOpenCommandPalette={openPalette} />
+              <DesktopOverviewScreen onSelectActivityDate={handleOpenTransactionsForDate} />
             )}
             {activeTab === 'wallets' && (
               <DesktopWalletsWorkspace onViewAllTransactions={() => handleTabChange('transactions')} />
             )}
             {activeTab === 'analytics' && <DesktopAnalyticsScreen />}
-            {activeTab === 'transactions' && <DesktopTransactionsScreen />}
+            {activeTab === 'transactions' && (
+              <DesktopTransactionsScreen
+                dateFilter={transactionDateFilter}
+                onDateFilterConsumed={() => setTransactionDateFilter(null)}
+              />
+            )}
             {activeTab === 'budgets-goals' && <DesktopBudgetsGoalsScreen />}
             {activeTab === 'bulk-import-export' && <DesktopBulkCenterScreen />}
             {activeTab === 'circle-members' && <DesktopCircleMembersScreen />}

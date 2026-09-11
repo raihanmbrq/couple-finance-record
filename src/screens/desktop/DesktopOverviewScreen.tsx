@@ -9,14 +9,14 @@ import { CategoryAllocationChart } from '@/components/desktop/overview/CategoryA
 import { MonthlyActivityCalendar } from '@/components/MonthlyActivityCalendar';
 
 interface DesktopOverviewScreenProps {
-  onOpenCommandPalette?: () => void;
+  onSelectActivityDate?: (dateKey: string) => void;
 }
 
-export const DesktopOverviewScreen: React.FC<DesktopOverviewScreenProps> = ({ onOpenCommandPalette }) => {
+export const DesktopOverviewScreen: React.FC<DesktopOverviewScreenProps> = ({ onSelectActivityDate }) => {
   return (
     <div data-testid="desktop-overview-screen" className="space-y-6">
       {/* Global Quick Date Filter + title */}
-      <OverviewTopBar onOpenCommandPalette={onOpenCommandPalette} />
+      <OverviewTopBar />
 
       {/* Spending Anomaly & Financial Health Alert */}
       <SpendingAnomalyBanner />
@@ -52,7 +52,7 @@ export const DesktopOverviewScreen: React.FC<DesktopOverviewScreenProps> = ({ on
         {/* Section 'Aktivitas Bulan Ini' */}
         <div className="lg:col-span-1 bg-surface p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between">
           <div className="flex-1">
-            <MonthlyActivityCalendar onSelectDate={() => {}} />
+            <MonthlyActivityCalendar onSelectDate={onSelectActivityDate ?? (() => {})} />
           </div>
         </div>
       </div>

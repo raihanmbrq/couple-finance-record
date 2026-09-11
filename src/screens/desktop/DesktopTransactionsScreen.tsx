@@ -2,7 +2,15 @@ import React from 'react';
 import { TransactionsDataGrid } from '@/components/desktop/grid/TransactionsDataGrid';
 import { TableProperties } from 'lucide-react';
 
-export const DesktopTransactionsScreen: React.FC = () => {
+interface DesktopTransactionsScreenProps {
+  dateFilter?: string | null;
+  onDateFilterConsumed?: () => void;
+}
+
+export const DesktopTransactionsScreen: React.FC<DesktopTransactionsScreenProps> = ({
+  dateFilter,
+  onDateFilterConsumed,
+}) => {
   return (
     <div data-testid="desktop-transactions-screen" className="space-y-4">
       {/* Header Info */}
@@ -19,7 +27,7 @@ export const DesktopTransactionsScreen: React.FC = () => {
       </div>
 
       {/* Main Data Grid */}
-      <TransactionsDataGrid />
+      <TransactionsDataGrid dateFilter={dateFilter} onDateFilterConsumed={onDateFilterConsumed} />
     </div>
   );
 };
