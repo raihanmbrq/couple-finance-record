@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CalendarDays, ChevronDown, Check, X } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFinanceDateRange, type GlobalRangeKey } from '@/context/FinanceDateRangeContext';
+import { DesktopDateRangeCalendar } from '@/components/desktop/ui/DesktopDateRangeCalendar';
 
 const PRESET_OPTIONS: { key: GlobalRangeKey; tKey: string; fallback: string }[] = [
   { key: 'thisMonth', tKey: 'filter.thisMonth', fallback: 'This Month' },
@@ -39,6 +40,27 @@ export const GlobalQuickDateFilter: React.FC<{ align?: 'left' | 'right' }> = ({ 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Escape closes the popover.
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
+
+  // Re-sync the custom-range drafts from the persisted range each time the
+  // popover opens, so the calendar always reflects the applied range.
+  useEffect(() => {
+    if (open) {
+      setDraftStart(customStartKey);
+      setDraftEnd(customEndKey);
+      setShowCustom(rangeKey === 'custom');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
@@ -83,7 +105,7 @@ export const GlobalQuickDateFilter: React.FC<{ align?: 'left' | 'right' }> = ({ 
       {/* Dropdown panel */}
       {open && (
         <div
-          className={`absolute z-50 mt-2 w-72 bg-surface border border-border rounded-2xl shadow-xl p-2 text-xs ${
+          className={`absolute z-50 mt-2 w-80 bg-surface border border-border rounded-2xl shadow-xl p-2 text-xs ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
         >
@@ -110,31 +132,16 @@ export const GlobalQuickDateFilter: React.FC<{ align?: 'left' | 'right' }> = ({ 
           </div>
 
           {showCustom && (
-            <div className="border-t border-border pt-2 pb-1 px-1 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <label className="space-y-1">
-                  <span className="block text-[10px] font-semibold text-text-muted uppercase tracking-wide">
-                    {t('filter.from') || 'From'}
-                  </span>
-                  <input
-                    type="date"
-                    value={draftStart}
-                    onChange={(e) => setDraftStart(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-surface-hover border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="block text-[10px] font-semibold text-text-muted uppercase tracking-wide">
-                    {t('filter.to') || 'To'}
-                  </span>
-                  <input
-                    type="date"
-                    value={draftEnd}
-                    onChange={(e) => setDraftEnd(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-surface-hover border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </label>
-              </div>
+            <div className="border-t border-border pt-3 pb-1 px-1 space-y-3">
+              <DesktopDateRangeCalendar
+                startDate={draftStart}
+                endDate={draftEnd}
+                onChange={(start, end) => {
+                  setDraftStart(start);
+                  setDraftEnd(end);
+                }}
+                testId="global-date-filter-calendar"
+              />
               <div className="flex items-center gap-2">
                 <button
                   type="button"
