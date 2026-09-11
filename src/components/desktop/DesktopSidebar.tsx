@@ -52,14 +52,18 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   return (
     <aside 
-      className={`bg-surface border-r border-border flex flex-col transition-all duration-300 relative z-30 select-none h-full shrink-0 overflow-hidden ${
+      className={`bg-surface border-r border-border flex flex-col transition-all duration-300 ease-in-out relative z-30 select-none h-full shrink-0 overflow-visible ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center text-accent-text shrink-0 shadow-sm">
+      <div className={`border-b border-border ${
+        collapsed ? 'h-20 flex flex-col items-center justify-center gap-1.5 px-2' : 'h-16 flex items-center justify-between px-4'
+      }`}>
+        <div className={`flex items-center overflow-hidden ${
+          collapsed ? 'justify-center' : 'gap-3'
+        }`}>
+          <div className={`${collapsed ? 'w-8 h-8' : 'w-9 h-9'} rounded-xl bg-accent flex items-center justify-center text-accent-text shrink-0 shadow-sm`}>
             <Heart className="w-5 h-5 fill-current" />
           </div>
           {!collapsed && (
@@ -73,7 +77,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           data-testid="sidebar-toggle-btn"
-          className="p-1.5 rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary transition-colors"
+          className={`rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary transition-colors shrink-0 ${
+            collapsed ? 'w-8 h-7 flex items-center justify-center' : 'p-1.5'
+          }`}
           title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -91,7 +97,11 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               onClick={() => onTabChange(item.id)}
               data-testid={item.testId}
               title={collapsed ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+              className={`group relative flex text-sm font-medium transition-all duration-150 ${
+                collapsed
+                  ? 'w-full h-11 items-center justify-center rounded-xl px-0 py-0'
+                  : 'w-full items-center gap-3 px-3 py-2.5 rounded-xl'
+              } ${
                 isActive
                   ? 'bg-accent text-accent-text shadow-sm'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
@@ -99,6 +109,11 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             >
               <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent-text' : 'text-text-muted'}`} />
               {!collapsed && <span className="truncate">{item.label}</span>}
+              {collapsed && (
+                <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                  {item.label}
+                </span>
+              )}
             </button>
           );
         })}
@@ -110,10 +125,19 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           onClick={onOpenSettings}
           data-testid="sidebar-link-settings"
           title={collapsed ? (t('profile_settings') || 'Settings') : undefined}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+          className={`group relative flex text-sm font-medium text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors ${
+            collapsed
+              ? 'w-full h-11 items-center justify-center rounded-xl px-0 py-0'
+              : 'w-full items-center gap-3 px-3 py-2.5 rounded-xl'
+          }`}
         >
           <Settings className="w-5 h-5 shrink-0 text-text-muted" />
           {!collapsed && <span className="truncate">{t('profile_settings') || 'Settings'}</span>}
+          {collapsed && (
+            <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+              {t('profile_settings') || 'Settings'}
+            </span>
+          )}
         </button>
       </div>
     </aside>
