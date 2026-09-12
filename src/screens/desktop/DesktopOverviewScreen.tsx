@@ -10,9 +10,15 @@ import { MonthlyActivityCalendar } from '@/components/MonthlyActivityCalendar';
 
 interface DesktopOverviewScreenProps {
   onSelectActivityDate?: (dateKey: string) => void;
+  onSelectMember?: (memberName: string) => void;
+  onSelectCategory?: (categoryKey: string) => void;
 }
 
-export const DesktopOverviewScreen: React.FC<DesktopOverviewScreenProps> = ({ onSelectActivityDate }) => {
+export const DesktopOverviewScreen: React.FC<DesktopOverviewScreenProps> = ({
+  onSelectActivityDate,
+  onSelectMember,
+  onSelectCategory,
+}) => {
   return (
     <div data-testid="desktop-overview-screen" className="space-y-6">
       {/* Global Quick Date Filter + title */}
@@ -41,12 +47,12 @@ export const DesktopOverviewScreen: React.FC<DesktopOverviewScreenProps> = ({ on
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Spouse Ratio Chart */}
         <div className="lg:col-span-1">
-          <SpouseRatioChart />
+          <SpouseRatioChart onSelectMember={onSelectMember} />
         </div>
 
         {/* Category Allocation Chart */}
         <div className="lg:col-span-1">
-          <CategoryAllocationChart />
+          <CategoryAllocationChart onSelectCategory={onSelectCategory} />
         </div>
 
         {/* Section 'Aktivitas Bulan Ini' */}

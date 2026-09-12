@@ -17,7 +17,11 @@ const CATEGORY_COLORS = [
   '#78716c', // stone (other)
 ];
 
-export const CategoryAllocationChart: React.FC = () => {
+interface CategoryAllocationChartProps {
+  onSelectCategory?: (categoryKey: string) => void;
+}
+
+export const CategoryAllocationChart: React.FC<CategoryAllocationChartProps> = ({ onSelectCategory }) => {
   const { transactions, categories, profile } = useApp();
   const { t } = useLanguage();
   const { filterTransactions } = useFinanceDateRange();
@@ -63,13 +67,15 @@ export const CategoryAllocationChart: React.FC = () => {
                 outerRadius={80}
                 paddingAngle={3}
                 dataKey="value"
+                onClick={(entry) => onSelectCategory?.(entry.categoryKey)}
+                cursor={onSelectCategory ? 'pointer' : undefined}
               >
                 {chartData.map((_, index) => (
                   <Cell key={`cat-cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(val: any) => [formatMoneyShort(Number(val) || 0, currency), 'Spent']}
+                formatter={(val: any) => [formatMoneyShort(Number(val) || 0, currency), t('budget.spent') || 'Spent']}
                 contentStyle={{ 
                   backgroundColor: 'var(--surface)', 
                   borderColor: 'var(--border)',

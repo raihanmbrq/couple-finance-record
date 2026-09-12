@@ -7,7 +7,11 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 
 const COLORS = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6'];
 
-export const SpouseRatioChart: React.FC = () => {
+interface SpouseRatioChartProps {
+  onSelectMember?: (memberName: string) => void;
+}
+
+export const SpouseRatioChart: React.FC<SpouseRatioChartProps> = ({ onSelectMember }) => {
   const { transactions, profile } = useApp();
   const { t } = useLanguage();
   const { filterTransactions } = useFinanceDateRange();
@@ -23,6 +27,7 @@ export const SpouseRatioChart: React.FC = () => {
 
   const chartData = Object.entries(ratioMap).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
+    memberName: name,
     value,
   }));
 
@@ -54,13 +59,15 @@ export const SpouseRatioChart: React.FC = () => {
                 outerRadius={80}
                 paddingAngle={4}
                 dataKey="value"
+                onClick={(entry) => onSelectMember?.(entry.memberName)}
+                cursor={onSelectMember ? 'pointer' : undefined}
               >
                 {chartData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(val: any) => [formatMoneyShort(Number(val) || 0, currency), 'Total Spent']}
+                formatter={(val: any) => [formatMoneyShort(Number(val) || 0, currency), t('analytics.totalSpent') || 'Total Spent']}
                 contentStyle={{ 
                   backgroundColor: 'var(--surface)', 
                   borderColor: 'var(--border)',

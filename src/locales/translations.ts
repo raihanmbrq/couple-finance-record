@@ -461,6 +461,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'overview.monthlyActivitySub': 'Kalender aktivitas pengeluaran harian',
 
     // ══ Desktop Dashboard v2 — Metric Cards ══
+    'metric.balance': 'Total Saldo Nett',
+    'metric.balanceSub1': 'Total dari',
+    'metric.balanceSub2': 'aktif dompet',
     'metric.income': 'Total Pemasukan',
     'metric.incomeSub': 'Pemasukan tercatat',
     'metric.expense': 'Total Pengeluaran',
@@ -578,6 +581,20 @@ export const translations: Record<Language, Record<string, string>> = {
     'walletWs.typesListTitle': 'Tipe Dompet Saat Ini',
     'walletWs.typesDesc': 'Tambah atau sesuaikan jenis dompet kustom untuk rumah tangga Anda.',
     'walletWs.manageTypesCta': 'Kelola Tipe Wallet',
+
+    // Desktop Sidebar
+    'sidebar.dashboard': 'Dashboard',
+    'sidebar.analytics': 'Analitik',
+    'sidebar.wallets': 'Dompet',
+    'sidebar.transactions': 'Transaksi',
+    'sidebar.budgets-goals': 'Anggaran & Goals',
+    'sidebar.bulk-import-export': 'Impor & Ekspor',
+    'sidebar.circle-members': 'Anggota Circle',
+
+    // Desktop Header
+    'header.addTransaction': 'Tambah Transaksi',
+    'header.hideBalance': 'Sembunyikan Saldo',
+    'header.showBalance': 'Tampilkan Saldo',
   },
   en: {
     'common.cancel': 'Cancel',
@@ -1037,6 +1054,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'overview.monthlyActivitySub': 'Calendar view of daily expense activity',
 
     // ══ Desktop Dashboard v2 — Metric Cards ══
+    'metric.balance': 'Total Net Balance',
+    'metric.balanceSub1': 'Across',
+    'metric.balanceSub2': 'active wallets',    
     'metric.income': 'Total Income',
     'metric.incomeSub': 'Logged inflow',
     'metric.expense': 'Total Expenses',
@@ -1154,6 +1174,20 @@ export const translations: Record<Language, Record<string, string>> = {
     'walletWs.typesListTitle': 'Current Wallet Types',
     'walletWs.typesDesc': 'Add or customise custom wallet types for your household.',
     'walletWs.manageTypesCta': 'Manage Wallet Types',
+
+    // Desktop Sidebar
+    'sidebar.dashboard': 'Dashboard',
+    'sidebar.analytics': 'Analytics',
+    'sidebar.wallets': 'Wallets',
+    'sidebar.transactions': 'Transactions',
+    'sidebar.budgets-goals': 'Budgets & Goals',
+    'sidebar.bulk-import-export': 'Bulk Import/Export',
+    'sidebar.circle-members': 'Circle Members',
+
+    // Desktop Header
+    'header.addTransaction': 'Add Transaction',
+    'header.hideBalance': 'Hide Balance',
+    'header.showBalance': 'Show Balance',
   },
 };
 

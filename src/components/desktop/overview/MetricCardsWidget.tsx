@@ -68,8 +68,8 @@ export const MetricCardsWidget: React.FC = () => {
   // Slide items: Slide 0 is Total Net Balance, Slide 1..N are member balances
   const slides = [
     {
-      title: 'Total Net Balance',
-      subtitle: `Across ${wallets.length} active wallets`,
+      title: t('metric.balance'),
+      subtitle: t('metric.balanceSub1') + ` ${wallets.length} ` + t('metric.balanceSub2'),
       balance: totalBalance,
       isTotal: true,
     },

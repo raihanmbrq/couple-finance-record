@@ -24,6 +24,8 @@ import {
 
 interface TransactionsDataGridProps {
   dateFilter?: string | null;
+  categoryFilter?: string | null;
+  loggedByFilter?: string | null;
   onDateFilterConsumed?: () => void;
 }
 
@@ -32,6 +34,8 @@ const localDayKey = (date: Date): string =>
 
 export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
   dateFilter,
+  categoryFilter,
+  loggedByFilter,
   onDateFilterConsumed,
 }) => {
   const { transactions, wallets, categories, householdMembers, deleteTransaction, profile } = useApp();
@@ -68,6 +72,11 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
     setSelectedDate(dateFilter);
     onDateFilterConsumed?.();
   }, [dateFilter, onDateFilterConsumed]);
+
+  useEffect(() => {
+    if (categoryFilter) setSelectedCategory(categoryFilter);
+    if (loggedByFilter) setSelectedMember(loggedByFilter);
+  }, [categoryFilter, loggedByFilter]);
 
   // Sorting state
   const [sortColumn, setSortColumn] = useState<'date' | 'amount' | 'category'>('date');

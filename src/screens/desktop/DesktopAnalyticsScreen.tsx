@@ -15,7 +15,12 @@ import { MonthNavigationPicker } from '@/components/desktop/ui/MonthNavigationPi
 import { TopExpensesWidget } from '@/components/desktop/analytics/TopExpensesWidget';
 import { PieChart as PieIcon } from 'lucide-react';
 
-export const DesktopAnalyticsScreen: React.FC = () => {
+interface DesktopAnalyticsScreenProps {
+  onSelectMember?: (memberName: string) => void;
+  onSelectCategory?: (categoryKey: string) => void;
+}
+
+export const DesktopAnalyticsScreen: React.FC<DesktopAnalyticsScreenProps> = ({ onSelectMember, onSelectCategory }) => {
   const { transactions, categories, profile } = useApp();
   const { t } = useLanguage();
   const { filterTransactions } = useFinanceDateRange();
@@ -67,11 +72,11 @@ export const DesktopAnalyticsScreen: React.FC = () => {
       {/* Row 2: Spouse Ratio, Category Allocation & Daily Calendar Activity with month nav */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <SpouseRatioChart />
+          <SpouseRatioChart onSelectMember={onSelectMember} />
         </div>
 
         <div className="lg:col-span-1">
-          <CategoryAllocationChart />
+          <CategoryAllocationChart onSelectCategory={onSelectCategory} />
         </div>
 
         {/* Aktivitas Bulan Ini + custom month & year selector */}

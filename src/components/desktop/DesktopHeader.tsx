@@ -110,12 +110,12 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
           {hideBalance ? (
             <>
               <EyeOff className="w-4 h-4" />
-              <span>Balance Hidden</span>
+              <span>{t('header.showBalance') || 'Show Balance'}</span>
             </>
           ) : (
             <>
               <Eye className="w-4 h-4" />
-              <span>Hide Balance</span>
+              <span>{t('header.hideBalance') || 'Hide Balance'}</span>
             </>
           )}
         </button>
@@ -143,7 +143,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-text font-medium text-sm hover:opacity-95 shadow-sm active:scale-98 transition-all"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Add Transaction</span>
+          <span>{t('header.addTransaction') || 'Add Transaction'}</span>
         </button>
 
         {/* Profile Dropdown */}

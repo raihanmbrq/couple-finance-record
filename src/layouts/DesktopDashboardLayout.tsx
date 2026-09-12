@@ -14,6 +14,11 @@ import { DesktopBudgetsGoalsScreen } from '@/screens/desktop/DesktopBudgetsGoals
 import { DesktopBulkCenterScreen } from '@/screens/desktop/DesktopBulkCenterScreen';
 import { DesktopCircleMembersScreen } from '@/screens/desktop/DesktopCircleMembersScreen';
 
+interface TransactionFilter {
+  category?: string;
+  loggedBy?: string;
+}
+
 export const DesktopDashboardLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DesktopTabKey>(() => {
     return (localStorage.getItem('pairflow_desktop_active_tab') as DesktopTabKey) || 'overview';
@@ -27,9 +32,11 @@ export const DesktopDashboardLayout: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [transactionDateFilter, setTransactionDateFilter] = useState<string | null>(null);
+  const [transactionFilter, setTransactionFilter] = useState<TransactionFilter | null>(null);
 
   const handleTabChange = (tab: DesktopTabKey) => {
     setActiveTab(tab);
+    if (tab !== 'transactions') setTransactionFilter(null);
     localStorage.setItem('pairflow_desktop_active_tab', tab);
   };
 
@@ -43,7 +50,20 @@ export const DesktopDashboardLayout: React.FC = () => {
   const closePalette = () => setPaletteOpen(false);
 
   const handleOpenTransactionsForDate = (dateKey: string) => {
+    setTransactionFilter(null);
     setTransactionDateFilter(dateKey);
+    handleTabChange('transactions');
+  };
+
+  const handleOpenTransactionsForMember = (memberName: string) => {
+    setTransactionDateFilter(null);
+    setTransactionFilter({ loggedBy: memberName });
+    handleTabChange('transactions');
+  };
+
+  const handleOpenTransactionsForCategory = (categoryKey: string) => {
+    setTransactionDateFilter(null);
+    setTransactionFilter({ category: categoryKey });
     handleTabChange('transactions');
   };
 
@@ -75,15 +95,26 @@ export const DesktopDashboardLayout: React.FC = () => {
             className="flex-1 min-h-0 overflow-y-auto p-8 max-w-7xl w-full mx-auto space-y-6 focus:outline-none"
           >
             {activeTab === 'overview' && (
-              <DesktopOverviewScreen onSelectActivityDate={handleOpenTransactionsForDate} />
+              <DesktopOverviewScreen
+                onSelectActivityDate={handleOpenTransactionsForDate}
+                onSelectMember={handleOpenTransactionsForMember}
+                onSelectCategory={handleOpenTransactionsForCategory}
+              />
             )}
             {activeTab === 'wallets' && (
               <DesktopWalletsWorkspace onViewAllTransactions={() => handleTabChange('transactions')} />
             )}
-            {activeTab === 'analytics' && <DesktopAnalyticsScreen />}
+            {activeTab === 'analytics' && (
+              <DesktopAnalyticsScreen
+                onSelectMember={handleOpenTransactionsForMember}
+                onSelectCategory={handleOpenTransactionsForCategory}
+              />
+            )}
             {activeTab === 'transactions' && (
               <DesktopTransactionsScreen
                 dateFilter={transactionDateFilter}
+                categoryFilter={transactionFilter?.category}
+                loggedByFilter={transactionFilter?.loggedBy}
                 onDateFilterConsumed={() => setTransactionDateFilter(null)}
               />
             )}

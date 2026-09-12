@@ -41,13 +41,13 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   const { t } = useLanguage();
 
   const navItems: { id: DesktopTabKey; label: string; icon: React.ElementType; testId: string }[] = [
-    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard, testId: 'sidebar-link-overview' },
-    { id: 'wallets', label: t('nav.wallets') || 'Wallets', icon: Wallet, testId: 'sidebar-link-wallets' },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, testId: 'sidebar-link-analytics' },
-    { id: 'transactions', label: 'Transactions', icon: TableProperties, testId: 'sidebar-link-transactions' },
-    { id: 'budgets-goals', label: t('nav.budget') || 'Budget and Goals', icon: Target, testId: 'sidebar-link-budgets-goals' },
-    { id: 'bulk-import-export', label: 'Import & Export', icon: FileSpreadsheet, testId: 'sidebar-link-bulk-import-export' },
-    { id: 'circle-members', label: 'Circle Members', icon: Users2, testId: 'sidebar-link-circle-members' },
+    { id: 'overview', label: t('sidebar.dashboard') || 'Dashboard', icon: LayoutDashboard, testId: 'sidebar-link-overview' },
+    { id: 'wallets', label: t('sidebar.wallets') || 'Wallets', icon: Wallet, testId: 'sidebar-link-wallets' },
+    { id: 'analytics', label: t('sidebar.analytics') || 'Analytics', icon: BarChart3, testId: 'sidebar-link-analytics' },
+    { id: 'transactions', label: t('sidebar.transactions') || 'Transactions', icon: TableProperties, testId: 'sidebar-link-transactions' },
+    { id: 'budgets-goals', label: t('sidebar.budgets-goals') || 'Budgets & Goals', icon: Target, testId: 'sidebar-link-budgets-goals' },
+    { id: 'bulk-import-export', label: t('sidebar.bulk-import-export') || 'Bulk Import/Export', icon: FileSpreadsheet, testId: 'sidebar-link-bulk-import-export' },
+    { id: 'circle-members', label: t('sidebar.circle-members') || 'Circle Members', icon: Users2, testId: 'sidebar-link-circle-members' },
   ];
 
   return (

@@ -4,11 +4,15 @@ import { TableProperties } from 'lucide-react';
 
 interface DesktopTransactionsScreenProps {
   dateFilter?: string | null;
+  categoryFilter?: string | null;
+  loggedByFilter?: string | null;
   onDateFilterConsumed?: () => void;
 }
 
 export const DesktopTransactionsScreen: React.FC<DesktopTransactionsScreenProps> = ({
   dateFilter,
+  categoryFilter,
+  loggedByFilter,
   onDateFilterConsumed,
 }) => {
   return (
@@ -27,7 +31,12 @@ export const DesktopTransactionsScreen: React.FC<DesktopTransactionsScreenProps>
       </div>
 
       {/* Main Data Grid */}
-      <TransactionsDataGrid dateFilter={dateFilter} onDateFilterConsumed={onDateFilterConsumed} />
+      <TransactionsDataGrid
+        dateFilter={dateFilter}
+        categoryFilter={categoryFilter}
+        loggedByFilter={loggedByFilter}
+        onDateFilterConsumed={onDateFilterConsumed}
+      />
     </div>
   );
 };
