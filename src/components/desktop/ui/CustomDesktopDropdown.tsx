@@ -25,11 +25,18 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
   className = '',
 }) => {
   const [open, setOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // No fallback to `options[0]`: an empty/unmatched value must show the
   // placeholder (e.g. "Please select a wallet") instead of a fake selection.
   const selectedOption = options.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    if (open) {
+      setHighlightedIndex(Math.max(0, options.findIndex((option) => option.value === value)));
+    }
+  }, [open, options, value]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -41,11 +48,40 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Escape') {
+      setOpen(false);
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (!open) {
+        setOpen(true);
+      } else if (options[highlightedIndex]) {
+        onChange(options[highlightedIndex].value);
+        setOpen(false);
+      }
+      return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!open) {
+        setOpen(true);
+        return;
+      }
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      setHighlightedIndex((current) => (current + direction + options.length) % options.length);
+    }
+  };
+
   return (
     <div ref={containerRef} className={`relative inline-block ${className}`} data-testid={testId}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        onKeyDown={handleKeyDown}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className="w-full flex items-center justify-between gap-2 px-3.5 py-2 bg-surface hover:bg-surface-hover border border-border rounded-xl text-xs font-medium text-text-primary shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
       >
         <div className="flex items-center gap-2 truncate">
@@ -70,8 +106,11 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
                   onChange(opt.value);
                   setOpen(false);
                 }}
+                onMouseEnter={() => setHighlightedIndex(options.indexOf(opt))}
+                role="option"
+                aria-selected={isSelected}
                 className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-surface-hover transition-colors ${
-                  isSelected ? 'bg-accent/10 font-bold text-accent' : 'text-text-primary'
+                  isSelected || highlightedIndex === options.indexOf(opt) ? 'bg-accent/10 font-bold text-accent' : 'text-text-primary'
                 }`}
               >
                 <div className="flex items-center gap-2 truncate">

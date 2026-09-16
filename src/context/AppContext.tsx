@@ -49,6 +49,8 @@ interface AppState {
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  bulkUpdateTransactions: (ids: string[], updates: Partial<Pick<Transaction, 'category' | 'wallet_id' | 'spent_by' | 'transaction_date' | 'notes'>>) => Promise<void>;
+  bulkDeleteTransactions: (ids: string[]) => Promise<void>;
   // Budgets
   setBudget: (category: string, limitAmount: number) => Promise<void>;
   deleteBudget: (id: string) => Promise<void>;
@@ -942,6 +944,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTransactions(prev => prev.filter(t => t.id !== id));
   }, [mode, transactions, wallets]);
 
+  const bulkUpdateTransactions = useCallback(async (
+    ids: string[],
+    updates: Partial<Pick<Transaction, 'category' | 'wallet_id' | 'spent_by' | 'transaction_date' | 'notes'>>,
+  ) => {
+    if (ids.length === 0 || Object.keys(updates).length === 0) return;
+    const selected = transactions.filter((tx) => ids.includes(tx.id));
+    const targetWallet = updates.wallet_id ? wallets.find((wallet) => wallet.id === updates.wallet_id) : undefined;
+    const databaseUpdates = updates.wallet_id
+      ? { ...updates, wallet_name: targetWallet?.name ?? null }
+      : updates;
+    if (mode === 'live') {
+      const { error } = await supabase.from('transactions').update(databaseUpdates).in('id', ids);
+      if (error) throw error;
+    }
+
+    const walletChanges = new Map<string, number>();
+    for (const tx of selected) {
+      const nextWalletId = updates.wallet_id ?? tx.wallet_id;
+      if (nextWalletId === tx.wallet_id) continue;
+      const effect = tx.type === 'income' ? tx.amount : -tx.amount;
+      walletChanges.set(tx.wallet_id, (walletChanges.get(tx.wallet_id) ?? 0) - effect);
+      walletChanges.set(nextWalletId, (walletChanges.get(nextWalletId) ?? 0) + effect);
+    }
+
+    if (mode === 'live') {
+      for (const [walletId, delta] of walletChanges) {
+        const wallet = wallets.find((item) => item.id === walletId);
+        if (!wallet || delta === 0) continue;
+        const { error } = await supabase.from('wallets').update({ balance: wallet.balance + delta }).eq('id', walletId);
+        if (error) throw error;
+      }
+    }
+
+    setTransactions((prev) => prev.map((tx) => {
+      if (!ids.includes(tx.id)) return tx;
+      const nextWallet = wallets.find((wallet) => wallet.id === (updates.wallet_id ?? tx.wallet_id));
+      return { ...tx, ...updates, wallet_name: nextWallet?.name ?? tx.wallet_name };
+    }).sort(sortByDateDesc));
+    setWallets((prev) => prev.map((wallet) => {
+      const delta = walletChanges.get(wallet.id) ?? 0;
+      return delta === 0 ? wallet : { ...wallet, balance: wallet.balance + delta };
+    }));
+  }, [mode, transactions, wallets]);
+
+  const bulkDeleteTransactions = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const selected = transactions.filter((tx) => ids.includes(tx.id));
+    if (mode === 'live') {
+      const { error } = await supabase.from('transactions').delete().in('id', ids);
+      if (error) throw error;
+    }
+
+    const walletChanges = new Map<string, number>();
+    for (const tx of selected) {
+      const effect = tx.type === 'income' ? tx.amount : -tx.amount;
+      walletChanges.set(tx.wallet_id, (walletChanges.get(tx.wallet_id) ?? 0) - effect);
+    }
+    if (mode === 'live') {
+      for (const [walletId, delta] of walletChanges) {
+        const wallet = wallets.find((item) => item.id === walletId);
+        if (!wallet || delta === 0) continue;
+        const { error } = await supabase.from('wallets').update({ balance: wallet.balance + delta }).eq('id', walletId);
+        if (error) throw error;
+      }
+    }
+    setTransactions((prev) => prev.filter((tx) => !ids.includes(tx.id)));
+    setWallets((prev) => prev.map((wallet) => {
+      const delta = walletChanges.get(wallet.id) ?? 0;
+      return delta === 0 ? wallet : { ...wallet, balance: wallet.balance + delta };
+    }));
+  }, [mode, transactions, wallets]);
+
   const setBudget = useCallback(async (category: string, limitAmount: number) => {
     if (!household) return;
     const existing = budgets.find(b => b.category === category);
@@ -1122,6 +1196,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    bulkUpdateTransactions,
+    bulkDeleteTransactions,
     setBudget,
     deleteBudget,
     saveGoal,

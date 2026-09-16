@@ -6,12 +6,16 @@ import { resolveCategoryMeta } from '@/lib/categoryStyle';
 import { CategoryChip } from '@/components/desktop/ui/CategoryChip';
 import { CustomDesktopDropdown } from '@/components/desktop/ui/CustomDesktopDropdown';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
+import { BulkEditTransactionsModal, type BulkTransactionUpdates } from '@/components/desktop/bulk/BulkEditTransactionsModal';
+import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
+import { useToast } from '@/context/ToastContext';
 import { 
   Search, 
   ArrowUpDown, 
   ArrowUp, 
   ArrowDown, 
-  Edit3, 
+  Edit3,
+  Pencil,
   Trash2, 
   X,
   Filter,
@@ -19,7 +23,8 @@ import {
   AlertTriangle,
   Rows2,
   Rows3,
-  ZoomIn
+  ZoomIn,
+  Check
 } from 'lucide-react';
 
 interface TransactionsDataGridProps {
@@ -32,13 +37,49 @@ interface TransactionsDataGridProps {
 const localDayKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
+interface StyledCheckboxProps {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  testId: string;
+}
+
+const StyledCheckbox: React.FC<StyledCheckboxProps> = ({ checked, onChange, label, testId }) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      onChange();
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      data-testid={testId}
+      onClick={onChange}
+      onKeyDown={handleKeyDown}
+      className={`inline-flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+        checked
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-transparent text-transparent hover:border-primary/60 hover:bg-primary/5'
+      }`}
+    >
+      {checked && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+    </button>
+  );
+};
+
 export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
   dateFilter,
   categoryFilter,
   loggedByFilter,
   onDateFilterConsumed,
 }) => {
-  const { transactions, wallets, categories, householdMembers, deleteTransaction, profile } = useApp();
+  const { transactions, wallets, categories, householdMembers, deleteTransaction, bulkUpdateTransactions, bulkDeleteTransactions, profile } = useApp();
+  const { showToast } = useToast();
   const currency = profile?.currency || 'IDR';
 
   // View density toggle (persisted)
@@ -66,6 +107,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
   const [selectedMember, setSelectedMember] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   useEffect(() => {
     if (!dateFilter) return;
@@ -87,6 +129,10 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deleteTxTarget, setDeleteTxTarget] = useState<Transaction | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedTransactionIds, setSelectedTransactionIds] = useState<string[]>([]);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   // Dropdown options
   const typeOptions = [
@@ -199,6 +245,53 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
     }
   };
 
+  const visibleIds = sortedTransactions.map((tx) => tx.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedTransactionIds.includes(id));
+
+  const toggleTransaction = (id: string) => {
+    setSelectedTransactionIds((current) => current.includes(id)
+      ? current.filter((selectedId) => selectedId !== id)
+      : [...current, id]);
+  };
+
+  const toggleAllVisible = () => {
+    setSelectedTransactionIds((current) => allVisibleSelected
+      ? current.filter((id) => !visibleIds.includes(id))
+      : Array.from(new Set([...current, ...visibleIds])));
+  };
+
+  const handleBulkEdit = async (updates: BulkTransactionUpdates) => {
+    if (Object.keys(updates).length === 0) {
+      showToast('Pilih setidaknya satu properti untuk diperbarui.', 'error');
+      return;
+    }
+    setIsBulkProcessing(true);
+    try {
+      await bulkUpdateTransactions(selectedTransactionIds, updates);
+      showToast(`Berhasil memperbarui ${selectedTransactionIds.length} transaksi`);
+      setSelectedTransactionIds([]);
+      setShowBulkEdit(false);
+    } catch {
+      showToast('Gagal memperbarui transaksi terpilih.', 'error');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setIsBulkProcessing(true);
+    try {
+      await bulkDeleteTransactions(selectedTransactionIds);
+      showToast(`Berhasil menghapus ${selectedTransactionIds.length} transaksi`);
+      setSelectedTransactionIds([]);
+      setShowBulkDeleteConfirm(false);
+    } catch {
+      showToast('Gagal menghapus transaksi terpilih.', 'error');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
   return (
     <div data-testid="transactions-data-grid" className="space-y-4">
       {/* Top Filter & Toolbar Bar */}
@@ -308,17 +401,44 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
             testId="grid-filter-category"
           />
 
-          {selectedDate && (
+          <div className="relative">
             <button
               type="button"
-              onClick={() => setSelectedDate(null)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-accent/30 bg-accent/10 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/15"
-              title="Clear date filter"
+              onClick={() => setDatePickerOpen((open) => !open)}
+              aria-expanded={datePickerOpen}
+              aria-haspopup="dialog"
+              data-testid="grid-filter-date-trigger"
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-colors ${
+                selectedDate ? 'border-accent/30 bg-accent/10 text-accent hover:bg-accent/15' : 'border-border bg-surface-hover text-text-muted hover:text-text-primary'
+              }`}
             >
-              <span>Date: {formatDate(`${selectedDate}T00:00:00`)}</span>
-              <X className="w-3 h-3" />
+              <span>{selectedDate ? `Date: ${formatDate(`${selectedDate}T00:00:00`)}` : 'Filter by Date'}</span>
+              {selectedDate ? (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Clear date filter"
+                  onClick={(event) => { event.stopPropagation(); setSelectedDate(null); setDatePickerOpen(false); }}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); setSelectedDate(null); setDatePickerOpen(false); } }}
+                  className="hover:text-text-primary"
+                >
+                  <X className="w-3 h-3" />
+                </span>
+              ) : null}
             </button>
-          )}
+            {datePickerOpen && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-[min(320px,calc(100vw-2rem))]">
+                <CustomDatePicker
+                  value={selectedDate ?? ''}
+                  onChange={(value) => { setSelectedDate(value); setDatePickerOpen(false); }}
+                  open={datePickerOpen}
+                  onClose={() => setDatePickerOpen(false)}
+                  title="Filter by Date"
+                  variant="inline"
+                />
+              </div>
+            )}
+          </div>
 
           {(selectedWallet !== 'all' || selectedCategory !== 'all' || selectedMember !== 'all' || selectedType !== 'all' || searchQuery || selectedDate) && (
             <button
@@ -344,6 +464,14 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
           <table data-grid-density={density} className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-surface-hover/60 border-b border-border text-text-muted select-none">
+                <th className="py-3 px-3 w-10 text-center">
+                  <StyledCheckbox
+                    checked={allVisibleSelected}
+                    onChange={toggleAllVisible}
+                    label="Select all visible transactions"
+                    testId="select-all-checkbox"
+                  />
+                </th>
                 <th 
                   onClick={() => handleSort('date')}
                   className="py-3 px-4 font-bold cursor-pointer hover:text-text-primary transition-colors"
@@ -387,7 +515,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
             <tbody className="divide-y divide-border/60">
               {sortedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-text-muted">
+                  <td colSpan={9} className="py-12 text-center text-text-muted">
                     No transactions found matching your filter criteria.
                   </td>
                 </tr>
@@ -402,6 +530,14 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
                       data-testid={`transaction-row-${tx.id}`}
                       className="hover:bg-surface-hover/50 transition-colors group"
                     >
+                      <td className="py-3 px-3 text-center">
+                        <StyledCheckbox
+                          checked={selectedTransactionIds.includes(tx.id)}
+                          onChange={() => toggleTransaction(tx.id)}
+                          label={`Select transaction ${tx.id}`}
+                          testId={`select-row-checkbox-${tx.id}`}
+                        />
+                      </td>
                       <td className="py-3 px-4 font-medium text-text-primary whitespace-nowrap">
                         {formatDate(tx.transaction_date || tx.created_at)}
                       </td>
@@ -487,6 +623,90 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
         </div>
       </div>
 
+      {selectedTransactionIds.length > 0 && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[75] flex items-center gap-3 px-4 py-3 bg-surface border border-border rounded-2xl shadow-2xl">
+          <span className="text-xs font-bold text-text-primary whitespace-nowrap">{selectedTransactionIds.length} Transaksi Terpilih</span>
+          <button
+            type="button"
+            onClick={() => setShowBulkEdit(true)}
+            disabled={isBulkProcessing}
+            data-testid="bulk-edit-btn"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-accent-text text-xs font-bold hover:opacity-90 disabled:opacity-60"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Edit Massal
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowBulkDeleteConfirm(true)}
+            disabled={isBulkProcessing}
+            data-testid="bulk-delete-btn"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 text-rose-500 text-xs font-bold hover:bg-rose-500/20 disabled:opacity-60"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Hapus Massal
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedTransactionIds([])}
+            disabled={isBulkProcessing}
+            title="Batal pilih"
+            className="p-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:opacity-60"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {isBulkProcessing && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/35 backdrop-blur-[1px]">
+          <div className="flex items-center gap-3 px-5 py-4 bg-surface rounded-2xl border border-border shadow-2xl text-sm font-semibold text-text-primary">
+            <span className="w-4 h-4 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+            Memproses transaksi terpilih...
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteConfirm && !isBulkProcessing && (
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bulk-delete-title"
+            data-testid="bulk-delete-confirmation"
+            className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-2xl"
+          >
+            <div className="flex flex-col items-center space-y-2 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-500">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h3 id="bulk-delete-title" className="text-base font-bold text-text-primary">Hapus Transaksi Terpilih?</h3>
+              <p className="text-xs text-text-muted">
+                Anda akan menghapus <strong className="text-text-primary">{selectedTransactionIds.length} transaksi</strong>. Tindakan ini tidak dapat dibatalkan.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                data-testid="bulk-delete-cancel-btn"
+                className="flex-1 rounded-xl border border-border py-2.5 text-xs font-semibold text-text-muted transition-colors hover:bg-surface-hover"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                data-testid="bulk-delete-confirm-btn"
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-rose-700"
+              >
+                Hapus Massal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Receipt Hover-Zoom Preview */}
       {hoverReceipt && (
         <div
@@ -534,6 +754,15 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
         transaction={editingTx}
         onClose={() => setEditingTx(null)}
       />
+
+      {showBulkEdit && (
+        <BulkEditTransactionsModal
+          selectedCount={selectedTransactionIds.length}
+          loading={isBulkProcessing}
+          onClose={() => setShowBulkEdit(false)}
+          onSubmit={handleBulkEdit}
+        />
+      )}
 
       {/* Delete Confirmation Popup Modal */}
       {deleteTxTarget && (
