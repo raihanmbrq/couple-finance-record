@@ -24,8 +24,11 @@ import {
   Rows2,
   Rows3,
   ZoomIn,
-  Check
+  Check,
+  Tags
 } from 'lucide-react';
+import { t } from '@/locales/translations';
+
 
 interface TransactionsDataGridProps {
   dateFilter?: string | null;
@@ -154,18 +157,16 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
     }),
   ];
 
-  const categoryOptions = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'food', label: 'Food & Groceries' },
-    { value: 'bills', label: 'Bills & Utilities' },
-    { value: 'shopping', label: 'Shopping' },
-    { value: 'entertainment', label: 'Entertainment' },
-    { value: 'transport', label: 'Transport' },
-    { value: 'health', label: 'Health & Medical' },
-    { value: 'education', label: 'Education' },
-    { value: 'salary', label: 'Salary' },
-    { value: 'other', label: 'Other' },
-  ];
+  const categoryOptions = useMemo(() => {
+    const usedCategoryIds = new Set(transactions.map((tx) => tx.category));
+
+    return [
+      { value: 'all', label: 'All Categories' },
+      ...categories
+        .filter((category) => usedCategoryIds.has(category.id))
+        .map((category) => ({ value: category.id, label: category.name })),
+    ];
+  }, [categories, transactions]);
 
   // Filtering Logic
   const filteredTransactions = useMemo(() => {

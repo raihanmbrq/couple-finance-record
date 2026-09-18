@@ -193,7 +193,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
                   <div className="flex items-center justify-between px-2 py-1">
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       <Globe className="w-3.5 h-3.5" />
-                      <span>{t('language') || 'Language'}</span>
+                      <span>{t('language.manage') || 'Language'}</span>
                     </div>
                     <div className="flex items-center gap-1 bg-surface-hover p-0.5 rounded-lg border border-border">
                       <button
@@ -216,7 +216,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
                   </div>
 
                   {/* Theme Presets */}
-                  <div className="flex items-center justify-between px-2 py-1">
+                  {/* <div className="flex items-center justify-between px-2 py-1">
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       <Palette className="w-3.5 h-3.5" />
                       <span>{t('theme') || 'Theme Accent'}</span>
@@ -233,7 +233,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
                         />
                       ))}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Open Full Settings & Sign Out */}
@@ -246,7 +246,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors"
                   >
                     <User className="w-3.5 h-3.5 text-text-muted" />
-                    <span>Manage Account & Preferences</span>
+                    <span>{t('profileMenu.manage') || 'Manage Account & Preferences'}</span>
                   </button>
 
                   <button
@@ -258,7 +258,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-rose-500 hover:bg-rose-500/10 transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>{t('sign_out') || 'Sign Out'}</span>
+                    <span>{t('profile.signOut') || 'Sign Out'}</span>
                   </button>
                 </div>
               </div>

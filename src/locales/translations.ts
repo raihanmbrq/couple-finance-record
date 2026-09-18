@@ -272,7 +272,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'theme.preset.roseDesc': 'Hangat & romantis',
     'theme.preset.slate': 'Ocean Blue',
     'theme.preset.slateDesc': 'Tenang & modern',
-    'language.manage': 'Bahasa / Language',
+    'language.manage': 'Bahasa',
     'language.desc': 'Pilih bahasa aplikasi',
     'language.title': 'Pilih Bahasa',
     'language.id': 'Bahasa Indonesia',
@@ -595,6 +595,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'header.addTransaction': 'Tambah Transaksi',
     'header.hideBalance': 'Sembunyikan Saldo',
     'header.showBalance': 'Tampilkan Saldo',
+
+    //Desktop Header Profile
+    'profileMenu.manage': 'Kelola Akun dan Preferensi',
   },
   en: {
     'common.cancel': 'Cancel',
@@ -1188,6 +1191,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'header.addTransaction': 'Add Transaction',
     'header.hideBalance': 'Hide Balance',
     'header.showBalance': 'Show Balance',
+
+    //Desktop Header Profile
+    'profileMenu.manage': 'Manage Account & Preferences',
   },
 };
 
