@@ -234,6 +234,7 @@ export const DesktopBudgetCrud: React.FC = () => {
                   value={selectedCategory}
                   onChange={setSelectedCategory}
                   className="w-full"
+                  floating
                 />
               </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
+import { FloatingPanel } from '@/components/desktop/ui/FloatingPanel';
 
 export interface DropdownOption {
   value: string;
@@ -14,6 +15,13 @@ interface CustomDesktopDropdownProps {
   placeholder?: string;
   testId?: string;
   className?: string;
+  /**
+   * Render the option list in a body portal anchored to the trigger instead of
+   * an in-flow absolute box. Use inside dialogs: an absolutely-positioned list
+   * still extends the dialog's scroll area, which forced users to scroll the
+   * modal before they could reach the options.
+   */
+  floating?: boolean;
 }
 
 export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
@@ -23,6 +31,7 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
   placeholder = 'Select option...',
   testId,
   className = '',
+  floating = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -39,6 +48,9 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
   }, [open, options, value]);
 
   useEffect(() => {
+    // Floating mode delegates outside-click detection to FloatingPanel, which
+    // also knows about the portaled list (it lives outside `containerRef`).
+    if (floating) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
@@ -46,9 +58,13 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [floating]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Tab') {
+      setOpen(false);
+      return;
+    }
     if (event.key === 'Escape') {
       setOpen(false);
       return;
@@ -74,6 +90,34 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
     }
   };
 
+  const optionItems = options.map((opt) => {
+    const isSelected = opt.value === value;
+    const isHighlighted = highlightedIndex === options.indexOf(opt);
+    const Icon = opt.icon;
+    return (
+      <button
+        key={opt.value}
+        type="button"
+        onClick={() => {
+          onChange(opt.value);
+          setOpen(false);
+        }}
+        onMouseEnter={() => setHighlightedIndex(options.indexOf(opt))}
+        role="option"
+        aria-selected={isSelected}
+        className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-surface-hover transition-colors ${
+          isSelected || isHighlighted ? 'bg-accent/10 font-bold text-accent' : 'text-text-primary'
+        }`}
+      >
+        <div className="flex items-center gap-2 truncate">
+          {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+          <span className="truncate">{opt.label}</span>
+        </div>
+        {isSelected && <Check className="w-3.5 h-3.5 text-accent shrink-0" />}
+      </button>
+    );
+  });
+
   return (
     <div ref={containerRef} className={`relative inline-block ${className}`} data-testid={testId}>
       <button
@@ -93,34 +137,24 @@ export const CustomDesktopDropdown: React.FC<CustomDesktopDropdownProps> = ({
         <ChevronDown className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {open && (
+      {open && floating && (
+        <FloatingPanel
+          anchorRef={containerRef}
+          open={open}
+          onClose={() => setOpen(false)}
+          matchAnchorWidth
+          maxHeight={240}
+          testId={testId ? `${testId}-listbox` : undefined}
+          role="listbox"
+          className="py-1 text-xs"
+        >
+          {optionItems}
+        </FloatingPanel>
+      )}
+
+      {open && !floating && (
         <div className="absolute left-0 mt-1.5 min-w-full w-max max-w-xs bg-surface border border-border rounded-xl shadow-xl z-50 py-1 max-h-60 overflow-y-auto text-xs">
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            const Icon = opt.icon;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-                onMouseEnter={() => setHighlightedIndex(options.indexOf(opt))}
-                role="option"
-                aria-selected={isSelected}
-                className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-surface-hover transition-colors ${
-                  isSelected || highlightedIndex === options.indexOf(opt) ? 'bg-accent/10 font-bold text-accent' : 'text-text-primary'
-                }`}
-              >
-                <div className="flex items-center gap-2 truncate">
-                  {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
-                  <span className="truncate">{opt.label}</span>
-                </div>
-                {isSelected && <Check className="w-3.5 h-3.5 text-accent shrink-0" />}
-              </button>
-            );
-          })}
+          {optionItems}
         </div>
       )}
     </div>

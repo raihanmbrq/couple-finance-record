@@ -135,6 +135,17 @@
   - Input: Target Amount, Target Date, Asset Class (Tabungan, Reksadana, Saham, Deposito, Emas), dan Expected Annual Return Rate ($r\%$).
   - Perhitungan Otomatis: Menghitung estimasi tabungan bulanan yang dibutuhkan.
   - Perbandingan Skenario: Menampilkan perbandingan nominal nabung/bulan antara skenario investasi compounding ($r > 0$) vs tabungan konvensional ($r = 0$).
+  - **Kontrol input custom (bukan kontrol native browser)**:
+    - Target Amount & Initial Accumulated memakai `MoneyInput` — input teks dengan thousand separator live (locale mengikuti currency profil), leading 0 ditolak, nilai dibaca via `parseMoneyInput` (tanpa spinner `input[type=number]`).
+    - Target Completion Date memakai `CustomDatePicker variant="floating"` (kalender bertema aplikasi, `minDate` = hari ini).
+    - Asset Class / Vehicle memakai `CustomDesktopDropdown floating` dengan opsi `ASSET_CATEGORIES` yang sama dengan form Create Goal (bukan `<select>` native), plus hint apakah kendaraan tersebut produk investasi.
+    - Expected Annual Return memakai input teks dengan suffix `%`; sanitasi digit + maksimal satu pemisah desimal (`,` atau `.`).
+
+#### C. Floating Popover Pattern (Desktop)
+
+- Overlay input di dalam dialog desktop — kalender tanggal, Asset Category, Source Wallet (Deposit to Goal), dan kategori (Set Category Budget) — dirender lewat portal `FloatingPanel` (`createPortal` ke `document.body`, `position: fixed`) yang di-anchor ke elemen trigger, bukan lagi panel in-flow/absolute.
+- **Efek yang diharapkan**: membuka kalender atau dropdown **tidak menambah tinggi dan tidak memicu scroll** pada modal; panel flip ke atas saat ruang bawah sempit, di-clamp ke viewport, dan ikut mengikuti trigger ketika modal/page di-scroll.
+- Tutup otomatis saat klik di luar panel atau `Esc` (tanpa menutup dialog induk); kalender memakai focus trap bertingkat (`useFocusTrap`) sehingga navigasi Tab tetap berada di dalam popover, lalu kembali ke dialog setelah ditutup.
 
 ---
 
@@ -178,6 +189,10 @@ Untuk mendukung _automated E2E testing_, seluruh komponen desktop utama telah me
 | **Analytics**    | Item Top 5 Expense    | `top-expense-item-{txId}`                                                           |
 | **Transactions** | Data Grid Row         | `transaction-row-{txId}`                                                            |
 | **Transactions** | Thumbnail Struk       | `receipt-thumbnail-{txId}`                                                          |
+| **Budgets & Goals** | Input Amount Simulator | `simulator-target-amount`, `simulator-current-amount`                            |
+| **Budgets & Goals** | Trigger Tanggal Target Simulator | `simulator-target-date`                                                 |
+| **Budgets & Goals** | Dropdown Asset Class Simulator | `simulator-asset-class` (+ `simulator-asset-class-listbox`)              |
+| **Global (Desktop)** | Popover Kalender Floating | `date-picker-floating`, `date-picker-grid`, `date-picker-day-{YYYY-MM-DD}`     |
 | **Global**       | Command Palette Input | `command-palette-input`                                                             |
 
 ---

@@ -1,24 +1,47 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format';
 import { calculateMonthlyContribution, monthsBetween, durationLabel } from '@/lib/goalMath';
 import { ASSET_CATEGORIES, type AssetCategory } from '@/lib/types';
-import { Calculator, Target, TrendingUp, PiggyBank, Sparkles, Check } from 'lucide-react';
+import { MoneyInput } from '@/components/desktop/ui/MoneyInput';
+import { CustomDesktopDropdown } from '@/components/desktop/ui/CustomDesktopDropdown';
+import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
+import { Calculator, Target, PiggyBank, Sparkles, Check, Calendar } from 'lucide-react';
+
+const toDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 export const GoalsAnnuitySimulator: React.FC = () => {
   const { saveGoal, profile } = useApp();
   const currency = profile?.currency || 'IDR';
 
-  // Simulator Inputs State
+  // Simulator Inputs State — money fields keep the *formatted* string so the
+  // user always sees thousand separators; amounts are read via parseMoneyInput.
   const [goalTitle, setGoalTitle] = useState('Dana Darurat / Impian');
-  const [targetAmount, setTargetAmount] = useState<number>(50_000_000);
-  const [currentAmount, setCurrentAmount] = useState<number>(5_000_000);
+  const [targetAmountInput, setTargetAmountInput] = useState(() => formatMoneyInput(50_000_000, currency));
+  const [currentAmountInput, setCurrentAmountInput] = useState(() => formatMoneyInput(5_000_000, currency));
   const [targetDate, setTargetDate] = useState<string>('2027-12-31');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [assetCategory, setAssetCategory] = useState<AssetCategory>('Reksadana');
-  const [expectedReturnRate, setExpectedReturnRate] = useState<number>(7); // 7% per annum default
+  const [returnRateInput, setReturnRateInput] = useState('7'); // 7% per annum default
   const [isSaved, setIsSaved] = useState(false);
+  const targetDateTriggerRef = useRef<HTMLButtonElement>(null);
 
-  const months = monthsBetween(new Date(), new Date(targetDate));
+  const targetAmount = parseMoneyInput(targetAmountInput);
+  const currentAmount = parseMoneyInput(currentAmountInput);
+  const expectedReturnRate = Number.parseFloat(returnRateInput.replace(',', '.')) || 0;
+  const isInvestment = ASSET_CATEGORIES.find((c) => c.key === assetCategory)?.isInvestment ?? false;
+
+  const assetCategoryOptions = useMemo(
+    () => ASSET_CATEGORIES.map((c) => ({ value: c.key, label: c.label })),
+    []
+  );
+
+  const months = useMemo(() => {
+    if (!targetDate) return 0;
+    const target = new Date(`${targetDate}T00:00:00`);
+    return Number.isNaN(target.getTime()) ? 0 : monthsBetween(new Date(), target);
+  }, [targetDate]);
 
   // Compound Annuity ($r > 0)
   const monthlyRequiredAnnuity = calculateMonthlyContribution({
@@ -37,6 +60,17 @@ export const GoalsAnnuitySimulator: React.FC = () => {
   });
 
   const monthlySavingsDiff = Math.max(0, monthlyRequiredLinear - monthlyRequiredAnnuity);
+
+  // Keep the rate field numeric without the native number-input chrome:
+  // digits plus at most one decimal separator ("7", "7,5" or "7.5").
+  const handleReturnRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let next = event.target.value.replace(/[^\d.,]/g, '');
+    const separatorIndex = next.search(/[.,]/);
+    if (separatorIndex !== -1) {
+      next = `${next.slice(0, separatorIndex + 1)}${next.slice(separatorIndex + 1).replace(/[.,]/g, '')}`;
+    }
+    setReturnRateInput(next);
+  };
 
   const handleSaveGoal = async () => {
     try {
@@ -85,52 +119,72 @@ export const GoalsAnnuitySimulator: React.FC = () => {
         </div>
 
         {/* Target Amount */}
-        <div>
-          <label className="block text-xs font-medium text-text-muted mb-1">Target Amount ({currency})</label>
-          <input
-            type="number"
-            value={targetAmount}
-            onChange={(e) => setTargetAmount(Number(e.target.value))}
-            data-testid="simulator-target-amount"
-            className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
+        <MoneyInput
+          label={`Target Amount (${currency})`}
+          value={targetAmountInput}
+          onChange={setTargetAmountInput}
+          currency={currency}
+          testId="simulator-target-amount"
+          placeholder="50.000.000"
+          hint="Thousand separators are applied as you type."
+        />
 
         {/* Current Accumulated Amount */}
-        <div>
-          <label className="block text-xs font-medium text-text-muted mb-1">Initial Accumulated ({currency})</label>
-          <input
-            type="number"
-            value={currentAmount}
-            onChange={(e) => setCurrentAmount(Number(e.target.value))}
-            className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
+        <MoneyInput
+          label={`Initial Accumulated (${currency})`}
+          value={currentAmountInput}
+          onChange={setCurrentAmountInput}
+          currency={currency}
+          testId="simulator-current-amount"
+          placeholder="5.000.000"
+          hint="Balance already set aside for this goal."
+        />
 
-        {/* Target Date */}
+        {/* Target Completion Date — custom floating calendar, no native picker */}
         <div>
           <label className="block text-xs font-medium text-text-muted mb-1">Target Completion Date</label>
-          <input
-            type="date"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
+          <button
+            type="button"
+            ref={targetDateTriggerRef}
             data-testid="simulator-target-date"
-            className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-haspopup="dialog"
+            aria-expanded={datePickerOpen}
+            onClick={() => setDatePickerOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-xl text-xs font-bold text-text-primary text-left transition-colors hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            <span className={targetDate ? '' : 'text-text-muted font-medium'}>
+              {targetDate ? formatDate(`${targetDate}T00:00:00`) : 'Select target date'}
+            </span>
+            <Calendar className="w-4 h-4 shrink-0 text-accent" aria-hidden="true" />
+          </button>
+          <CustomDatePicker
+            value={targetDate}
+            onChange={(value) => { setTargetDate(value); setDatePickerOpen(false); }}
+            open={datePickerOpen}
+            onClose={() => setDatePickerOpen(false)}
+            title="Select target completion date"
+            minDate={toDateKey(new Date())}
+            variant="floating"
+            anchorRef={targetDateTriggerRef}
           />
         </div>
 
-        {/* Asset Category */}
+        {/* Asset Category — custom themed dropdown, no native <select> */}
         <div>
           <label className="block text-xs font-medium text-text-muted mb-1">Asset Class / Vehicle</label>
-          <select
+          <CustomDesktopDropdown
+            options={assetCategoryOptions}
             value={assetCategory}
-            onChange={(e) => setAssetCategory(e.target.value as AssetCategory)}
-            className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-          >
-            {ASSET_CATEGORIES.map((cat) => (
-              <option key={cat.key} value={cat.key}>{cat.label}</option>
-            ))}
-          </select>
+            onChange={(value) => setAssetCategory(value as AssetCategory)}
+            className="w-full"
+            testId="simulator-asset-class"
+            floating
+          />
+          <p className="text-[11px] text-text-muted mt-1">
+            {isInvestment
+              ? 'Investment vehicle — compounding applies to the monthly contribution.'
+              : 'Savings vehicle — compounding is optional, tune the return rate manually.'}
+          </p>
         </div>
 
         {/* Expected Annual Return Rate (%) */}
@@ -138,14 +192,21 @@ export const GoalsAnnuitySimulator: React.FC = () => {
           <label className="block text-xs font-medium text-text-muted mb-1">
             Expected Annual Return (r %/year)
           </label>
-          <input
-            type="number"
-            step="0.5"
-            value={expectedReturnRate}
-            onChange={(e) => setExpectedReturnRate(Number(e.target.value))}
-            data-testid="simulator-expected-return"
-            className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              value={returnRateInput}
+              onChange={handleReturnRateChange}
+              data-testid="simulator-expected-return"
+              className="w-full px-3 py-2 pr-9 bg-surface border border-border rounded-xl text-xs font-bold text-text-primary tabular-nums focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-text-muted">
+              %
+            </span>
+          </div>
+          <p className="text-[11px] text-text-muted mt-1">Set 0 for a plain savings scenario.</p>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -6,7 +6,9 @@ import { formatMoney, formatMoneyInput, parseMoneyInput, formatDate } from '@/li
 import { calculateMonthlyContribution, durationLabel, monthsBetween } from '@/lib/goalMath';
 import { ASSET_CATEGORIES, type Goal } from '@/lib/types';
 import { CustomDesktopDropdown } from '@/components/desktop/ui/CustomDesktopDropdown';
-import { Target, Plus, Trash2, Edit3, PiggyBank, Wallet, Sparkles, AlertTriangle, X, Check, ArrowRight } from 'lucide-react';
+import { MoneyInput } from '@/components/desktop/ui/MoneyInput';
+import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
+import { Target, Plus, Trash2, Edit3, PiggyBank, Wallet, Sparkles, AlertTriangle, X, Check, ArrowRight, Calendar } from 'lucide-react';
 
 export const DesktopGoalsSection: React.FC = () => {
   const { goals, wallets, saveGoal, deleteGoal, depositToGoal, profile } = useApp();
@@ -21,6 +23,11 @@ export const DesktopGoalsSection: React.FC = () => {
   const [targetAmountInput, setTargetAmountInput] = useState('');
   const [startDate, setStartDate] = useState('');
   const [targetDate, setTargetDate] = useState('');
+  const [openDatePicker, setOpenDatePicker] = useState<'start' | 'target' | null>(null);
+  // Triggers the floating calendars are anchored to (portal popovers keep the
+  // dialog height fixed instead of stretching its scroll area).
+  const startDateTriggerRef = useRef<HTMLButtonElement>(null);
+  const targetDateTriggerRef = useRef<HTMLButtonElement>(null);
   const [category, setCategory] = useState<Goal['asset_category']>('Tabungan Biasa');
   const [returnRate, setReturnRate] = useState('5');
   const [saving, setSaving] = useState(false);
@@ -55,21 +62,6 @@ export const DesktopGoalsSection: React.FC = () => {
     annualReturnPct: 0,
   });
 
-  // Number input formatter rejecting leading 0s
-  const handleMoneyInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>
-  ) => {
-    let raw = e.target.value.replace(/\D/g, '');
-    raw = raw.replace(/^0+/, '');
-    if (!raw) {
-      setter('');
-      return;
-    }
-    const num = parseInt(raw, 10);
-    setter(formatMoneyInput(num, currency));
-  };
-
   const openCreate = () => {
     setEditing(null);
     setTitle('');
@@ -92,8 +84,14 @@ export const DesktopGoalsSection: React.FC = () => {
     setShowForm(true);
   };
 
+  // Closing the dialog must also drop any open floating popover anchored to it.
+  const closeForm = () => {
+    setShowForm(false);
+    setOpenDatePicker(null);
+  };
+
   const handleSaveGoal = async () => {
-    if (!title.trim() || !numTargetAmount || !targetDate) return;
+    if (!title.trim() || !numTargetAmount || !targetDate || (startDate && targetDate < startDate)) return;
     setSaving(true);
     try {
       await saveGoal({
@@ -106,7 +104,7 @@ export const DesktopGoalsSection: React.FC = () => {
         expected_return_rate: isInvestment ? rate : 0,
         monthly_contribution: pmtAnnuity,
       });
-      setShowForm(false);
+      closeForm();
       showToast(t('toast.saved') || 'Goal saved successfully!');
     } finally {
       setSaving(false);
@@ -260,7 +258,7 @@ export const DesktopGoalsSection: React.FC = () => {
               <h3 className="text-base font-bold text-text-primary">
                 {editing ? 'Edit Financial Goal' : 'Create New Financial Goal'}
               </h3>
-              <button onClick={() => setShowForm(false)} className="p-1 rounded-lg text-text-muted hover:text-text-primary">
+              <button onClick={closeForm} className="p-1 rounded-lg text-text-muted hover:text-text-primary">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -279,33 +277,62 @@ export const DesktopGoalsSection: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-medium text-text-muted mb-1">Target Amount ({currency})</label>
-                <input
-                  type="text"
+                <MoneyInput
                   value={targetAmountInput}
-                  onChange={(e) => handleMoneyInputChange(e, setTargetAmountInput)}
+                  onChange={setTargetAmountInput}
+                  currency={currency}
+                  size="lg"
                   placeholder="50.000.000"
-                  className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-xl text-lg font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                  hint="Formatted with thousand separators; leading 0s rejected."
                 />
-                <p className="text-[11px] text-text-muted mt-1">Formatted with thousand separators; leading 0s rejected.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-text-muted mb-1">Start Date</label>
-                  <input
-                    type="date"
+                  <button
+                    type="button"
+                    ref={startDateTriggerRef}
+                    aria-haspopup="dialog"
+                    aria-expanded={openDatePicker === 'start'}
+                    onClick={() => setOpenDatePicker(openDatePicker === 'start' ? null : 'start')}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-xl text-xs text-text-primary text-left focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <span>{startDate ? formatDate(startDate) : 'Select start date'}</span>
+                    <Calendar className="w-4 h-4 shrink-0 text-accent" aria-hidden="true" />
+                  </button>
+                  <CustomDatePicker
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                    onChange={(value) => { setStartDate(value); setOpenDatePicker(null); }}
+                    open={openDatePicker === 'start'}
+                    onClose={() => setOpenDatePicker(null)}
+                    title="Select start date"
+                    variant="floating"
+                    anchorRef={startDateTriggerRef}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-muted mb-1">Target Date</label>
-                  <input
-                    type="date"
+                  <button
+                    type="button"
+                    ref={targetDateTriggerRef}
+                    aria-haspopup="dialog"
+                    aria-expanded={openDatePicker === 'target'}
+                    onClick={() => setOpenDatePicker(openDatePicker === 'target' ? null : 'target')}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-xl text-xs text-text-primary text-left focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <span>{targetDate ? formatDate(targetDate) : 'Select target date'}</span>
+                    <Calendar className="w-4 h-4 shrink-0 text-accent" aria-hidden="true" />
+                  </button>
+                  <CustomDatePicker
                     value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                    minDate={startDate || undefined}
+                    onChange={(value) => { setTargetDate(value); setOpenDatePicker(null); }}
+                    open={openDatePicker === 'target'}
+                    onClose={() => setOpenDatePicker(null)}
+                    title="Select target date"
+                    variant="floating"
+                    anchorRef={targetDateTriggerRef}
                   />
                 </div>
               </div>
@@ -317,6 +344,7 @@ export const DesktopGoalsSection: React.FC = () => {
                   value={category}
                   onChange={(val) => setCategory(val as Goal['asset_category'])}
                   className="w-full"
+                  floating
                 />
               </div>
 
@@ -346,7 +374,7 @@ export const DesktopGoalsSection: React.FC = () => {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={closeForm}
                   className="px-4 py-2 rounded-xl text-xs font-medium border border-border text-text-muted hover:bg-surface-hover"
                 >
                   Cancel
@@ -354,7 +382,7 @@ export const DesktopGoalsSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveGoal}
-                  disabled={saving || !title.trim() || !numTargetAmount || !targetDate}
+                  disabled={saving || !title.trim() || !numTargetAmount || !targetDate || Boolean(startDate && targetDate < startDate)}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-accent text-accent-text hover:opacity-90 disabled:opacity-40"
                 >
                   {saving ? 'Saving...' : 'Save Goal'}
@@ -389,17 +417,18 @@ export const DesktopGoalsSection: React.FC = () => {
                   value={depositWalletId}
                   onChange={setDepositWalletId}
                   className="w-full"
+                  floating
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-text-muted mb-1">Deposit Amount ({currency})</label>
-                <input
-                  type="text"
+                <MoneyInput
                   value={depositAmountInput}
-                  onChange={(e) => handleMoneyInputChange(e, setDepositAmountInput)}
+                  onChange={setDepositAmountInput}
+                  currency={currency}
+                  size="lg"
                   placeholder="1.000.000"
-                  className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-xl text-lg font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
 

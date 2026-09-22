@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { FloatingPanel } from '@/components/desktop/ui/FloatingPanel';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface CustomDatePickerProps {
   value: string; // "YYYY-MM-DD"
@@ -9,22 +10,28 @@ interface CustomDatePickerProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  minDate?: string;
   /**
    * `sheet` (default) keeps the mobile bottom-sheet used across the app.
    * `inline` renders an in-flow dark panel intended to sit directly beneath a
    * desktop trigger button (no viewport-centred overlay).
+   * `floating` (desktop only) portals the same calendar next to the trigger so
+   * the surrounding dialog never grows or scrolls when it opens. Requires
+   * `anchorRef`; without it the `inline` layout is used as a fallback.
    */
-  variant?: 'sheet' | 'inline';
+  variant?: 'sheet' | 'inline' | 'floating';
+  /** Trigger element the `floating` calendar is anchored to. */
+  anchorRef?: RefObject<HTMLElement>;
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const toDateKey = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
-export function CustomDatePicker({ value, onChange, open, onClose, title, variant = 'sheet' }: CustomDatePickerProps) {
+export function CustomDatePicker({ value, onChange, open, onClose, title, minDate, variant = 'sheet', anchorRef }: CustomDatePickerProps) {
   const { language } = useLanguage();
-  const isInline = variant === 'inline';
+  const isInline = variant !== 'sheet';
   const [currentDate, setCurrentDate] = useState(() => {
-    return value ? new Date(`${value}T00:00:00`) : new Date();
+    return value ? new Date(`${value}T00:00:00`) : minDate ? new Date(`${minDate}T00:00:00`) : new Date();
   });
   // The day that currently owns the keyboard highlight (roving tabindex).
   const [focusedDay, setFocusedDay] = useState(() => value || toDateKey(new Date()));
@@ -63,11 +70,12 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
   // month and place the roving highlight on the selected day.
   useEffect(() => {
     if (!open) return;
-    const base = value ? new Date(`${value}T00:00:00`) : new Date();
+    const base = value ? new Date(`${value}T00:00:00`) : minDate ? new Date(`${minDate}T00:00:00`) : new Date();
     const safe = Number.isNaN(base.getTime()) ? new Date() : base;
     setCurrentDate(new Date(safe.getFullYear(), safe.getMonth(), 1));
-    setFocusedDay(value || toDateKey(safe));
-  }, [open, value]);
+    const safeKey = toDateKey(safe);
+    setFocusedDay(value && (!minDate || value >= minDate) ? value : minDate || safeKey);
+  }, [open, value, minDate]);
 
   const monthPrefix = `${year}-${pad(month + 1)}`;
 
@@ -91,6 +99,10 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
     });
   };
 
+  const handlePrevYear = () => {
+    setCurrentDate(prev => new Date(prev.getFullYear() - 1, prev.getMonth(), 1));
+  };
+
   const handleNextMonth = () => {
     setCurrentDate(prev => {
       const nextM = prev.getMonth() === 11 ? 0 : prev.getMonth() + 1;
@@ -99,8 +111,14 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
     });
   };
 
+  const handleNextYear = () => {
+    setCurrentDate(prev => new Date(prev.getFullYear() + 1, prev.getMonth(), 1));
+  };
+
   const handleSelectDay = (day: number) => {
-    onChange(`${year}-${pad(month + 1)}-${pad(day)}`);
+    const selected = `${year}-${pad(month + 1)}-${pad(day)}`;
+    if (minDate && selected < minDate) return;
+    onChange(selected);
     onClose();
   };
 
@@ -163,6 +181,7 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
     const currentDayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const isSelected = currentDayStr === selectedStr;
     const isToday = currentDayStr === todayStr;
+    const isBeforeMinDate = Boolean(minDate && currentDayStr < minDate);
 
     const isFocused = currentDayStr === focusedDay;
 
@@ -175,6 +194,8 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
         aria-label={currentDayStr}
         aria-pressed={isSelected}
         aria-current={isToday ? 'date' : undefined}
+        aria-disabled={isBeforeMinDate}
+        disabled={isBeforeMinDate}
         tabIndex={isFocused ? 0 : -1}
         onClick={() => handleSelectDay(d)}
         className={`${dayBaseClass} ${
@@ -189,6 +210,9 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
   const calendarBody = (
     <>
       <div className={navBarClass}>
+        <button type="button" onClick={handlePrevYear} className={navBtnClass} aria-label="Previous Year">
+          <ChevronsLeft className={isInline ? 'h-4 w-4' : 'h-5 w-5'} />
+        </button>
         <button type="button" onClick={handlePrevMonth} className={navBtnClass} aria-label="Previous Month">
           <ChevronLeft className={isInline ? 'h-4 w-4' : 'h-5 w-5'} />
         </button>
@@ -197,6 +221,9 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
         </div>
         <button type="button" onClick={handleNextMonth} className={navBtnClass} aria-label="Next Month">
           <ChevronRight className={isInline ? 'h-4 w-4' : 'h-5 w-5'} />
+        </button>
+        <button type="button" onClick={handleNextYear} className={navBtnClass} aria-label="Next Year">
+          <ChevronsRight className={isInline ? 'h-4 w-4' : 'h-5 w-5'} />
         </button>
       </div>
 
@@ -220,13 +247,38 @@ export function CustomDatePicker({ value, onChange, open, onClose, title, varian
     </>
   );
 
+  // Desktop (dialog-safe): the same calendar floated next to the trigger via a
+  // body portal, so opening it never stretches or scrolls the parent dialog.
+  // Escape is handled by FloatingPanel (stopPropagation keeps the dialog open).
+  if (variant === 'floating' && anchorRef) {
+    if (!open) return null;
+    return (
+      <FloatingPanel
+        anchorRef={anchorRef}
+        open={open}
+        onClose={onClose}
+        width={320}
+        maxHeight={360}
+        trapFocus
+        role="dialog"
+        ariaLabel={title || (language === 'en' ? 'Select date' : 'Pilih tanggal')}
+        testId="date-picker-floating"
+        className="p-4"
+      >
+        <div className="space-y-3">{calendarBody}</div>
+      </FloatingPanel>
+    );
+  }
+
   // Desktop: in-flow dark panel rendered directly beneath the trigger button.
   // Escape closes only the calendar (stopPropagation keeps the dialog open).
-  if (variant === 'inline') {
+  if (variant === 'inline' || variant === 'floating') {
     if (!open) return null;
     return (
       <div
         data-testid="date-picker-inline"
+        role="dialog"
+        aria-label={title || (language === 'en' ? 'Select date' : 'Pilih tanggal')}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
             event.stopPropagation();
