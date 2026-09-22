@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Profile, Household, HouseholdMember, Wallet, WalletTypeRow, Transaction, Budget, Goal, GoalInput, TransactionCategory } from '@/lib/types';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { TRANSFER_CATEGORY, type Profile, type Household, type HouseholdMember, type Wallet, type WalletTypeRow, type Transaction, type Budget, type Goal, type GoalInput, type TransactionCategory } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import { uploadAvatarToCloudinary } from '@/lib/cloudinary';
+import { accumulateEffects, invertEffects, walletEffects } from '@/lib/transactionMath';
+import { findLegacyIncomeLeg, normalizeLegacyTransfers } from '@/lib/transferNormalize';
 import {
   mockProfile, mockPartner, mockHousehold, mockWallets, mockWalletTypes, mockCategories, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
@@ -82,6 +84,81 @@ export function useApp() {
   return ctx;
 }
 
+/** Postgres `check_violation` raised by the `transactions.type` CHECK constraint. */
+function isTransferTypeUnsupported(error: { code?: string; message?: string }): boolean {
+  if (error.code !== '23514') return false;
+  return (error.message ?? '').toLowerCase().includes('type');
+}
+
+/**
+ * Legacy write fallback used while the `type = 'transfer'` migration has not
+ * been applied yet: persists the old expense + income pair instead. The
+ * read-time normalizer collapses the pair back into one transfer row, so
+ * analytics and balances stay identical either way.
+ */
+async function insertLegacyTransferPair(
+  tx: Omit<Transaction, 'id' | 'created_at'>,
+  sourceWallet: Wallet | undefined,
+  destinationWallet: Wallet | undefined,
+): Promise<Transaction[]> {
+  const now = new Date().toISOString();
+  const sourceId = tx.source_wallet_id ?? tx.wallet_id;
+  const destinationId = tx.destination_wallet_id;
+
+  if (!destinationId) throw new Error('Transfer is missing its destination wallet.');
+
+  const sourceRow: Transaction = {
+    id: crypto.randomUUID(),
+    wallet_id: sourceId,
+    user_id: tx.user_id,
+    wallet_name: sourceWallet?.name ?? tx.wallet_name ?? null,
+    amount: tx.amount,
+    type: 'expense',
+    category: TRANSFER_CATEGORY,
+    notes: tx.notes ?? null,
+    spent_by: tx.spent_by,
+    transaction_date: tx.transaction_date || now,
+    receipt_url: tx.receipt_url ?? null,
+    created_at: now,
+  };
+
+  const destinationRow: Transaction = {
+    ...sourceRow,
+    id: crypto.randomUUID(),
+    wallet_id: destinationId,
+    wallet_name: destinationWallet?.name ?? tx.destination_wallet_name ?? null,
+    type: 'income',
+  };
+
+  const { error } = await supabase.from('transactions').insert([
+    {
+      user_id: sourceRow.user_id,
+      wallet_id: sourceRow.wallet_id,
+      wallet_name: sourceRow.wallet_name,
+      amount: sourceRow.amount,
+      type: sourceRow.type,
+      category: sourceRow.category,
+      notes: sourceRow.notes,
+      spent_by: sourceRow.spent_by,
+      transaction_date: sourceRow.transaction_date,
+    },
+    {
+      user_id: destinationRow.user_id,
+      wallet_id: destinationRow.wallet_id,
+      wallet_name: destinationRow.wallet_name,
+      amount: destinationRow.amount,
+      type: destinationRow.type,
+      category: destinationRow.category,
+      notes: destinationRow.notes,
+      spent_by: destinationRow.spent_by,
+      transaction_date: destinationRow.transaction_date,
+    },
+  ]);
+  if (error) throw error;
+
+  return [sourceRow, destinationRow];
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [mode, setAppMode] = useState<AppMode>('demo');
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -97,6 +174,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
+
+  /**
+   * DB-truth transaction rows. `transactions` below is the *effective* view:
+   * legacy transfer pairs (expense + income legs) collapsed into a single
+   * `type = 'transfer'` row so every consumer can simply test
+   * `type !== 'transfer'`.
+   */
+  const rawTransactionsRef = useRef<Transaction[]>([]);
+
+  /** The one write path for transaction state (keeps ref + view in sync). */
+  const applyRawTransactions = useCallback((next: Transaction[]) => {
+    rawTransactionsRef.current = next;
+    setTransactions(normalizeLegacyTransfers(next).transactions);
+  }, []);
+
+  /** Raw rows for mutation bookkeeping (falls back to the view on first render). */
+  const rawTransactions = useCallback(
+    () => (rawTransactionsRef.current.length > 0 ? rawTransactionsRef.current : transactions),
+    [transactions],
+  );
 
   // Restore demo session from localStorage or check live session
   useEffect(() => {
@@ -192,7 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!householdData) {
         setHousehold(null);
         setWallets([]);
-        setTransactions([]);
+        applyRawTransactions([]);
         setHouseholdMembers([]);
         setBudgets([]);
         setGoals([]);
@@ -271,7 +368,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .order('transaction_date', { ascending: false });
         txRows = (tx as Transaction[]) ?? [];
       }
-      setTransactions(txRows.sort(sortByDateDesc));
+      applyRawTransactions(txRows.sort(sortByDateDesc));
 
       const { data: bg } = await supabase
         .from('budgets')
@@ -289,7 +386,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyRawTransactions]);
 
   const enterDemo = useCallback(() => {
     setAppMode('demo');
@@ -315,13 +412,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
     ]);
     setWallets(mockWallets);
-    setTransactions([...mockTransactions].sort(sortByDateDesc));
+    applyRawTransactions([...mockTransactions].sort(sortByDateDesc));
     setBudgets(mockBudgets);
     setGoals(mockGoals);
     setWalletTypes(mockWalletTypes);
     setCategories(mockCategories);
     localStorage.setItem('duitbersama_session', 'demo');
-  }, []);
+  }, [applyRawTransactions]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setLoading(true);
@@ -467,12 +564,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHousehold(null);
     setHouseholdMembers([]);
     setWallets([]);
-    setTransactions([]);
+    applyRawTransactions([]);
     setBudgets([]);
     setGoals([]);
     setWalletTypes([]);
     setCategories([]);
-  }, [mode]);
+  }, [mode, applyRawTransactions]);
 
   const setMode = useCallback(async (_mode: 'single' | 'couple', _partnerName?: string) => {
     // This is handled by createHousehold/joinHousehold
@@ -538,11 +635,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHousehold(null);
     setHouseholdMembers([]);
     setWallets([]);
-    setTransactions([]);
+    applyRawTransactions([]);
     setBudgets([]);
     setGoals([]);
     setProfile({ ...profile, household_id: null, role: 'single' });
-  }, [loadLiveData, mode, profile]);
+  }, [loadLiveData, mode, profile, applyRawTransactions]);
 
   const addWallet = useCallback(async (name: string, type: Wallet['type'], balance: number, icon?: string | null) => {
     let hh = household;
@@ -646,11 +743,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (walletErr) throw walletErr;
     }
 
-    setTransactions(prev => prev.map((tx) =>
-      tx.wallet_id === id ? { ...tx, wallet_name: walletName ?? tx.wallet_name } : tx,
-    ));
+    applyRawTransactions(
+      rawTransactions().map((tx) =>
+        tx.wallet_id === id ? { ...tx, wallet_name: walletName ?? tx.wallet_name } : tx,
+      ),
+    );
     setWallets(prev => prev.filter(w => w.id !== id));
-  }, [mode, wallets]);
+  }, [mode, wallets, applyRawTransactions, rawTransactions]);
 
   const addCustomWalletType = useCallback(async (name: string, icon: string): Promise<WalletTypeRow> => {
     const createdAt = new Date().toISOString();
@@ -770,17 +869,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, 'id' | 'created_at'>) => {
     const targetWallet = wallets.find(w => w.id === tx.wallet_id);
+    const destinationWallet = tx.destination_wallet_id
+      ? wallets.find(w => w.id === tx.destination_wallet_id)
+      : undefined;
+
+    const createdAt = new Date().toISOString();
     const newTx: Transaction = {
       ...tx,
       id: crypto.randomUUID(),
       wallet_name: targetWallet?.name ?? tx.wallet_name ?? null,
-      transaction_date: tx.transaction_date || new Date().toISOString(),
-      created_at: new Date().toISOString(),
+      destination_wallet_name: tx.type === 'transfer'
+        ? destinationWallet?.name ?? tx.destination_wallet_name ?? null
+        : tx.destination_wallet_name ?? null,
+      transaction_date: tx.transaction_date || createdAt,
+      created_at: createdAt,
     };
 
-    const nextWalletBalance = targetWallet
-      ? targetWallet.balance + (tx.type === 'income' ? tx.amount : -tx.amount)
-      : tx.amount;
+    // A transfer debits the source AND credits the destination; income/expense
+    // only ever touch their own wallet.
+    const effectMap = new Map<string, number>();
+    accumulateEffects(effectMap, walletEffects(newTx));
+
+    let persistedRows: Transaction[] = [newTx];
 
     if (mode === 'live') {
       const { error } = await supabase.from('transactions').insert({
@@ -794,23 +904,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
         wallet_name: newTx.wallet_name,
         transaction_date: tx.transaction_date,
         receipt_url: tx.receipt_url ?? null,
+        source_wallet_id: newTx.source_wallet_id ?? null,
+        destination_wallet_id: newTx.destination_wallet_id ?? null,
+        destination_wallet_name: newTx.destination_wallet_name ?? null,
       });
-      if (error) throw error;
 
-      if (targetWallet) {
-        const { error: walletError } = await supabase.from('wallets').update({ balance: nextWalletBalance }).eq('id', tx.wallet_id);
+      if (error) {
+        if (newTx.type === 'transfer' && isTransferTypeUnsupported(error)) {
+          // `type = 'transfer'` migration not applied yet — persist the legacy
+          // pair instead. The normalizer collapses it back on read.
+          persistedRows = await insertLegacyTransferPair(newTx, targetWallet, destinationWallet);
+        } else {
+          throw error;
+        }
+      }
+
+      for (const [walletId, delta] of effectMap) {
+        const wallet = wallets.find(w => w.id === walletId);
+        if (!wallet || delta === 0) continue;
+        const { error: walletError } = await supabase
+          .from('wallets')
+          .update({ balance: wallet.balance + delta })
+          .eq('id', walletId);
         if (walletError) throw walletError;
       }
     }
 
-    setTransactions(prev => [newTx, ...prev].sort(sortByDateDesc));
+    applyRawTransactions([...persistedRows, ...rawTransactions()].sort(sortByDateDesc));
     setWallets(prev => prev.map(w => {
-      if (w.id === tx.wallet_id) {
-        return { ...w, balance: nextWalletBalance };
-      }
-      return w;
+      const delta = effectMap.get(w.id);
+      return delta ? { ...w, balance: w.balance + delta } : w;
     }));
-  }, [mode, profile, wallets]);
+  }, [mode, profile, wallets, applyRawTransactions, rawTransactions]);
 
   const goalTitleFromDeposit = (tx: Transaction) => {
     const prefix = 'Deposit ke Goal: ';
@@ -822,71 +947,157 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const currentTx = transactions.find((tx) => tx.id === id);
     if (!currentTx) return;
 
-    const walletId = updates.wallet_id ?? currentTx.wallet_id;
-    const previousWalletId = currentTx.wallet_id;
-    const previousAmount = currentTx.amount;
-    const previousType = currentTx.type;
-    const nextAmount = updates.amount ?? currentTx.amount;
-    const nextType = updates.type ?? currentTx.type;
-    const previousEffect = previousType === 'income' ? previousAmount : -previousAmount;
-    const nextEffect = nextType === 'income' ? nextAmount : -nextAmount;
-    const previousWallet = wallets.find((w) => w.id === previousWalletId);
-    const nextWallet = wallets.find((w) => w.id === walletId);
-
     const updatedTransaction: Transaction = {
       ...currentTx,
       ...updates,
       id,
-      amount: nextAmount,
-      type: nextType,
+      amount: updates.amount ?? currentTx.amount,
+      type: updates.type ?? currentTx.type,
       category: updates.category ?? currentTx.category,
       notes: updates.notes ?? currentTx.notes,
       spent_by: updates.spent_by ?? currentTx.spent_by,
       transaction_date: updates.transaction_date ?? currentTx.transaction_date,
-      wallet_id: walletId,
+      wallet_id: updates.wallet_id ?? currentTx.wallet_id,
       user_id: updates.user_id ?? currentTx.user_id,
-      wallet_name: nextWallet?.name ?? currentTx.wallet_name,
     };
 
-    if (mode === 'live') {
-      const { error } = await supabase
-        .from('transactions')
-        .update({
-          user_id: profile?.id ?? currentTx.user_id,
-          wallet_id: walletId,
-          amount: nextAmount,
-          type: nextType,
-          category: updatedTransaction.category,
-          notes: updatedTransaction.notes,
-          spent_by: updatedTransaction.spent_by,
-          wallet_name: updatedTransaction.wallet_name,
-          transaction_date: updatedTransaction.transaction_date,
-          receipt_url: updatedTransaction.receipt_url ?? null,
-        })
-        .eq('id', id);
-      if (error) throw error;
+    // A transfer that was collapsed from a legacy pair still has an income
+    // counter-leg in the DB until the migration is applied.
+    const rawRows = rawTransactions();
+    const legacyIncomeLeg = findLegacyIncomeLeg(rawRows, currentTx);
+    const sourceWallet = wallets.find((w) => w.id === updatedTransaction.wallet_id);
 
-      if (previousWallet) {
-        const prevWalletBalance = previousWalletId === walletId
-          ? previousWallet.balance - previousEffect + nextEffect
-          : previousWallet.balance - previousEffect;
-        const { error: prevWalletError } = await supabase
-          .from('wallets')
-          .update({ balance: prevWalletBalance })
-          .eq('id', previousWalletId);
-        if (prevWalletError) throw prevWalletError;
+    if (updatedTransaction.type === 'transfer') {
+      // `wallet_id` always mirrors the source wallet of a transfer.
+      updatedTransaction.source_wallet_id = updatedTransaction.wallet_id;
+      const destinationId = updatedTransaction.destination_wallet_id ?? null;
+      const destinationWallet = wallets.find((w) => w.id === destinationId);
+      updatedTransaction.destination_wallet_id = destinationId;
+      updatedTransaction.destination_wallet_name =
+        destinationWallet?.name ?? updatedTransaction.destination_wallet_name ?? null;
+      updatedTransaction.wallet_name = sourceWallet?.name ?? updatedTransaction.wallet_name;
+    } else {
+      // Removing the transfer semantics: only the edited side keeps a balance
+      // effect, so the destination columns are cleared too.
+      updatedTransaction.wallet_name = sourceWallet?.name ?? updatedTransaction.wallet_name;
+      updatedTransaction.source_wallet_id = null;
+      updatedTransaction.destination_wallet_id = null;
+      updatedTransaction.destination_wallet_name = null;
+    }
+
+    // Net balance change = reverse the old transaction, then apply the new one.
+    const effectMap = new Map<string, number>();
+    accumulateEffects(effectMap, invertEffects(walletEffects(currentTx)));
+    accumulateEffects(effectMap, walletEffects(updatedTransaction));
+
+    const persistedIds = new Set<string>([id]);
+    let nextRawRows = rawRows.map((row) => {
+      if (row.id !== id) return row;
+      return {
+        ...row,
+        ...updates,
+        id,
+        wallet_id: updatedTransaction.wallet_id,
+        amount: updatedTransaction.amount,
+        type: updatedTransaction.type,
+        category: updatedTransaction.category,
+        notes: updatedTransaction.notes,
+        spent_by: updatedTransaction.spent_by,
+        transaction_date: updatedTransaction.transaction_date,
+        wallet_name: updatedTransaction.wallet_name,
+        source_wallet_id: updatedTransaction.source_wallet_id ?? null,
+        destination_wallet_id: updatedTransaction.destination_wallet_id ?? null,
+        destination_wallet_name: updatedTransaction.destination_wallet_name ?? null,
+      };
+    });
+
+    if (mode === 'live') {
+      if (legacyIncomeLeg) {
+        // Pre-migration shape: keep the row as the expense leg of the pair and
+        // mirror the edit onto the leftover income leg.
+        nextRawRows = nextRawRows.map((row) => {
+          if (row.id === legacyIncomeLeg.id) {
+            return {
+              ...row,
+              category: TRANSFER_CATEGORY,
+              type: 'income' as const,
+              wallet_id: updatedTransaction.destination_wallet_id ?? row.wallet_id,
+              wallet_name: updatedTransaction.destination_wallet_name ?? row.wallet_name,
+              amount: updatedTransaction.amount,
+              notes: updatedTransaction.notes,
+              spent_by: updatedTransaction.spent_by,
+              transaction_date: updatedTransaction.transaction_date,
+            };
+          }
+          if (row.id !== id) return row;
+          return {
+            ...row,
+            category: TRANSFER_CATEGORY,
+            type: 'expense' as const,
+            wallet_id: updatedTransaction.source_wallet_id ?? row.wallet_id,
+            amount: updatedTransaction.amount,
+            notes: updatedTransaction.notes,
+            spent_by: updatedTransaction.spent_by,
+            transaction_date: updatedTransaction.transaction_date,
+            source_wallet_id: null,
+            destination_wallet_id: null,
+            destination_wallet_name: null,
+          };
+        });
+
+        persistedIds.add(legacyIncomeLeg.id);
+        for (const row of nextRawRows) {
+          if (!persistedIds.has(row.id)) continue;
+          const { error } = await supabase
+            .from('transactions')
+            .update({
+              category: row.category,
+              type: row.type,
+              wallet_id: row.wallet_id,
+              wallet_name: row.wallet_name ?? null,
+              amount: row.amount,
+              notes: row.notes,
+              spent_by: row.spent_by,
+              transaction_date: row.transaction_date,
+            })
+            .eq('id', row.id);
+          if (error) throw error;
+        }
+      } else {
+        const { error } = await supabase
+          .from('transactions')
+          .update({
+            user_id: profile?.id ?? currentTx.user_id,
+            wallet_id: updatedTransaction.wallet_id,
+            amount: updatedTransaction.amount,
+            type: updatedTransaction.type,
+            category: updatedTransaction.category,
+            notes: updatedTransaction.notes,
+            spent_by: updatedTransaction.spent_by,
+            wallet_name: updatedTransaction.wallet_name,
+            transaction_date: updatedTransaction.transaction_date,
+            receipt_url: updatedTransaction.receipt_url ?? null,
+            source_wallet_id: updatedTransaction.source_wallet_id ?? null,
+            destination_wallet_id: updatedTransaction.destination_wallet_id ?? null,
+            destination_wallet_name: updatedTransaction.destination_wallet_name ?? null,
+          })
+          .eq('id', id);
+        if (error) throw error;
       }
 
-      if (nextWallet && previousWalletId !== walletId) {
-        const nextWalletBalance = nextWallet.balance + nextEffect;
-        const { error: nextWalletError } = await supabase
+      for (const [walletId, delta] of effectMap) {
+        const wallet = wallets.find((w) => w.id === walletId);
+        if (!wallet || delta === 0) continue;
+        const { error: walletError } = await supabase
           .from('wallets')
-          .update({ balance: nextWalletBalance })
+          .update({ balance: wallet.balance + delta })
           .eq('id', walletId);
-        if (nextWalletError) throw nextWalletError;
+        if (walletError) throw walletError;
       }
     }
 
+    const previousAmount = currentTx.amount;
+    const nextAmount = updatedTransaction.amount;
     const previousGoalTitle = goalTitleFromDeposit(currentTx);
     const nextGoalTitle = goalTitleFromDeposit(updatedTransaction);
     setGoals(prev => prev.map((goal) => {
@@ -901,38 +1112,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return goal;
     }));
-    setTransactions(prev => prev.map((tx) => tx.id === id ? updatedTransaction : tx).sort(sortByDateDesc));
+    applyRawTransactions(nextRawRows.sort(sortByDateDesc));
     setWallets(prev => prev.map((w) => {
-      if (w.id === previousWalletId && previousWalletId === walletId) {
-        return { ...w, balance: w.balance - previousEffect + nextEffect };
-      }
-      if (w.id === previousWalletId && previousWalletId !== walletId) {
-        return { ...w, balance: w.balance - previousEffect };
-      }
-      if (w.id === walletId && previousWalletId !== walletId) {
-        return { ...w, balance: w.balance + nextEffect };
-      }
-      return w;
+      const delta = effectMap.get(w.id);
+      return delta ? { ...w, balance: w.balance + delta } : w;
     }));
-  }, [mode, profile, transactions, wallets]);
+  }, [mode, profile, transactions, wallets, applyRawTransactions, rawTransactions]);
 
   const deleteTransaction = useCallback(async (id: string) => {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
 
     const goalTitle = goalTitleFromDeposit(tx);
+    const rawRows = rawTransactions();
+    // Pre-migration shape: also remove the leftover income leg of the pair.
+    const legacyIncomeLeg = findLegacyIncomeLeg(rawRows, tx);
+
+    // Deleting reverses every wallet the transaction had touched. For a
+    // transfer that means crediting the source and debiting the destination.
+    const effectMap = new Map<string, number>();
+    accumulateEffects(effectMap, invertEffects(walletEffects(tx)));
+
+    const removedIds = new Set<string>([id, ...(legacyIncomeLeg ? [legacyIncomeLeg.id] : [])]);
 
     if (mode === 'live') {
-      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      const { error } = await supabase.from('transactions').delete().in('id', [...removedIds]);
       if (error) throw error;
 
-      const targetWallet = wallets.find(w => w.id === tx.wallet_id);
-      if (targetWallet) {
-        const nextBalance = targetWallet.balance + (tx.type === 'income' ? -tx.amount : tx.amount);
-        const { error: walletError } = await supabase.from('wallets').update({ balance: nextBalance }).eq('id', tx.wallet_id);
+      for (const [walletId, delta] of effectMap) {
+        const wallet = wallets.find(w => w.id === walletId);
+        if (!wallet || delta === 0) continue;
+        const { error: walletError } = await supabase
+          .from('wallets')
+          .update({ balance: wallet.balance + delta })
+          .eq('id', walletId);
         if (walletError) throw walletError;
-
-        setWallets(prev => prev.map(w => w.id === tx.wallet_id ? { ...w, balance: nextBalance } : w));
       }
     }
 
@@ -941,21 +1155,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? { ...goal, current_amount: Math.max(0, goal.current_amount - tx.amount) }
         : goal));
     }
-    setTransactions(prev => prev.filter(t => t.id !== id));
-  }, [mode, transactions, wallets]);
+    applyRawTransactions(rawRows.filter(t => !removedIds.has(t.id)));
+    setWallets(prev => prev.map((w) => {
+      const delta = effectMap.get(w.id);
+      return delta ? { ...w, balance: w.balance + delta } : w;
+    }));
+  }, [mode, transactions, wallets, applyRawTransactions, rawTransactions]);
 
   const bulkUpdateTransactions = useCallback(async (
     ids: string[],
     updates: Partial<Pick<Transaction, 'category' | 'wallet_id' | 'spent_by' | 'transaction_date' | 'notes'>>,
   ) => {
     if (ids.length === 0 || Object.keys(updates).length === 0) return;
-    const selected = transactions.filter((tx) => ids.includes(tx.id));
+    // Internal transfers expose a synthetic source -> destination movement, so
+    // re-categorising or re-walleting them through the bulk editor is not
+    // meaningful. They are edited through the transfer form instead.
+    const selected = transactions.filter((tx) => ids.includes(tx.id) && tx.type !== 'transfer');
+    const effectiveIds = selected.map((tx) => tx.id);
+    if (effectiveIds.length === 0) return;
+
     const targetWallet = updates.wallet_id ? wallets.find((wallet) => wallet.id === updates.wallet_id) : undefined;
     const databaseUpdates = updates.wallet_id
       ? { ...updates, wallet_name: targetWallet?.name ?? null }
       : updates;
     if (mode === 'live') {
-      const { error } = await supabase.from('transactions').update(databaseUpdates).in('id', ids);
+      const { error } = await supabase.from('transactions').update(databaseUpdates).in('id', effectiveIds);
       if (error) throw error;
     }
 
@@ -963,11 +1187,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     for (const tx of selected) {
       const nextWalletId = updates.wallet_id ?? tx.wallet_id;
       if (nextWalletId === tx.wallet_id) continue;
-      const effect = tx.type === 'income' ? tx.amount : -tx.amount;
-      walletChanges.set(tx.wallet_id, (walletChanges.get(tx.wallet_id) ?? 0) - effect);
-      walletChanges.set(nextWalletId, (walletChanges.get(nextWalletId) ?? 0) + effect);
+      // Move the whole balance effect of the row to its new wallet.
+      for (const effect of walletEffects(tx)) {
+        accumulateEffects(walletChanges, invertEffects([effect]));
+        accumulateEffects(walletChanges, [{ walletId: nextWalletId, delta: effect.delta }]);
+      }
     }
-
     if (mode === 'live') {
       for (const [walletId, delta] of walletChanges) {
         const wallet = wallets.find((item) => item.id === walletId);
@@ -977,8 +1202,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setTransactions((prev) => prev.map((tx) => {
-      if (!ids.includes(tx.id)) return tx;
+    applyRawTransactions(rawTransactions().map((tx) => {
+      if (!effectiveIds.includes(tx.id)) return tx;
       const nextWallet = wallets.find((wallet) => wallet.id === (updates.wallet_id ?? tx.wallet_id));
       return { ...tx, ...updates, wallet_name: nextWallet?.name ?? tx.wallet_name };
     }).sort(sortByDateDesc));
@@ -986,22 +1211,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const delta = walletChanges.get(wallet.id) ?? 0;
       return delta === 0 ? wallet : { ...wallet, balance: wallet.balance + delta };
     }));
-  }, [mode, transactions, wallets]);
+  }, [mode, transactions, wallets, applyRawTransactions, rawTransactions]);
 
   const bulkDeleteTransactions = useCallback(async (ids: string[]) => {
     if (ids.length === 0) return;
+    const rawRows = rawTransactions();
     const selected = transactions.filter((tx) => ids.includes(tx.id));
-    if (mode === 'live') {
-      const { error } = await supabase.from('transactions').delete().in('id', ids);
-      if (error) throw error;
-    }
+    if (selected.length === 0) return;
 
+    const removedIds = new Set<string>(selected.map((tx) => tx.id));
     const walletChanges = new Map<string, number>();
     for (const tx of selected) {
-      const effect = tx.type === 'income' ? tx.amount : -tx.amount;
-      walletChanges.set(tx.wallet_id, (walletChanges.get(tx.wallet_id) ?? 0) - effect);
+      // Reversing a transfer credits its source and debits its destination.
+      accumulateEffects(walletChanges, invertEffects(walletEffects(tx)));
+      // Drop any leftover legacy income leg so the pair disappears completely.
+      const leg = findLegacyIncomeLeg(rawRows, tx);
+      if (leg) removedIds.add(leg.id);
     }
+
     if (mode === 'live') {
+      const { error } = await supabase.from('transactions').delete().in('id', [...removedIds]);
+      if (error) throw error;
+
       for (const [walletId, delta] of walletChanges) {
         const wallet = wallets.find((item) => item.id === walletId);
         if (!wallet || delta === 0) continue;
@@ -1009,12 +1240,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
       }
     }
-    setTransactions((prev) => prev.filter((tx) => !ids.includes(tx.id)));
+
+    applyRawTransactions(rawRows.filter((tx) => !removedIds.has(tx.id)));
     setWallets((prev) => prev.map((wallet) => {
       const delta = walletChanges.get(wallet.id) ?? 0;
       return delta === 0 ? wallet : { ...wallet, balance: wallet.balance + delta };
     }));
-  }, [mode, transactions, wallets]);
+  }, [mode, transactions, wallets, applyRawTransactions, rawTransactions]);
 
   const setBudget = useCallback(async (category: string, limitAmount: number) => {
     if (!household) return;
@@ -1155,10 +1387,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (gErr) throw gErr;
     }
 
-    setTransactions(prev => [newTx, ...prev].sort(sortByDateDesc));
+    applyRawTransactions([newTx, ...rawTransactions()].sort(sortByDateDesc));
     setWallets(prev => prev.map(w => w.id === walletId ? { ...w, balance: nextBalance } : w));
     setGoals(prev => prev.map(g => g.id === goalId ? { ...g, current_amount: nextCurrent } : g));
-  }, [goals, mode, profile, wallets]);
+  }, [goals, mode, profile, wallets, applyRawTransactions, rawTransactions]);
 
   const value: AppState = {
     mode,

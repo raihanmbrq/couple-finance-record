@@ -4,6 +4,7 @@ import { formatMoney, formatDate } from '@/lib/format';
 import { getCategory, type Transaction } from '@/lib/types';
 import { resolveCategoryMeta } from '@/lib/categoryStyle';
 import { CategoryChip } from '@/components/desktop/ui/CategoryChip';
+import { TransferBadge, transferRouteLabel } from '@/components/ui/TransferBadge';
 import { CustomDesktopDropdown } from '@/components/desktop/ui/CustomDesktopDropdown';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 import { BulkEditTransactionsModal, type BulkTransactionUpdates } from '@/components/desktop/bulk/BulkEditTransactionsModal';
@@ -108,7 +109,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
   const [selectedWallet, setSelectedWallet] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedMember, setSelectedMember] = useState<string>('all');
-  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense' | 'transfer'>('all');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
@@ -142,6 +143,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
     { value: 'all', label: 'All Types' },
     { value: 'income', label: 'Income Only' },
     { value: 'expense', label: 'Expense Only' },
+    { value: 'transfer', label: 'Internal Transfer' },
   ];
 
   const walletOptions = [
@@ -246,7 +248,10 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
     }
   };
 
-  const visibleIds = sortedTransactions.map((tx) => tx.id);
+  // Internal transfers cannot be re-categorised / re-walletted in bulk, so they
+  // are excluded from bulk selection (edit them through the transfer form).
+  const selectableTransactions = sortedTransactions.filter((tx) => tx.type !== 'transfer');
+  const visibleIds = selectableTransactions.map((tx) => tx.id);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedTransactionIds.includes(id));
 
   const toggleTransaction = (id: string) => {
@@ -524,6 +529,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
                 sortedTransactions.map((tx) => {
                   const catMeta = resolveCategoryMeta(tx.category, categories);
                   const isIncome = tx.type === 'income';
+                  const isTransfer = tx.type === 'transfer';
 
                   return (
                     <tr 
@@ -532,23 +538,35 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
                       className="hover:bg-surface-hover/50 transition-colors group"
                     >
                       <td className="py-3 px-3 text-center">
-                        <StyledCheckbox
-                          checked={selectedTransactionIds.includes(tx.id)}
-                          onChange={() => toggleTransaction(tx.id)}
-                          label={`Select transaction ${tx.id}`}
-                          testId={`select-row-checkbox-${tx.id}`}
-                        />
+                        {isTransfer ? (
+                          // Transfers are edited from the transfer form, not bulk-edited.
+                          <span className="text-[10px] text-text-muted" title="Managed by the transfer form">
+                            —
+                          </span>
+                        ) : (
+                          <StyledCheckbox
+                            checked={selectedTransactionIds.includes(tx.id)}
+                            onChange={() => toggleTransaction(tx.id)}
+                            label={`Select transaction ${tx.id}`}
+                            testId={`select-row-checkbox-${tx.id}`}
+                          />
+                        )}
                       </td>
                       <td className="py-3 px-4 font-medium text-text-primary whitespace-nowrap">
                         {formatDate(tx.transaction_date || tx.created_at)}
                       </td>
 
                       <td className="py-3 px-4 font-medium text-text-primary whitespace-nowrap">
-                        <CategoryChip categoryKey={tx.category} iconName={catMeta.icon} label={catMeta.label} />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <CategoryChip categoryKey={tx.category} iconName={catMeta.icon} label={catMeta.label} />
+                          {isTransfer && <TransferBadge transaction={tx} />}
+                        </div>
                       </td>
 
                       <td className="py-3 px-4 text-text-muted whitespace-nowrap">
-                        {tx.wallet_name || 'Wallet'}
+                        {isTransfer
+                          ? transferRouteLabel(tx, (id) => wallets.find((w) => w.id === id)?.name ?? null)
+                          : tx.wallet_name || 'Wallet'}
                       </td>
 
                       <td className="py-3 px-4 whitespace-nowrap">
@@ -592,8 +610,14 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
                       </td>
 
                       <td className="py-3 px-4 text-right font-extrabold whitespace-nowrap">
-                        <span className={isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                          {isIncome ? '+' : '-'}{formatMoney(tx.amount, currency)}
+                        <span className={
+                          isTransfer
+                            ? 'text-text-muted'
+                            : isIncome
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600 dark:text-rose-400'
+                        }>
+                          {isTransfer ? '' : isIncome ? '+' : '-'}{formatMoney(tx.amount, currency)}
                         </span>
                       </td>
 

@@ -19,7 +19,9 @@ export const DesktopBudgetCrud: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Calculate spent per category this month
+  // Calculate spent per category this month.
+  // `type === 'expense'` excludes internal wallet transfers, so a transfer never
+  // consumes a budget limit.
   const spentByCategory = useMemo(() => {
     const now = new Date();
     const map = new Map<string, number>();

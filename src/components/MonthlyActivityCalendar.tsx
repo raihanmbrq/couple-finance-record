@@ -42,7 +42,8 @@ export function MonthlyActivityCalendar({ onSelectDate, year, month, hideHeader 
   const dailyTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const tx of transactions) {
-      if (tx.type !== 'expense' || tx.category === 'transfer') continue;
+      // Internal transfers are not spend of any kind.
+      if (tx.type !== 'expense') continue;
       const d = new Date(tx.transaction_date || tx.created_at);
       if (d.getMonth() !== viewMonth || d.getFullYear() !== viewYear) continue;
       const key = localDayKey(d);

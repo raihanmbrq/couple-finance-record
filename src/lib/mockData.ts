@@ -110,6 +110,28 @@ export const mockTransactions: Transaction[] = [
   { id: 'tx-10', wallet_id: 'wallet-4', user_id: mockPartnerId, amount: 50_000, type: 'expense', category: 'food', notes: 'Coffee at Starbucks', spent_by: 'Sari Wulandari', transaction_date: daysAgo(6), created_at: daysAgo(6) },
   { id: 'tx-11', wallet_id: 'wallet-1', user_id: mockUserId, amount: 500_000, type: 'expense', category: 'bills', notes: 'Internet bill', spent_by: 'Andi Pratama', transaction_date: daysAgo(7), created_at: daysAgo(7) },
   { id: 'tx-12', wallet_id: 'wallet-3', user_id: mockPartnerId, amount: 180_000, type: 'expense', category: 'shopping', notes: 'Skincare', spent_by: 'Sari Wulandari', transaction_date: daysAgo(8), created_at: daysAgo(8) },
+  // Internal wallet transfer (BCA -> GoPay). It shows up in the activity lists
+  // with an "Internal Transfer" badge but is excluded from Total Income,
+  // Total Expense, budgets and every analytics figure.
+  {
+    id: 'tx-13',
+    wallet_id: 'wallet-3',
+    user_id: mockPartnerId,
+    amount: 500_000,
+    type: 'transfer',
+    category: 'transfer',
+    notes: 'Transfer ke GoPay E-Wallet',
+    spent_by: 'Sari Wulandari',
+    wallet_name: 'Sari Bank',
+    source_wallet_id: 'wallet-3',
+    destination_wallet_id: 'wallet-4',
+    destination_wallet_name: 'GoPay E-Wallet',
+    transaction_date: daysAgo(2),
+    created_at: daysAgo(2),
+  },
+  // External transfer (expense with the "Transfer" category): money sent to a
+  // third party, so it MUST stay part of Total Expense and the breakdown.
+  { id: 'tx-14', wallet_id: 'wallet-1', user_id: mockUserId, amount: 200_000, type: 'expense', category: 'transfer', notes: 'Kirim ke orang tua', spent_by: 'Andi Pratama', transaction_date: daysAgo(3), created_at: daysAgo(3) },
 ];
 
 export const mockGoals: Goal[] = [

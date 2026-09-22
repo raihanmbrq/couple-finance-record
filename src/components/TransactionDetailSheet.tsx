@@ -3,9 +3,8 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { type Transaction } from '@/lib/types';
 import { formatDate, formatMoney } from '@/lib/format';
-import { getIcon } from '@/lib/icons';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Trash2, ImageIcon, Clock, Wallet, User } from 'lucide-react';
+import { X, Trash2, ImageIcon, Clock, Wallet, User, ArrowRightLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface TransactionDetailSheetProps {
@@ -37,6 +36,7 @@ export function TransactionDetailSheet({
   if (!transaction) return null;
 
   const isIncome = transaction.type === 'income';
+  const isTransfer = transaction.type === 'transfer';
   const dateStr = transaction.transaction_date
     ? formatDate(new Date(transaction.transaction_date))
     : '—';
@@ -48,23 +48,31 @@ export function TransactionDetailSheet({
           {/* Category + Type */}
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-              isIncome ? 'bg-income/10' : 'bg-secondary'
+              isTransfer ? 'bg-accent/10' : isIncome ? 'bg-income/10' : 'bg-secondary'
             }`}>
-              <Icon className={`w-6 h-6 ${isIncome ? 'text-income' : 'text-text-secondary'}`} />
+              {isTransfer ? (
+                <ArrowRightLeft className="w-6 h-6 text-accent" />
+              ) : (
+                <Icon className={`w-6 h-6 ${isIncome ? 'text-income' : 'text-text-secondary'}`} />
+              )}
             </div>
             <div className="flex-1">
               <p className="font-semibold text-text-primary">{categoryName}</p>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                isIncome ? 'bg-income/10 text-income' : 'bg-expense/10 text-expense'
+                isTransfer
+                  ? 'bg-accent/10 text-accent'
+                  : isIncome
+                    ? 'bg-income/10 text-income'
+                    : 'bg-expense/10 text-expense'
               }`}>
-                {isIncome ? t('common.income') : t('common.expense')}
+                {isTransfer ? t('tx.internalTransfer') : isIncome ? t('common.income') : t('common.expense')}
               </span>
             </div>
           </div>
 
           {/* Amount */}
-          <p className={`text-3xl font-bold ${isIncome ? 'text-income' : 'text-text-primary'}`}>
-            {isIncome ? '+' : '-'}{formatMoney(transaction.amount, currency)}
+          <p className={`text-3xl font-bold ${isTransfer ? 'text-text-primary' : isIncome ? 'text-income' : 'text-text-primary'}`}>
+            {isTransfer ? '' : isIncome ? '+' : '-'}{formatMoney(transaction.amount, currency)}
           </p>
 
           {/* Divider */}
@@ -73,7 +81,15 @@ export function TransactionDetailSheet({
           {/* Info rows */}
           <div className="space-y-3">
             <InfoRow icon={<Clock className="w-4 h-4" />} label={t('tx.date')} value={dateStr} />
-            <InfoRow icon={<Wallet className="w-4 h-4" />} label={t('common.wallet')} value={walletName ?? '—'} />
+            {isTransfer ? (
+              <InfoRow
+                icon={<Wallet className="w-4 h-4" />}
+                label={t('transfer.title')}
+                value={`${walletName ?? transaction.wallet_name ?? '—'} → ${transaction.destination_wallet_name ?? '—'}`}
+              />
+            ) : (
+              <InfoRow icon={<Wallet className="w-4 h-4" />} label={t('common.wallet')} value={walletName ?? '—'} />
+            )}
             <InfoRow icon={<User className="w-4 h-4" />} label={t('tx.loggedBy')} value={transaction.spent_by} />
             {transaction.notes && (
               <div className="flex gap-3">

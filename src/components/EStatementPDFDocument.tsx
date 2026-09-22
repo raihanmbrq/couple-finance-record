@@ -26,7 +26,7 @@ const STRIPE_BG = '#F8FAFC';
 export interface ReportTxRow {
   id: string;
   date: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   typeLabel: string;
   category: string;
   wallet: string;
@@ -271,6 +271,24 @@ const styles = StyleSheet.create({
     color: EXPENSE_COLOR,
     textAlign: 'right',
   },
+  // Internal transfers are neutral: they neither add to nor subtract from the
+  // household's net worth, so they get a muted presentation.
+  txAmountTransfer: {
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    color: TEXT_MUTED,
+    textAlign: 'right',
+  },
+  typeBadgeTransfer: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 4,
+    paddingVertical: 1.5,
+    paddingHorizontal: 4,
+    fontSize: 6.5,
+    fontWeight: 'bold',
+    color: '#334155',
+  },
   typeBadgeIncome: {
     alignSelf: 'flex-start',
     backgroundColor: '#DCFCE7',
@@ -472,7 +490,15 @@ export function EStatementPDFDocument({
             <View key={tx.id} style={[styles.txRow, ...(i % 2 === 1 ? [styles.txStriped] : [])]}>
               <Text style={[styles.txCell, { width: COL.date }]}>{tx.date}</Text>
               <View style={{ width: COL.type }}>
-                <Text style={tx.type === 'income' ? styles.typeBadgeIncome : styles.typeBadgeExpense}>
+                <Text
+                  style={
+                    tx.type === 'transfer'
+                      ? styles.typeBadgeTransfer
+                      : tx.type === 'income'
+                        ? styles.typeBadgeIncome
+                        : styles.typeBadgeExpense
+                  }
+                >
                   {tx.typeLabel}
                 </Text>
               </View>
@@ -482,11 +508,15 @@ export function EStatementPDFDocument({
               <Text style={[styles.txCell, { width: COL.notes }]}>{tx.notes}</Text>
               <Text
                 style={[
-                  tx.type === 'income' ? styles.txAmountIncome : styles.txAmountExpense,
+                  tx.type === 'transfer'
+                    ? styles.txAmountTransfer
+                    : tx.type === 'income'
+                      ? styles.txAmountIncome
+                      : styles.txAmountExpense,
                   { width: COL.amount },
                 ]}
               >
-                {tx.type === 'income' ? '+' : '-'}
+                {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
                 {formatAmount(tx.amount)}
               </Text>
             </View>

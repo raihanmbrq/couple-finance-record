@@ -105,25 +105,20 @@ export const DesktopTransferModal: React.FC<DesktopTransferModalProps> = ({ open
     setError('');
     setLoading(true);
     try {
-      const sourceName = srcWallet?.name ?? 'Unknown';
       const targetName = dstWallet?.name ?? 'Unknown';
 
+      // Single `transfer` row (debits the source, credits the destination and is
+      // ignored by income/expense aggregates) instead of the old expense+income
+      // pair that double-counted every transfer.
       await addTransaction({
         wallet_id: srcId,
         amount: amt,
-        type: 'expense',
+        type: 'transfer',
         category: 'transfer',
+        source_wallet_id: srcId,
+        destination_wallet_id: dstId,
+        destination_wallet_name: targetName,
         notes: notes.trim() || t('transfer.to', { name: targetName }),
-        spent_by: profile?.full_name ?? 'Me',
-        transaction_date: `${transactionDate}T12:00:00.000Z`,
-      });
-
-      await addTransaction({
-        wallet_id: dstId,
-        amount: amt,
-        type: 'income',
-        category: 'transfer',
-        notes: notes.trim() || t('transfer.from', { name: sourceName }),
         spent_by: profile?.full_name ?? 'Me',
         transaction_date: `${transactionDate}T12:00:00.000Z`,
       });

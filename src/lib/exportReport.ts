@@ -37,6 +37,8 @@ const LABELS_TABLE: Record<'id' | 'en', Record<string, string>> = {
     totalIncome: 'Total Pemasukan', totalExpense: 'Total Pengeluaran', netCashflow: 'Arus Kas / Net Balance',
     category: 'Kategori', percentage: 'Persentase', amount: 'Nominal',
     date: 'Tanggal', type: 'Tipe', typeIncome: 'Pemasukan', typeExpense: 'Pengeluaran',
+    typeTransfer: 'Transfer Internal',
+    totalTransfer: 'Transfer Internal (tidak dihitung sebagai pemasukan/pengeluaran)',
     wallet: 'Wallet', loggedBy: 'Diinput Oleh', notes: 'Catatan',
     reportId: 'ID Laporan', period: 'Periode', printedAt: 'Tanggal Cetak',
     disclaimer: 'Dokumen ini bersifat rahasia dan hanya untuk penggunaan internal. Mohon tidak menyebarluaskan tanpa izin.',
@@ -48,6 +50,8 @@ const LABELS_TABLE: Record<'id' | 'en', Record<string, string>> = {
     totalIncome: 'Total Income', totalExpense: 'Total Expense', netCashflow: 'Net Cashflow',
     category: 'Category', percentage: 'Percentage', amount: 'Amount',
     date: 'Date', type: 'Type', typeIncome: 'Income', typeExpense: 'Expense',
+    typeTransfer: 'Internal Transfer',
+    totalTransfer: 'Internal Transfer (excluded from income/expense)',
     wallet: 'Wallet', loggedBy: 'Logged By', notes: 'Notes',
     reportId: 'Report ID', period: 'Period', printedAt: 'Printed At',
     disclaimer: 'This document is confidential and for internal use only. Please do not distribute without permission.',
@@ -81,7 +85,7 @@ function getCatName(categories: { id: string; name: string }[], id: string): str
 
 export function downloadExcelReport(options: ReportOptions) {
   const { transactions, wallets, categories, range, language, householdName, labels } = options;
-  const { rows, totalIncome, totalExpense, netCashflow, categoryBreakdown } = computeReportData(
+  const { rows, totalIncome, totalExpense, totalTransfer, netCashflow, categoryBreakdown } = computeReportData(
     filterTransactionsByRange(transactions, range)
   );
 
@@ -90,6 +94,7 @@ export function downloadExcelReport(options: ReportOptions) {
     detailSheet: resolveLabel(labels, language, 'detailSheet'),
     totalIncome: resolveLabel(labels, language, 'totalIncome'),
     totalExpense: resolveLabel(labels, language, 'totalExpense'),
+    totalTransfer: resolveLabel(labels, language, 'totalTransfer'),
     netCashflow: resolveLabel(labels, language, 'netCashflow'),
     category: resolveLabel(labels, language, 'category'),
     percentage: resolveLabel(labels, language, 'percentage'),
@@ -98,6 +103,7 @@ export function downloadExcelReport(options: ReportOptions) {
     type: resolveLabel(labels, language, 'type'),
     typeIncome: resolveLabel(labels, language, 'typeIncome'),
     typeExpense: resolveLabel(labels, language, 'typeExpense'),
+    typeTransfer: resolveLabel(labels, language, 'typeTransfer'),
     wallet: resolveLabel(labels, language, 'wallet'),
     loggedBy: resolveLabel(labels, language, 'loggedBy'),
     notes: resolveLabel(labels, language, 'notes'),
@@ -114,6 +120,9 @@ export function downloadExcelReport(options: ReportOptions) {
     [L.totalExpense, totalExpense],
     [L.netCashflow, netCashflow],
     [],
+    // Internal transfers are listed separately and are NOT part of any total above.
+    [L.totalTransfer, totalTransfer],
+    [],
     [L.category, L.amount, L.percentage],
     ...categoryBreakdown.map((row) => [catName(row.category), row.total, `${row.percentage}%`]),
   ];
@@ -122,7 +131,7 @@ export function downloadExcelReport(options: ReportOptions) {
     [L.date, L.type, L.category, L.wallet, L.loggedBy, L.notes, L.amount],
     ...rows.map((tx) => [
       formatDateShort(tx.transaction_date || tx.created_at),
-      tx.type === 'income' ? L.typeIncome : L.typeExpense,
+      tx.type === 'transfer' ? L.typeTransfer : tx.type === 'income' ? L.typeIncome : L.typeExpense,
       catName(tx.category),
       walletMap.get(tx.wallet_id) ?? tx.wallet_name ?? '—',
       tx.spent_by,
@@ -162,6 +171,7 @@ export async function downloadPDFReport(options: ReportOptions) {
     type: resolveLabel(labels, language, 'type'),
     typeIncome: resolveLabel(labels, language, 'typeIncome'),
     typeExpense: resolveLabel(labels, language, 'typeExpense'),
+    typeTransfer: resolveLabel(labels, language, 'typeTransfer'),
     wallet: resolveLabel(labels, language, 'wallet'),
     loggedBy: resolveLabel(labels, language, 'loggedBy'),
     notes: resolveLabel(labels, language, 'notes'),
@@ -180,9 +190,16 @@ export async function downloadPDFReport(options: ReportOptions) {
     id: tx.id,
     date: formatDateShort(tx.transaction_date || tx.created_at),
     type: tx.type,
-    typeLabel: tx.type === 'income' ? L.typeIncome : L.typeExpense,
+    typeLabel:
+      tx.type === 'transfer' ? L.typeTransfer : tx.type === 'income' ? L.typeIncome : L.typeExpense,
     category: catName(tx.category),
-    wallet: walletMap.get(tx.wallet_id) ?? tx.wallet_name ?? '—',
+    // Internal transfers are shown as a source -> destination movement.
+    wallet:
+      tx.type === 'transfer'
+        ? `${walletMap.get(tx.source_wallet_id ?? tx.wallet_id) ?? tx.wallet_name ?? '—'} → ${
+            walletMap.get(tx.destination_wallet_id ?? '') ?? tx.destination_wallet_name ?? '—'
+          }`
+        : walletMap.get(tx.wallet_id) ?? tx.wallet_name ?? '—',
     spentBy: tx.spent_by,
     notes: tx.notes ?? '',
     amount: tx.amount,

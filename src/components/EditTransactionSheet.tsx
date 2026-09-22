@@ -10,7 +10,7 @@ import { CreateCategorySheet } from '@/components/CreateCategorySheet';
 import { type Transaction, type TransactionType } from '@/lib/types';
 import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
-import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2 } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Plus, Trash2 } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
 import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
@@ -30,6 +30,8 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [walletId, setWalletId] = useState('');
+  /** Internal transfer only: the wallet receiving the money. */
+  const [destinationWalletId, setDestinationWalletId] = useState('');
   const [category, setCategory] = useState('food');
   const [notes, setNotes] = useState('');
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
     setType(transaction.type);
     setAmount(String(transaction.amount));
     setWalletId(transaction.wallet_id);
+    setDestinationWalletId(transaction.destination_wallet_id ?? '');
     setCategory(transaction.category);
     setNotes(transaction.notes ?? '');
     setReceiptUrl(transaction.receipt_url ?? null);
@@ -92,6 +95,14 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
       setError(t('tx.selectWallet'));
       return;
     }
+    if (type === 'transfer' && !destinationWalletId) {
+      setError(t('transfer.selectDest'));
+      return;
+    }
+    if (type === 'transfer' && destinationWalletId === walletId) {
+      setError(t('transfer.sameWallet'));
+      return;
+    }
 
     setError('');
     setLoading(true);
@@ -102,6 +113,19 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
         amount: amt,
         type,
         category,
+        // A transfer keeps its source/destination pair (source mirrors wallet_id).
+        ...(type === 'transfer'
+          ? {
+              source_wallet_id: walletId,
+              destination_wallet_id: destinationWalletId,
+              destination_wallet_name:
+                wallets.find((w) => w.id === destinationWalletId)?.name ?? null,
+            }
+          : {
+              source_wallet_id: null,
+              destination_wallet_id: null,
+              destination_wallet_name: null,
+            }),
         notes: notes.trim() || null,
         spent_by: profile?.full_name ?? transaction.spent_by,
         transaction_date: `${transactionDate}T12:00:00.000Z`,
@@ -122,27 +146,63 @@ export function EditTransactionSheet({ open, transaction, onClose }: EditTransac
     <Sheet open={open} onClose={onClose} title={t('tx.editTitle')}>
       <div className="space-y-5">
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setType('expense')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-              type === 'expense' ? 'bg-expense/20 text-expense border-2 border-expense' : 'bg-secondary text-text-secondary border-2 border-transparent'
-            }`}
-          >
-            <ArrowDownCircle className="w-5 h-5" />
-            {t('common.expense')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setType('income')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-              type === 'income' ? 'bg-income/20 text-income border-2 border-income' : 'bg-secondary text-text-secondary border-2 border-transparent'
-            }`}
-          >
-            <ArrowUpCircle className="w-5 h-5" />
-            {t('common.income')}
-          </button>
+          {type === 'transfer' ? (
+            // A transfer keeps its dedicated type: it is a movement between two
+            // own wallets, never a normal expense/income row.
+            <div
+              data-testid="edit-transfer-indicator"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent/10 text-accent border-2 border-accent"
+            >
+              <ArrowRightLeft className="w-5 h-5" />
+              {t('tx.internalTransfer')}
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setType('expense')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
+                  type === 'expense' ? 'bg-expense/20 text-expense border-2 border-expense' : 'bg-secondary text-text-secondary border-2 border-transparent'
+                }`}
+              >
+                <ArrowDownCircle className="w-5 h-5" />
+                {t('common.expense')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setType('income')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
+                  type === 'income' ? 'bg-income/20 text-income border-2 border-income' : 'bg-secondary text-text-secondary border-2 border-transparent'
+                }`}
+              >
+                <ArrowUpCircle className="w-5 h-5" />
+                {t('common.income')}
+              </button>
+            </>
+          )}
         </div>
+
+        {type === 'transfer' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-text-secondary">{t('tx.destinationWallet')}</label>
+            <div className="grid grid-cols-2 gap-2">
+              {wallets.filter((w) => w.id !== walletId).map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  onClick={() => setDestinationWalletId(w.id)}
+                  className={`p-3 rounded-xl text-left transition-all border-2 ${
+                    destinationWalletId === w.id ? 'border-accent bg-accent/10' : 'border-secondary bg-secondary'
+                  }`}
+                >
+                  <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
+                  <p className="text-xs text-text-secondary">{formatWalletType(w.type)}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-text-secondary">{t('tx.transferInternalHint')}</p>
+          </div>
+        )}
 
         <div className="flex gap-2 items-end">
           <div className="flex-1">

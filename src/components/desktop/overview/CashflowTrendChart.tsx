@@ -27,11 +27,15 @@ export const CashflowTrendChart: React.FC = () => {
   const monthlyBuckets = spanDays > 62;
 
   // Filter to the active Global Quick Date Filter period, then aggregate.
+  // Internal transfers (`type = 'transfer'`) are excluded: they move money
+  // between the household's own wallets and must not appear as income/expense.
   const aggregated: Record<string, { date: string; Income: number; Expense: number }> = {};
 
-  const sortedTx = filterTransactions(transactions).sort(
-    (a, b) => new Date(a.transaction_date || a.created_at).getTime() - new Date(b.transaction_date || b.created_at).getTime()
-  );
+  const sortedTx = filterTransactions(transactions)
+    .filter((tx) => tx.type !== 'transfer')
+    .sort(
+      (a, b) => new Date(a.transaction_date || a.created_at).getTime() - new Date(b.transaction_date || b.created_at).getTime()
+    );
 
   sortedTx.forEach((tx) => {
     const d = new Date(tx.transaction_date || tx.created_at);
@@ -50,7 +54,7 @@ export const CashflowTrendChart: React.FC = () => {
     }
     if (tx.type === 'income') {
       aggregated[key].Income += tx.amount;
-    } else {
+    } else if (tx.type === 'expense') {
       aggregated[key].Expense += tx.amount;
     }
   });

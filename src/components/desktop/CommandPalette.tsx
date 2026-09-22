@@ -203,8 +203,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         return {
           id: `tx-${tx.id}`,
           group: 'transactions' as const,
-          label: tx.notes || meta.label,
-          hint: `${tx.type === 'income' ? '+' : '-'}${formatMoneyShort(tx.amount, currency)} · ${formatDateShort(tx.transaction_date || tx.created_at)}`,
+          label: tx.type === 'transfer'
+            ? `${tx.notes || meta.label} · ${t('tx.internalTransfer')}`
+            : tx.notes || meta.label,
+          hint: `${tx.type === 'transfer' ? '' : tx.type === 'income' ? '+' : '-'}${formatMoneyShort(tx.amount, currency)} · ${formatDateShort(tx.transaction_date || tx.created_at)}`,
           icon: Receipt,
           keywords: `${tx.notes || ''} ${meta.label} ${tx.wallet_name || ''} ${tx.spent_by || ''} ${tx.amount}`,
           run: () => {

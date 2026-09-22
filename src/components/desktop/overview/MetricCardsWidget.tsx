@@ -28,11 +28,14 @@ export const MetricCardsWidget: React.FC = () => {
 
   // Income & Expenses — scoped to the active Global Quick Date Filter period
   const periodTransactions = filterTransactions(transactions);
-  const totalIncome = periodTransactions
+  // Internal wallet transfers are pure movement between own wallets — they are
+  // never counted as income or expense.
+  const cashflowTx = periodTransactions.filter((tx) => tx.type !== 'transfer');
+  const totalIncome = cashflowTx
     .filter((tx) => tx.type === 'income')
     .reduce((acc, tx) => acc + (tx.amount || 0), 0);
 
-  const totalExpense = periodTransactions
+  const totalExpense = cashflowTx
     .filter((tx) => tx.type === 'expense')
     .reduce((acc, tx) => acc + (tx.amount || 0), 0);
 

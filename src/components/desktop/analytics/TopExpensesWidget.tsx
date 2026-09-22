@@ -18,8 +18,10 @@ export const TopExpensesWidget: React.FC = () => {
   const currency = profile?.currency || 'IDR';
 
   const topExpenses = useMemo(() => {
+    // `type === 'expense'` already excludes internal transfers (which carry the
+    // dedicated `transfer` type); external "Transfer"-category spend stays in.
     return filterTransactions(transactions)
-      .filter((tx) => tx.type === 'expense' && tx.category !== 'transfer')
+      .filter((tx) => tx.type === 'expense')
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
   }, [transactions, filterTransactions]);

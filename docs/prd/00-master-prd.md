@@ -199,13 +199,26 @@ Bab ini merangkum 14 file migrasi di `supabase/migrations/` (2026-07-30 s.d. 202
 | `id`               | uuid PK           |                                                          |
 | `wallet_id`        | uuid FK → wallets | RLS transaksi diturunkan dari household wallet           |
 | `amount`           | bigint            | Selalu positif; arah ditentukan `type`                   |
-| `type`             | text              | `'income'` / `'expense'`                                 |
+| `type`             | text              | `'income'` / `'expense'` / `'transfer'` (transfer = perpindahan internal antar wallet sendiri) |
 | `category`         | text              | ID kategori (mis. `food`, `salary`, `transfer`, `goals`) |
 | `notes`            | text nullable     |                                                          |
 | `spent_by`         | text              | Nama pencatat (denormalisasi display)                    |
 | `transaction_date` | timestamptz       | Disimpan jam 12:00 UTC                                   |
 | `receipt_url`      | text nullable     | URL Cloudinary bukti transaksi                           |
 | `created_at`       | timestamptz       | Fallback urutan & tanggal                                |
+| `source_wallet_id` | uuid nullable     | Hanya `type='transfer'`: wallet asal (mirror `wallet_id`) |
+| `destination_wallet_id` | uuid nullable | Hanya `type='transfer'`: wallet tujuan                |
+| `destination_wallet_name` | text nullable | Snapshot nama wallet tujuan (riwayat tetap terbaca bila wallet dihapus) |
+| `transfer_group_id` | uuid nullable    | Penaut dua leg transfer legacy (migrasi `20260922000000`) |
+
+##### Aturan agregasi `type` vs `category`
+
+| Kasus                                                    | Perlakuan                                                                 |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `type = 'transfer'`                                      | **Internal**: mengurangi saldo `source_wallet_id` dan menambah `destination_wallet_id`. **Tidak** masuk Total Income, Total Expense, Net Cashflow, Budget, Analytics, maupun ringkasan export. Total kekayaan household tidak berubah. |
+| `type = 'expense'` + `category = 'transfer'`             | **Eksternal** (kirim ke pihak ketiga): mengurangi saldo wallet dan **tetap** dihitung sebagai Expense + masuk breakdown kategori "Transfer". |
+| `type = 'income'` + `category = 'transfer'`              | **Eksternal** (terima dari pihak ketiga): dihitung sebagai Income.         |
+
 
 #### `budgets`
 
@@ -348,7 +361,7 @@ CRUD wallet (dompet tunai, bank, e-wallet, joint, custom), tipe wallet sistem + 
 - **Tambah wallet** (`AddWalletSheet`): nama wajib, tipe wajib, saldo awal opsional (default 0). Saat save, `getSaveTimeWalletIcon(name, type)` menentukan icon brand.
 - **Brand icon auto-detect** (`walletIconDetect.ts`): keyword matching terhadap 10 brand Indonesia — Mandiri/Livin, BCA/blu, BNI, BTN, BRI, Jago, GoPay, OVO, DANA, ShopeePay. Icon brand hanya dipaksa bila **nama cocok DAN tipe sesuai** (bank brand ↔ tipe `bank`; ewallet brand ↔ tipe `ewallet`); selain itu null.
 - **Wallet details** (`WalletDetailsSheet`): membaca wallet terbaru dari context (saldo live), 3 aksi — Edit, Transfer, Top Up — plus hapus dengan konfirmasi dua langkah.
-- **Transfer** (`WalletTransferSheet`): transfer = **sepasang transaksi** kategori `transfer`: expense di wallet sumber (notes default `Transfer ke {tujuan}`) + income di wallet tujuan (notes default `Transfer dari {sumber}`), `spent_by` = nama pengguna, tanggal sama. Picker wallet dikelompokkan per pemilik (Saya dulu, lalu anggota circle) dan mengecualikan wallet yang dipilih di sisi lain; tersedia tombol "Add New Wallet" inline. **Top Up** = transfer dengan wallet tujuan ter-preselect.
+- **Transfer** (`WalletTransferSheet` / `DesktopTransferModal`): transfer = **satu transaksi `type = 'transfer'`** dengan `source_wallet_id` (wallet sumber, mirror `wallet_id`), `destination_wallet_id`, dan `destination_wallet_name`; `category = 'transfer'`, notes default `Transfer ke {tujuan}`, `spent_by` = nama pengguna. Efek saldo: sumber `-amount`, tujuan `+amount` sehingga total kekayaan household tidak berubah, dan transaksi ini **dikecualikan dari seluruh agregat** income/expense. Picker wallet dikelompokkan per pemilik (Saya dulu, lalu anggota circle) dan mengecualikan wallet yang dipilih di sisi lain; tersedia tombol "Add New Wallet" inline. **Top Up** = transfer dengan wallet tujuan ter-preselect. *(Sebelum migrasi `20260922000000` transfer lama tersimpan sebagai sepasang baris expense+income; normalizer di `src/lib/transferNormalize.ts` membaca & menyatukannya secara otomatis.)*
 - **Validasi transfer**: amount > 0; sumber & tujuan dipilih; sumber ≠ tujuan; saldo sumber ≥ amount (`transfer.insufficientBalance`).
 - **Hapus wallet ber-record transaksi**: wallet boleh dihapus meski memiliki transaksi. Tombol hapus dua langkah; saat konfirmasi muncul peringatan jumlah transaksi terkait, transaksi lama **tetap tersimpan** dan tetap menampilkan nama dompet lama (snapshot `transactions.wallet_name`). Di live mode wallet di-soft-delete (`wallets.archived_at`) sehingga FK/RLS dan riwayat tetap aman. Delete tipe wallet ditolak bila masih dipakai wallet aktif; delete kategori ditolak bila masih dipakai transaksi.
 
@@ -400,7 +413,7 @@ Budget bulanan per kategori dengan progres pengeluaran, dan Goal (sinking fund) 
 **Business Logic & Rules**
 
 - **Budget** (`BudgetScreen`):
-  - `spentByCategory` = total expense **bulan berjalan** per kategori.
+  - `spentByCategory` = total expense **bulan berjalan** per kategori. Transfer internal (`type='transfer'`) tidak pernah masuk perhitungan ini, sehingga tidak mengonsumsi limit budget.
   - Kartu rekap bulanan: Total Budget / Total Spent / Remaining; bila `totalBudget >= 100_000_000` layout beralih vertikal (`isLargeBudget`).
   - Kartu per kategori: `ProgressBar`, persentase spent, sisa (`remaining`) atau kelebihan (`over`) saat melewati limit.
   - Kategori yang dapat di-budget: bertipe `expense`/`both`, belum punya budget, dan **bukan** `salary`.
@@ -458,7 +471,7 @@ Ekspor laporan keuangan periode tertentu ke **Excel (.xlsx)** atau **PDF e-state
 - **Entry point**: tombol Export di `TransactionsScreen` dan entri "Laporan Keuangan" di Settings.
 - **Periode** (`reportUtils.ts`): preset _This Month_ (awal bulan → hari ini), _Last 30 Days_ (29 hari ke belakang inklusif), atau _Custom_ (validasi: kedua tanggal terisi dan start ≤ end, bila tidak → toast gagal).
 - **Preview live**: jumlah transaksi periode + net cashflow berwarna (hijau ≥ 0, merah < 0).
-- **Perhitungan** (`computeReportData`): total income, total expense, net cashflow, dan breakdown expense per kategori (porsi % dengan 1 desimal, diurutkan nominal terbesar).
+- **Perhitungan** (`computeReportData`): total income, total expense, net cashflow, total transfer internal, dan breakdown expense per kategori (porsi % dengan 1 desimal, diurutkan nominal terbesar). **Transfer internal (`type='transfer'`) dikecualikan** dari total income/expense/net dan dari breakdown kategori — hanya dilaporkan terpisah sebagai `totalTransfer`. Expense/income berkategori `transfer` tetap dihitung karena merupakan perpindahan eksternal.
 - **Report ID**: `PF-YYYYMMDD-XXXX` (4 karakter acak base36 uppercase), nama file `PairFlow_{reportId}.{xlsx|pdf}`.
 - **Excel** (`downloadExcelReport`, xlsx): sheet 1 _Ringkasan_ (judul PairFlow + nama household, periode, total income/expense/net, tabel kategori-amount-persen) dan sheet 2 _Detail Transaksi_ (Date, Type, Category, Wallet, Logged By, Notes, Amount).
 - **PDF** (`downloadPDFReport`, @react-pdf/renderer → `EStatementPDFDocument`): header laporan, periode, tanggal cetak, ringkasan, breakdown kategori dengan porsi, tabel detail, disclaimer kerahasiaan; warna aksen mengikuti preset tema (`PRESET_ACCENT`).

@@ -131,27 +131,21 @@ export function WalletTransferSheet({ open, onClose, sourceWalletId, destWalletI
     setError('');
     setLoading(true);
     try {
-      const sourceName = srcWallet?.name ?? 'Unknown';
       const targetName = dstWallet?.name ?? 'Unknown';
 
-      // Expense from source wallet
+      // One single `transfer` row: it debits the source wallet and credits the
+      // destination wallet, and is excluded from every income/expense aggregate
+      // (previously this was a pair of expense + income rows, which the
+      // analytics counted as real cashflow).
       await addTransaction({
         wallet_id: srcId,
         amount: amt,
-        type: 'expense',
+        type: 'transfer',
         category: 'transfer',
+        source_wallet_id: srcId,
+        destination_wallet_id: dstId,
+        destination_wallet_name: targetName,
         notes: notes.trim() || t('transfer.to', { name: targetName }),
-        spent_by: profile?.full_name ?? 'Me',
-        transaction_date: `${transactionDate}T12:00:00.000Z`,
-      });
-
-      // Income to destination wallet
-      await addTransaction({
-        wallet_id: dstId,
-        amount: amt,
-        type: 'income',
-        category: 'transfer',
-        notes: notes.trim() || t('transfer.from', { name: sourceName }),
         spent_by: profile?.full_name ?? 'Me',
         transaction_date: `${transactionDate}T12:00:00.000Z`,
       });

@@ -15,10 +15,11 @@ import { WALLET_BRAND_MAP } from '@/lib/walletBrands';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { getCategory, type Wallet } from '@/lib/types';
 import { formatDate, formatDateRange, formatMoney } from '@/lib/format';
-import { Search, Receipt, X, FileDown, Calendar, ChevronDown, Wallet as WalletIcon, Tags, Users, Pencil, Trash2 } from 'lucide-react';
+import { Search, Receipt, X, FileDown, Calendar, ChevronDown, Wallet as WalletIcon, Tags, Users, Pencil, Trash2, ArrowRightLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getIcon } from '@/lib/icons';
 import { TransactionDetailSheet } from '@/components/TransactionDetailSheet';
+import { TransferBadge, transferRouteLabel } from '@/components/ui/TransferBadge';
 
 const localDayKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -379,6 +380,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
                     const wallet = walletMap.get(tx.wallet_id);
                     const walletName = wallet?.name ?? tx.wallet_name ?? null;
                     const isIncome = tx.type === 'income';
+                    const isTransfer = tx.type === 'transfer';
                     return (
                       <button
                         key={tx.id}
@@ -387,20 +389,31 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
                         className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-secondary/50 transition-colors"
                       >
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          isIncome ? 'bg-income/10' : 'bg-secondary'
+                          isTransfer ? 'bg-accent/10' : isIncome ? 'bg-income/10' : 'bg-secondary'
                         }`}>
-                          <Icon className={`w-5 h-5 ${isIncome ? 'text-income' : 'text-text-secondary'}`} />
+                          {isTransfer ? (
+                            <ArrowRightLeft className="w-5 h-5 text-accent" />
+                          ) : (
+                            <Icon className={`w-5 h-5 ${isIncome ? 'text-income' : 'text-text-secondary'}`} />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-text-primary truncate">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
+                          <p className="font-semibold text-sm text-text-primary truncate">
+                            {tx.notes || (isTransfer
+                              ? transferRouteLabel(tx, (id) => walletMap.get(id)?.name ?? null)
+                              : dynCat?.name || cat?.label || tx.category)}
+                          </p>
                           <div className="flex items-center gap-2 flex-wrap">
                             {walletName && <span className="text-xs text-text-secondary">{walletName}</span>}
+                            {isTransfer && <TransferBadge transaction={tx} />}
                           </div>
                           <Badge color="secondary" className="text-[10px] py-0.5 mt-0.5">{tx.spent_by}</Badge>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <p className={`font-bold text-sm whitespace-nowrap tabular-nums ${isIncome ? 'text-income' : 'text-text-primary'}`}>
-                            {isIncome ? '+' : '-'}{formatMoney(tx.amount, currency)}
+                          <p className={`font-bold text-sm whitespace-nowrap tabular-nums ${
+                            isTransfer ? 'text-text-secondary' : isIncome ? 'text-income' : 'text-text-primary'
+                          }`}>
+                            {isTransfer ? '' : isIncome ? '+' : '-'}{formatMoney(tx.amount, currency)}
                           </p>
                           <div className="flex items-center gap-1">
                             <button

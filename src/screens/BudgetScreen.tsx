@@ -26,7 +26,10 @@ export function BudgetScreen() {
   const [deleteBudgetTarget, setDeleteBudgetTarget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Calculate spent per category this month
+  // Calculate spent per category this month.
+  // `type === 'expense'` excludes internal wallet transfers, so a transfer never
+  // consumes a category budget. An external "Transfer"-category expense still
+  // counts against the Transfer budget.
   const spentByCategory = useMemo(() => {
     const now = new Date();
     const map = new Map<string, number>();

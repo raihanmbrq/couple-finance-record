@@ -62,6 +62,8 @@ export const SpendingAnomalyBanner: React.FC = () => {
     const prevM = curM === 0 ? 11 : curM - 1;
 
     for (const tx of transactions) {
+      // Internal wallet transfers are not income or expense.
+      if (tx.type === 'transfer') continue;
       const time = new Date(tx.transaction_date || tx.created_at).getTime();
       if (inMonth(tx, curY, curM)) {
         if (time < curStart || time > curEnd) continue;
@@ -69,9 +71,8 @@ export const SpendingAnomalyBanner: React.FC = () => {
           curIncome += tx.amount;
           continue;
         }
-        if (tx.category === 'transfer') continue;
         current.set(tx.category, (current.get(tx.category) || 0) + tx.amount);
-      } else if (tx.type === 'expense' && tx.category !== 'transfer' && inMonth(tx, prevY, prevM)) {
+      } else if (tx.type === 'expense' && inMonth(tx, prevY, prevM)) {
         previous.set(tx.category, (previous.get(tx.category) || 0) + tx.amount);
       }
     }

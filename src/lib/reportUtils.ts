@@ -12,6 +12,11 @@ export interface ReportData {
   rows: Transaction[];
   totalIncome: number;
   totalExpense: number;
+  /**
+   * Total of internal wallet transfers in the period. Listed for transparency
+   * only — never added to income, expense or net cashflow.
+   */
+  totalTransfer: number;
   netCashflow: number;
   categoryBreakdown: ReportCategoryRow[];
 }
@@ -61,11 +66,22 @@ export function filterTransactionsByRange(
 }
 
 export function computeReportData(txs: Transaction[]): ReportData {
-  const totalIncome = txs.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
-  const totalExpense = txs.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+  // Internal wallet transfers (`type = 'transfer'`) move money between the
+  // household's own wallets, so they must never inflate Income or Expense.
+  // They stay in `rows` so the detail sheet keeps the full cashflow history.
+  //
+  // Note: an EXPENSE/INCOME row with the "Transfer" category is an EXTERNAL
+  // movement (money sent to / received from a third party) and stays counted.
+  const counted = txs.filter((tx) => tx.type !== 'transfer');
+
+  const totalIncome = counted.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
+  const totalExpense = counted.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+  const totalTransfer = txs
+    .filter((tx) => tx.type === 'transfer')
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
   const expenseByCategory = new Map<string, number>();
-  for (const tx of txs) {
+  for (const tx of counted) {
     if (tx.type !== 'expense') continue;
     expenseByCategory.set(tx.category, (expenseByCategory.get(tx.category) ?? 0) + tx.amount);
   }
@@ -82,6 +98,7 @@ export function computeReportData(txs: Transaction[]): ReportData {
     rows: txs,
     totalIncome,
     totalExpense,
+    totalTransfer,
     netCashflow: totalIncome - totalExpense,
     categoryBreakdown,
   };

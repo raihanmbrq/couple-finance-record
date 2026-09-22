@@ -4,9 +4,11 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/context/ToastContext';
 import { formatMoney, formatDateShort } from '@/lib/format';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
+import { affectsWallet, walletSignedAmount } from '@/lib/transactionMath';
 import { walletTypeIcon } from '@/lib/walletIcons';
 import { WALLET_BRAND_MAP } from '@/lib/walletBrands';
 import { WalletBrandIcon } from '@/components/ui/WalletBrandIcon';
+import { TransferBadge } from '@/components/ui/TransferBadge';
 import {
   Pencil,
   ArrowRightLeft,
@@ -73,7 +75,9 @@ export const SelectedWalletPanel: React.FC<SelectedWalletPanelProps> = ({
   const walletTxs = useMemo(() => {
     if (!wallet) return [];
     return [...transactions]
-      .filter((tx) => tx.wallet_id === wallet.id)
+      // A transfer belongs to both sides: the source wallet (outflow) and the
+      // destination wallet (inflow).
+      .filter((tx) => affectsWallet(tx, wallet.id))
       .sort(
         (a, b) =>
           new Date(b.transaction_date ?? b.created_at).getTime() -
@@ -87,6 +91,8 @@ export const SelectedWalletPanel: React.FC<SelectedWalletPanelProps> = ({
 
   const monthOutflow = useMemo(() => {
     const now = new Date();
+    // Internal transfers are excluded from spend figures (they are only a
+    // movement between the household's own wallets).
     return walletTxs
       .filter((tx) => tx.type === 'expense')
       .filter((tx) => {
@@ -249,30 +255,37 @@ export const SelectedWalletPanel: React.FC<SelectedWalletPanelProps> = ({
               <span>{t('common.category')}</span>
               <span className="text-right">{t('common.amount')}</span>
             </div>
-            {recentTxs.map((tx) => (
-              <div
-                key={tx.id}
-                data-testid={`wallet-tx-${tx.id}`}
-                className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-2"
-              >
-                <span className="whitespace-nowrap text-[11px] text-text-muted">
-                  {formatDateShort(tx.transaction_date ?? tx.created_at)}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-xs font-medium text-text-primary">
-                    {tx.notes || categoryLabel(tx.category)}
-                  </span>
-                  <span className="block truncate text-[10px] text-text-muted">{tx.spent_by}</span>
-                </span>
-                <span
-                  className={`whitespace-nowrap text-right text-xs font-bold tabular-nums ${
-                    tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-text-primary'
-                  }`}
+            {recentTxs.map((tx) => {
+              const signed = walletSignedAmount(tx, wallet?.id ?? '');
+              return (
+                <div
+                  key={tx.id}
+                  data-testid={`wallet-tx-${tx.id}`}
+                  className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-2"
                 >
-                  {hideBalance ? '••••' : `${tx.type === 'income' ? '+' : '-'}${formatMoney(tx.amount, currency)}`}
-                </span>
-              </div>
-            ))}
+                  <span className="whitespace-nowrap text-[11px] text-text-muted">
+                    {formatDateShort(tx.transaction_date ?? tx.created_at)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-medium text-text-primary">
+                      {tx.notes || categoryLabel(tx.category)}
+                    </span>
+                    {/* Internal transfer: shown from this wallet's perspective. */}
+                    {tx.type === 'transfer' && (
+                      <TransferBadge transaction={tx} walletId={wallet?.id} className="mt-0.5" />
+                    )}
+                    <span className="block truncate text-[10px] text-text-muted">{tx.spent_by}</span>
+                  </span>
+                  <span
+                    className={`whitespace-nowrap text-right text-xs font-bold tabular-nums ${
+                      signed >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-text-primary'
+                    }`}
+                  >
+                    {hideBalance ? '••••' : `${signed >= 0 ? '+' : '-'}${formatMoney(tx.amount, currency)}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
         <button

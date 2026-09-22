@@ -33,6 +33,9 @@ export const DesktopAnalyticsScreen: React.FC<DesktopAnalyticsScreenProps> = ({ 
   const [viewYear, viewMonth] = viewMonthKey.split('-').map((v, i) => (i === 0 ? Number(v) : Number(v) - 1));
 
   const filteredTx = filterTransactions(transactions);
+  // `type === 'expense'` already excludes internal wallet transfers (they carry
+  // the dedicated `transfer` type). An EXPENSE with the "Transfer" category is
+  // an external payment and correctly shows up in the table below.
   const expenses = filteredTx.filter((tx) => tx.type === 'expense');
   const totalExpense = expenses.reduce((acc, tx) => acc + tx.amount, 0);
 

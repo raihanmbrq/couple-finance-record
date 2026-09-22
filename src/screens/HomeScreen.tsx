@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { formatMoney, formatMoneyShort, formatRelative } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { getCategory, type Wallet, type HouseholdMember } from '@/lib/types';
-import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ChevronDown, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, ArrowUpRight, ArrowDownRight, ArrowRightLeft, ChevronDown, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { getIcon } from '@/lib/icons';
 import { walletTypeIcon } from '@/lib/walletIcons';
@@ -16,6 +16,7 @@ import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 import { CustomMonthPicker } from '@/components/ui/CustomMonthPicker';
 import { CustomSelectSheet } from '@/components/ui/CustomSelectSheet';
 import { MonthlyActivityCalendar } from '@/components/MonthlyActivityCalendar';
+import { TransferBadge, transferRouteLabel } from '@/components/ui/TransferBadge';
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -157,17 +158,19 @@ export function HomeScreen({ onOpenDate }: { onOpenDate?: (date: string) => void
 
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] || 'User';
 
-  // This month's income/expense
+  // This month's income/expense. Internal wallet transfers carry the dedicated
+  // `transfer` type so they are excluded here; an EXPENSE/INCOME row with the
+  // "Transfer" category is an external movement and stays counted.
   const monthTx = transactions.filter(t => {
     const d = new Date(t.created_at);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
   const monthIncomeFor = (uid: string) =>
-    monthTx.filter(t => t.type === 'income' && t.category !== 'transfer' && t.user_id === uid).reduce((s, t) => s + t.amount, 0);
+    monthTx.filter(t => t.type === 'income' && t.user_id === uid).reduce((s, t) => s + t.amount, 0);
   const monthExpenseFor = (uid: string) =>
-    monthTx.filter(t => t.type === 'expense' && t.category !== 'transfer' && t.user_id === uid).reduce((s, t) => s + t.amount, 0);
-  const allIncome = monthTx.filter(t => t.type === 'income' && t.category !== 'transfer').reduce((s, t) => s + t.amount, 0);
-  const allExpense = monthTx.filter(t => t.type === 'expense' && t.category !== 'transfer').reduce((s, t) => s + t.amount, 0);
+    monthTx.filter(t => t.type === 'expense' && t.user_id === uid).reduce((s, t) => s + t.amount, 0);
+  const allIncome = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const allExpense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
   const sortedMemberBalances = [...memberBalances].sort((a, b) =>
     a.member.user_id === profile?.id ? -1 : b.member.user_id === profile?.id ? 1 : 0
@@ -298,8 +301,9 @@ export function HomeScreen({ onOpenDate }: { onOpenDate?: (date: string) => void
   const recentTx = transactions.slice(0, 5);
 
   const filteredBreakdownTx = transactions.filter(t => {
+    // Internal wallet transfers are not spend; external "Transfer"-category
+    // expenses remain part of the breakdown.
     if (t.type !== 'expense') return false;
-    if (t.category === 'transfer') return false;
     const txDate = new Date(t.transaction_date || t.created_at);
     
     if (timeFilter === 'fullMonth') {
@@ -614,6 +618,7 @@ export function HomeScreen({ onOpenDate }: { onOpenDate?: (date: string) => void
               const cat = getCategory(tx.category);
               const dynCat = categories.find((c) => c.id === tx.category);
               const isIncome = tx.type === 'income';
+              const isTransfer = tx.type === 'transfer';
               return (
                 <button
                   key={tx.id}
@@ -621,21 +626,26 @@ export function HomeScreen({ onOpenDate }: { onOpenDate?: (date: string) => void
                   onClick={() => setEditingTransaction(tx)}
                   className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-secondary transition-colors first:rounded-t-2xl last:rounded-b-2xl"
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-income/10' : 'bg-secondary'}`}>
-                    {isIncome ? (
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-accent/10' : isIncome ? 'bg-income/10' : 'bg-secondary'}`}>
+                    {isTransfer ? (
+                      <ArrowRightLeft className="w-5 h-5 text-accent" />
+                    ) : isIncome ? (
                       <TrendingUp className="w-5 h-5 text-income" />
                     ) : (
                       <TrendingDown className="w-5 h-5 text-text-secondary" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="font-semibold text-sm text-text-primary truncate mb-0.5">{tx.notes || dynCat?.name || cat?.label || tx.category}</p>
+                    <p className="font-semibold text-sm text-text-primary truncate mb-0.5">
+                      {tx.notes || (isTransfer ? transferRouteLabel(tx, (id) => wallets.find((w) => w.id === id)?.name ?? null) : dynCat?.name || cat?.label || tx.category)}
+                    </p>
+                    {isTransfer && <TransferBadge transaction={tx} />}
                     <p className="text-[11px] text-text-secondary truncate">{tx.spent_by}</p>
                     <p className="text-[10px] text-text-secondary/70 truncate">{formatRelative(tx.created_at)}</p>
                   </div>
                   <div className="shrink-0 flex items-center">
-                    <p className={`font-bold tabular-nums ${formatMoneyShort(tx.amount, currency).length > 12 ? 'text-xs' : 'text-sm'} ${isIncome ? 'text-income' : 'text-text-primary'}`}>
-                      {isIncome ? '+' : '-'}{formatMoneyShort(tx.amount, currency)}
+                    <p className={`font-bold tabular-nums ${formatMoneyShort(tx.amount, currency).length > 12 ? 'text-xs' : 'text-sm'} ${isTransfer ? 'text-text-secondary' : isIncome ? 'text-income' : 'text-text-primary'}`}>
+                      {isTransfer ? '' : isIncome ? '+' : '-'}{formatMoneyShort(tx.amount, currency)}
                     </p>
                   </div>
                 </button>

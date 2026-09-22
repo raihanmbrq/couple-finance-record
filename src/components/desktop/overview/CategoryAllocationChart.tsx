@@ -27,7 +27,10 @@ export const CategoryAllocationChart: React.FC<CategoryAllocationChartProps> = (
   const { filterTransactions } = useFinanceDateRange();
   const currency = profile?.currency || 'IDR';
 
-  const expenses = filterTransactions(transactions).filter((tx) => tx.type === 'expense' && tx.category !== 'transfer');
+  // Internal wallet transfers are excluded from the breakdown. An EXPENSE with
+  // the "Transfer" category is an EXTERNAL payment (money sent to a third
+  // party), so it stays counted here.
+  const expenses = filterTransactions(transactions).filter((tx) => tx.type === 'expense');
 
   const catMap: Record<string, number> = {};
   expenses.forEach((tx) => {
@@ -67,7 +70,7 @@ export const CategoryAllocationChart: React.FC<CategoryAllocationChartProps> = (
                 outerRadius={80}
                 paddingAngle={3}
                 dataKey="value"
-                onClick={(entry) => onSelectCategory?.(entry.categoryKey)}
+                onClick={(entry) => onSelectCategory?.((entry as unknown as { categoryKey: string }).categoryKey)}
                 cursor={onSelectCategory ? 'pointer' : undefined}
               >
                 {chartData.map((_, index) => (

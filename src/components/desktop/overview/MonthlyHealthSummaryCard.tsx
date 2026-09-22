@@ -43,8 +43,9 @@ export const MonthlyHealthSummaryCard: React.FC = () => {
     const prevEnd = new Date(anchorY, anchorM, 0, 23, 59, 59, 999).getTime();
 
     for (const tx of transactions) {
+      // Internal wallet transfers never contribute to income or expense.
+      if (tx.type === 'transfer') continue;
       const time = new Date(tx.transaction_date || tx.created_at).getTime();
-      if (tx.category === 'transfer') continue;
       if (inMonthRange(tx, anchorY, anchorM, rangeMin, rangeMax)) {
         if (tx.type === 'income') curIncome += tx.amount;
         else {

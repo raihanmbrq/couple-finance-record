@@ -60,7 +60,19 @@ export interface Wallet {
   created_at: string;
 }
 
-export type TransactionType = 'income' | 'expense';
+/**
+ * `TRANSFER` = internal movement between the household's own wallets
+ * (transfer / top up). It must never contribute to income, expense, budgets,
+ * analytics totals or export summaries.
+ */
+export type TransactionType = 'income' | 'expense' | 'transfer';
+
+/**
+ * System category id of the "Transfer" category. Combined with a normal
+ * `expense` / `income` type it means an EXTERNAL movement (money sent to or
+ * received from a third party) which MUST stay inside income/expense totals.
+ */
+export const TRANSFER_CATEGORY = 'transfer';
 
 export interface Transaction {
   id: string;
@@ -75,6 +87,27 @@ export interface Transaction {
   transaction_date: string;
   receipt_url?: string | null;
   created_at: string;
+  /** Internal transfer only: wallet the money left (mirrors `wallet_id`). */
+  source_wallet_id?: string | null;
+  /** Internal transfer only: wallet the money arrived in. */
+  destination_wallet_id?: string | null;
+  /** Internal transfer only: wallet-name snapshot of the destination wallet. */
+  destination_wallet_name?: string | null;
+  /** Internal transfer only: links the legs of a legacy paired transfer. */
+  transfer_group_id?: string | null;
+}
+
+/** Internal movement between the user's own wallets — excluded from every aggregate. */
+export function isInternalTransfer(tx: Pick<Transaction, 'type'>): boolean {
+  return tx.type === 'transfer';
+}
+
+/**
+ * External movement recorded with the "Transfer" category but a normal
+ * expense/income type (e.g. money sent to parents). Counted as real cashflow.
+ */
+export function isExternalTransfer(tx: Pick<Transaction, 'type' | 'category'>): boolean {
+  return tx.type !== 'transfer' && tx.category === TRANSFER_CATEGORY;
 }
 
 export interface Budget {

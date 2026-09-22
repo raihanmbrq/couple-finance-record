@@ -49,7 +49,9 @@ export const MemberBreakdownSideCard: React.FC = () => {
 
   const rows: MemberRow[] = useMemo(() => {
     const periodTx = filterTransactions(transactions);
-    const expenseTx = periodTx.filter((tx) => tx.type === 'expense' && tx.category !== 'transfer');
+    // Internal transfers are excluded (dedicated `transfer` type); an external
+    // "Transfer"-category expense is still a real spend by that member.
+    const expenseTx = periodTx.filter((tx) => tx.type === 'expense');
 
     // Aggregate amounts + per-category totals per spent_by name.
     const totalsBySpentBy = new Map<string, number>();

@@ -17,7 +17,8 @@ export const SpouseRatioChart: React.FC<SpouseRatioChartProps> = ({ onSelectMemb
   const { filterTransactions } = useFinanceDateRange();
   const currency = profile?.currency || 'IDR';
 
-  const expenses = filterTransactions(transactions).filter((tx) => tx.type === 'expense' && tx.category !== 'transfer');
+  // Internal wallet transfers must not skew the who-spent-what ratio.
+  const expenses = filterTransactions(transactions).filter((tx) => tx.type === 'expense');
 
   const ratioMap: Record<string, number> = {};
   expenses.forEach((tx) => {
@@ -59,7 +60,7 @@ export const SpouseRatioChart: React.FC<SpouseRatioChartProps> = ({ onSelectMemb
                 outerRadius={80}
                 paddingAngle={4}
                 dataKey="value"
-                onClick={(entry) => onSelectMember?.(entry.memberName)}
+                onClick={(entry) => onSelectMember?.((entry as unknown as { memberName: string }).memberName)}
                 cursor={onSelectMember ? 'pointer' : undefined}
               >
                 {chartData.map((_, index) => (
