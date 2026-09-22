@@ -5,13 +5,13 @@ import type { Transaction } from '@/lib/types';
  * Global Quick Date Filter — shared by the Desktop Overview & Analytics screens.
  *
  * Preset keys follow the product spec:
- *   'thisMonth' | 'last30' | 'thisYear' | 'custom'
+ *   'today' | 'last7' | 'thisMonth' | 'last30' | 'custom'
  *
  * Range semantics are INCLUSIVE on both ends, resolved in the user's local
  * timezone. The chosen key is persisted so it survives tab switches & reloads.
  */
 
-export type GlobalRangeKey = 'thisMonth' | 'last30' | 'thisYear' | 'custom';
+export type GlobalRangeKey = 'today' | 'last7' | 'thisMonth' | 'last30' | 'custom';
 
 export interface ResolvedFinanceRange {
   /** Inclusive start instant (local midnight). */
@@ -63,7 +63,7 @@ function parseStoredRange(): { startKey: string; endKey: string } {
 
 function readStoredKey(): GlobalRangeKey {
   const raw = localStorage.getItem(RANGE_KEY_STORAGE) as GlobalRangeKey | null;
-  if (raw && ['thisMonth', 'last30', 'thisYear', 'custom'].includes(raw)) return raw;
+  if (raw && ['today', 'last7', 'thisMonth', 'last30', 'custom'].includes(raw)) return raw;
   return 'thisMonth';
 }
 
@@ -73,12 +73,15 @@ function resolveRange(key: GlobalRangeKey, customStartKey: string, customEndKey:
   let start: Date;
   let end: Date;
 
-  if (key === 'last30') {
+  if (key === 'today') {
+    start = today;
+    end = today;
+  } else if (key === 'last7') {
+    start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+    end = today;
+  } else if (key === 'last30') {
     start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
     end = today;
-  } else if (key === 'thisYear') {
-    start = new Date(now.getFullYear(), 0, 1);
-    end = new Date(now.getFullYear(), 11, 31);
   } else if (key === 'custom' && customStartKey && customEndKey) {
     const s = new Date(`${customStartKey}T00:00:00`);
     const e = new Date(`${customEndKey}T00:00:00`);

@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CalendarDays, ChevronDown, Check, X } from 'lucide-react';
+import { CalendarDays, Check, X } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFinanceDateRange, type GlobalRangeKey } from '@/context/FinanceDateRangeContext';
 import { DesktopDateRangeCalendar } from '@/components/desktop/ui/DesktopDateRangeCalendar';
 
 const PRESET_OPTIONS: { key: GlobalRangeKey; tKey: string; fallback: string }[] = [
+  { key: 'today', tKey: 'filter.today', fallback: 'Today' },
+  { key: 'last7', tKey: 'filter.last7', fallback: 'Last 7 Days' },
   { key: 'thisMonth', tKey: 'filter.thisMonth', fallback: 'This Month' },
   { key: 'last30', tKey: 'filter.last30', fallback: 'Last 30 Days' },
-  { key: 'thisYear', tKey: 'filter.thisYear', fallback: 'This Year' },
   { key: 'custom', tKey: 'filter.customRange', fallback: 'Custom Range' },
 ];
 
@@ -17,8 +18,8 @@ const localShort = (dateKey: string, locale: string): string => {
 };
 
 /**
- * Global Quick Date Period Selector — a pill/dropdown on the Dashboard Overview
- * top bar. Every Overview metric card & analytics chart reacts through
+ * Global Quick Date Period Selector — a calendar popover on desktop screens.
+ * Every Overview metric card & analytics chart reacts through
  * FinanceDateRangeProvider.
  */
 export const GlobalQuickDateFilter: React.FC<{ align?: 'left' | 'right' }> = ({ align = 'right' }) => {
@@ -92,15 +93,21 @@ export const GlobalQuickDateFilter: React.FC<{ align?: 'left' | 'right' }> = ({ 
 
   return (
     <div ref={containerRef} className="relative inline-block" data-testid="global-date-filter">
-      {/* Pill trigger */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 pl-3 pr-2.5 py-2 bg-surface border border-border rounded-xl text-xs font-medium text-text-primary shadow-xs transition-colors hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-accent"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label={`${t('filter.periodLabel') || 'Date filter'}: ${pillLabel}`}
+        title={pillLabel}
+        className={`relative flex h-9 w-9 items-center justify-center rounded-xl border shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-accent ${
+          'border-accent bg-accent/10 text-accent hover:bg-accent/15'
+        }`}
       >
-        <CalendarDays className="w-4 h-4 text-accent" />
-        <span className="min-w-[70px] text-left">{pillLabel}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <CalendarDays className="h-4 w-4" />
+        {rangeKey !== 'thisMonth' && (
+          <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+        )}
       </button>
       {/* Dropdown panel */}
       {open && (

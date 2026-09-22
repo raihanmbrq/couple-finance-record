@@ -6,10 +6,11 @@ import { resolveCategoryMeta } from '@/lib/categoryStyle';
 import { CategoryChip } from '@/components/desktop/ui/CategoryChip';
 import { TransferBadge, transferRouteLabel } from '@/components/ui/TransferBadge';
 import { CustomDesktopDropdown } from '@/components/desktop/ui/CustomDesktopDropdown';
+import { GlobalQuickDateFilter } from '@/components/desktop/overview/GlobalQuickDateFilter';
 import { EditTransactionSheet } from '@/components/EditTransactionSheet';
 import { BulkEditTransactionsModal, type BulkTransactionUpdates } from '@/components/desktop/bulk/BulkEditTransactionsModal';
-import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
 import { useToast } from '@/context/ToastContext';
+import { useFinanceDateRange } from '@/context/FinanceDateRangeContext';
 import { 
   Search, 
   ArrowUpDown, 
@@ -84,6 +85,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
 }) => {
   const { transactions, wallets, categories, householdMembers, deleteTransaction, bulkUpdateTransactions, bulkDeleteTransactions, profile } = useApp();
   const { showToast } = useToast();
+  const { filterTransactions } = useFinanceDateRange();
   const currency = profile?.currency || 'IDR';
 
   // View density toggle (persisted)
@@ -111,7 +113,6 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
   const [selectedMember, setSelectedMember] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense' | 'transfer'>('all');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   useEffect(() => {
     if (!dateFilter) return;
@@ -172,7 +173,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
 
   // Filtering Logic
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
+    return filterTransactions(transactions).filter((tx) => {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const categoryLabel = getCategory(tx.category)?.label.toLowerCase() || '';
@@ -208,7 +209,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
 
       return true;
     });
-  }, [transactions, searchQuery, selectedWallet, selectedCategory, selectedMember, selectedType, selectedDate]);
+  }, [transactions, filterTransactions, searchQuery, selectedWallet, selectedCategory, selectedMember, selectedType, selectedDate]);
 
   // Sorting Logic
   const sortedTransactions = useMemo(() => {
@@ -407,44 +408,7 @@ export const TransactionsDataGrid: React.FC<TransactionsDataGridProps> = ({
             testId="grid-filter-category"
           />
 
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setDatePickerOpen((open) => !open)}
-              aria-expanded={datePickerOpen}
-              aria-haspopup="dialog"
-              data-testid="grid-filter-date-trigger"
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-colors ${
-                selectedDate ? 'border-accent/30 bg-accent/10 text-accent hover:bg-accent/15' : 'border-border bg-surface-hover text-text-muted hover:text-text-primary'
-              }`}
-            >
-              <span>{selectedDate ? `Date: ${formatDate(`${selectedDate}T00:00:00`)}` : 'Filter by Date'}</span>
-              {selectedDate ? (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Clear date filter"
-                  onClick={(event) => { event.stopPropagation(); setSelectedDate(null); setDatePickerOpen(false); }}
-                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); setSelectedDate(null); setDatePickerOpen(false); } }}
-                  className="hover:text-text-primary"
-                >
-                  <X className="w-3 h-3" />
-                </span>
-              ) : null}
-            </button>
-            {datePickerOpen && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-[min(320px,calc(100vw-2rem))]">
-                <CustomDatePicker
-                  value={selectedDate ?? ''}
-                  onChange={(value) => { setSelectedDate(value); setDatePickerOpen(false); }}
-                  open={datePickerOpen}
-                  onClose={() => setDatePickerOpen(false)}
-                  title="Filter by Date"
-                  variant="inline"
-                />
-              </div>
-            )}
-          </div>
+          <GlobalQuickDateFilter align="left" />
 
           {(selectedWallet !== 'all' || selectedCategory !== 'all' || selectedMember !== 'all' || selectedType !== 'all' || searchQuery || selectedDate) && (
             <button

@@ -452,6 +452,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'transfer.insufficientBalance': 'Saldo dompet asal tidak mencukupi',
 
     // ══ Desktop Dashboard v2 — Global Date Filter ══
+    'filter.today': 'Hari Ini',
+    'filter.last7': '7 Hari Terakhir',
     'filter.thisMonth': 'Bulan Ini',
     'filter.last30': '30 Hari Terakhir',
     'filter.thisYear': 'Tahun Ini',
@@ -1054,6 +1056,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'transfer.insufficientBalance': 'Source wallet balance is insufficient',
 
     // ══ Desktop Dashboard v2 — Global Date Filter ══
+    'filter.today': 'Today',
+    'filter.last7': 'Last 7 Days',
     'filter.thisMonth': 'This Month',
     'filter.last30': 'Last 30 Days',
     'filter.thisYear': 'This Year',
