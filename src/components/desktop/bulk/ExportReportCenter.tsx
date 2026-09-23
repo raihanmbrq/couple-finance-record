@@ -4,20 +4,23 @@ import { useLanguage } from '@/context/LanguageContext';
 import { formatMoney, formatDateShort } from '@/lib/format';
 import { 
   downloadExcelReport, 
-  downloadPDFReport, 
+  downloadPDFReport,
+  downloadPPTXReport,
   generateReportId, 
   filterTransactionsByRange, 
   computeReportData,
   type ReportRange 
 } from '@/lib/exportReport';
-import { FileText, Download, FileSpreadsheet, Calendar, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, FileSpreadsheet, Presentation } from 'lucide-react';
 
 export const ExportReportCenter: React.FC = () => {
-  const { transactions, wallets, categories, household, profile } = useApp();
-  const { language, t } = useLanguage();
+    const { transactions, wallets, categories, budgets, goals, household, profile } = useApp();
+  const { language } = useLanguage();
   const currency = profile?.currency || 'IDR';
 
-  const [rangeType, setRangeType] = useState<'this_month' | 'last_month' | 'this_year' | 'all'>('this_month');
+  const [rangeType, setRangeType] = useState<'this_month' | 'last_month' | 'this_year' | 'all' | 'custom'>('this_month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [isExporting, setIsExporting] = useState<string | null>(null);
 
   // Compute start/end dates for range
@@ -38,6 +41,9 @@ export const ExportReportCenter: React.FC = () => {
       const end = new Date(now.getFullYear(), 11, 31).toISOString().slice(0, 10);
       return { start, end };
     }
+    if (rangeType === 'custom' && customStart && customEnd && customStart <= customEnd) {
+      return { start: customStart, end: customEnd };
+    }
     // all
     return { start: '2020-01-01', end: now.toISOString().slice(0, 10) };
   };
@@ -46,7 +52,7 @@ export const ExportReportCenter: React.FC = () => {
   const filtered = filterTransactionsByRange(transactions, currentRange);
   const { totalIncome, totalExpense, netCashflow, rows } = computeReportData(filtered);
 
-  const getReportOptions = (format: 'excel' | 'pdf') => ({
+  const getReportOptions = (format: 'excel' | 'pdf' | 'pptx') => ({
     reportId: generateReportId(),
     transactions,
     wallets,
@@ -57,6 +63,8 @@ export const ExportReportCenter: React.FC = () => {
     householdName: household?.name || 'PairFlow Household',
     language: (language as 'id' | 'en') || 'id',
     labels: {},
+      budgets,
+      goals,
   });
 
   const handleExportExcel = () => {
@@ -74,6 +82,17 @@ export const ExportReportCenter: React.FC = () => {
     setIsExporting('pdf');
     try {
       await downloadPDFReport(getReportOptions('pdf'));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
+  const handleExportPptx = async () => {
+    setIsExporting('pptx');
+    try {
+      await downloadPPTXReport(getReportOptions('pptx'));
     } catch (e) {
       console.error(e);
     } finally {
@@ -100,10 +119,11 @@ export const ExportReportCenter: React.FC = () => {
             { key: 'last_month', label: 'Last Month' },
             { key: 'this_year', label: 'This Year' },
             { key: 'all', label: 'All History' },
+            { key: 'custom', label: 'Custom Date' },
           ].map((r) => (
             <button
               key={r.key}
-              onClick={() => setRangeType(r.key as any)}
+              onClick={() => setRangeType(r.key as typeof rangeType)}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 rangeType === r.key ? 'bg-accent text-accent-text font-bold' : 'text-text-muted hover:text-text-primary'
               }`}
@@ -113,6 +133,13 @@ export const ExportReportCenter: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {rangeType === 'custom' && (
+        <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-surface-hover/40 p-4">
+          <label className="text-xs font-medium text-text-muted">Start date<input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} className="mt-1 block rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary" /></label>
+          <label className="text-xs font-medium text-text-muted">End date<input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} className="mt-1 block rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary" /></label>
+        </div>
+      )}
 
       {/* Report Summary Live Preview Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-hover/40 p-4 rounded-xl border border-border">
@@ -163,6 +190,17 @@ export const ExportReportCenter: React.FC = () => {
           >
             <Download className="w-4 h-4" />
             <span>{isExporting === 'pdf' ? 'Generating PDF...' : 'Download PDF E-Statement'}</span>
+          </button>
+
+          {/* PPTX Export Button */}
+          <button
+            onClick={handleExportPptx}
+            disabled={isExporting !== null}
+            data-testid="export-pptx-btn"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-all shadow-xs"
+          >
+            <Presentation className="w-4 h-4" />
+            <span>{isExporting === 'pptx' ? 'Generating PPTX...' : 'Export PPTX'}</span>
           </button>
         </div>
       </div>

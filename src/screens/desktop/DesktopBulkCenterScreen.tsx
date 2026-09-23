@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 import { ExportReportCenter } from '@/components/desktop/bulk/ExportReportCenter';
 import { StatementUploaderModal } from '@/components/desktop/bulk/StatementUploaderModal';
-import { FileSpreadsheet, Upload, Download, Sparkles } from 'lucide-react';
+import { downloadExcelTemplate } from '@/lib/exportReport';
+import { useApp } from '@/context/AppContext';
+import { FileSpreadsheet, Upload, Download } from 'lucide-react';
 
 export const DesktopBulkCenterScreen: React.FC = () => {
+  const { categories, wallets, householdMembers, household } = useApp();
   const [showUploader, setShowUploader] = useState(false);
+
+  const handleDownloadTemplate = () => {
+    downloadExcelTemplate({
+      householdName: household?.name,
+      categories: categories.map((category) => category.name),
+      wallets: wallets.map((wallet) => wallet.name),
+      members: householdMembers.map((member) => member.profile?.full_name || member.user_id || 'Member'),
+    });
+  };
 
   return (
     <div data-testid="desktop-bulk-center-screen" className="space-y-6">
@@ -16,7 +28,7 @@ export const DesktopBulkCenterScreen: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold text-text-primary">Bulk Actions & Import/Export Center</h1>
-            <p className="text-xs text-text-muted">Import bank statements with column mapping and export Excel/PDF reports</p>
+            <p className="text-xs text-text-muted">Impor transaksi melalui template Excel dan ekspor laporan keuangan pasangan</p>
           </div>
         </div>
 
@@ -27,7 +39,7 @@ export const DesktopBulkCenterScreen: React.FC = () => {
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-accent-text font-bold text-xs hover:opacity-95 shadow-sm active:scale-98 transition-all"
         >
           <Upload className="w-4 h-4" />
-          <span>+ Import Bank Mutasi CSV</span>
+          <span>Import Transaksi Excel</span>
         </button>
       </div>
 
@@ -38,16 +50,25 @@ export const DesktopBulkCenterScreen: React.FC = () => {
             <Upload className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-text-primary">Bank Mutasi Statement Importer</h3>
+            <h3 className="text-sm font-bold text-text-primary">Bulk Import Transaksi via Excel</h3>
             <p className="text-xs text-text-muted">
-              Batch import CSV statements from BCA, Mandiri, BSI, GoPay, OVO with interactive column mapping preview.
+              Impor banyak transaksi menggunakan template baku dengan validasi tanggal, tipe, nominal, kategori, dompet, dan anggota.
             </p>
-            <button
-              onClick={() => setShowUploader(true)}
-              className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1 pt-1"
-            >
-              Start Bank Import &rarr;
-            </button>
+            <div className="pt-2 flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowUploader(true)}
+                className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1"
+              >
+                Start Excel Import &rarr;
+              </button>
+              <button
+                onClick={handleDownloadTemplate}
+                data-testid="download-template-excel-btn"
+                className="text-xs font-bold text-emerald-600 hover:underline inline-flex items-center gap-1"
+              >
+                Download Template Excel (.xlsx)
+              </button>
+            </div>
           </div>
         </div>
 

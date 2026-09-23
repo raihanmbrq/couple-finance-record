@@ -23,7 +23,7 @@ import { useFinanceDateRange } from '@/context/FinanceDateRangeContext';
 import { useToast } from '@/context/ToastContext';
 import { formatMoneyShort, formatDateShort } from '@/lib/format';
 import { resolveCategoryMeta } from '@/lib/categoryStyle';
-import { downloadExcelReport, downloadPDFReport, generateReportId } from '@/lib/exportReport';
+import { downloadExcelReport, downloadPDFReport, downloadPPTXReport, generateReportId } from '@/lib/exportReport';
 import type { DesktopTabKey } from '@/components/desktop/DesktopSidebar';
 
 interface CommandPaletteProps {
@@ -114,7 +114,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
-  const runExport = async (format: 'excel' | 'pdf') => {
+  const runExport = async (format: 'excel' | 'pdf' | 'pptx') => {
     const options = {
       reportId: generateReportId(),
       transactions,
@@ -131,9 +131,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       if (format === 'excel') {
         downloadExcelReport(options);
         showToast(t('palette.exportExcelDone') || 'Excel report downloaded');
-      } else {
+      } else if (format === 'pdf') {
         await downloadPDFReport(options);
         showToast(t('palette.exportPdfDone') || 'PDF e-statement downloaded');
+      } else {
+        await downloadPPTXReport(options);
+        showToast(t('palette.exportPptxDone') || 'PPTX presentation downloaded');
       }
       onClose();
     } catch (err) {
@@ -173,6 +176,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: Download,
         keywords: 'download pdf e-statement export report',
         run: () => runExport('pdf'),
+      },
+      {
+        id: 'export-pptx',
+        group: 'actions',
+        label: t('palette.exportPptx') || 'Export PPTX Presentation',
+        hint: `${formatDateShort(range.startKey)} – ${formatDateShort(range.endKey)}`,
+        icon: FileIcon,
+        keywords: 'download pptx presentation export powerpoint deck',
+        run: () => runExport('pptx'),
       },
     ];
 

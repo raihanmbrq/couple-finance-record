@@ -41,6 +41,12 @@ export interface ReportCategoryRow {
   percentage: number;
 }
 
+export interface ReportMetricRow {
+  label: string;
+  value: string;
+  detail?: string;
+}
+
 export interface EStatementPDFDocumentProps {
   householdName: string;
   reportId: string;
@@ -55,6 +61,11 @@ export interface EStatementPDFDocumentProps {
   rows: ReportTxRow[];
   labels: Record<string, string>;
   formatAmount: (n: number) => string;
+  memberBreakdown?: ReportMetricRow[];
+  topExpensesByAmount?: ReportMetricRow[];
+  topExpensesByFrequency?: ReportMetricRow[];
+  walletBreakdown?: ReportMetricRow[];
+  highlightedTransactions?: ReportMetricRow[];
 }
 
 // ---------------------------------------------------------------------------
@@ -382,6 +393,11 @@ export function EStatementPDFDocument({
   rows,
   labels,
   formatAmount,
+  memberBreakdown = [],
+  topExpensesByAmount = [],
+  topExpensesByFrequency = [],
+  walletBreakdown = [],
+  highlightedTransactions = [],
 }: EStatementPDFDocumentProps) {
   return (
     <Document
@@ -441,6 +457,41 @@ export function EStatementPDFDocument({
             <Text style={[styles.summaryValue, { color: accent }]}>{formatAmount(netCashflow)}</Text>
           </View>
         </View>
+
+        {memberBreakdown.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Executive Summary: Expense by Member</Text>
+            {memberBreakdown.map((item) => <View key={item.label} style={styles.catRow}><Text style={styles.catName}>{item.label}</Text><Text style={styles.catAmount}>{item.value} {item.detail ?? ''}</Text></View>)}
+          </>
+        )}
+
+        {topExpensesByAmount.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Top 5 Expenses by Amount</Text>
+            {topExpensesByAmount.map((item, index) => <View key={`${item.label}-${index}`} style={styles.catRow}><Text style={styles.catName}>{index + 1}. {item.label}</Text><Text style={styles.catAmount}>{item.value} {item.detail ?? ''}</Text></View>)}
+          </>
+        )}
+
+        {topExpensesByFrequency.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Top 5 Expenses by Frequency</Text>
+            {topExpensesByFrequency.map((item, index) => <View key={`${item.label}-${index}`} style={styles.catRow}><Text style={styles.catName}>{index + 1}. {item.label}</Text><Text style={styles.catAmount}>{item.value} {item.detail ?? ''}</Text></View>)}
+          </>
+        )}
+
+        {walletBreakdown.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Wallet Ending Balance</Text>
+            {walletBreakdown.map((item) => <View key={item.label} style={styles.catRow}><Text style={styles.catName}>{item.label}</Text><Text style={styles.catAmount}>{item.value}</Text></View>)}
+          </>
+        )}
+
+        {highlightedTransactions.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Highlighted Transactions (&gt; Rp 500.000)</Text>
+            {highlightedTransactions.map((item, index) => <View key={`${item.label}-${index}`} style={styles.catRow}><Text style={styles.catName}>{item.label}</Text><Text style={styles.catAmount}>{item.value}</Text></View>)}
+          </>
+        )}
 
         {/* ================= Category Breakdown ================= */}
         {categoryBreakdown.length > 0 && (

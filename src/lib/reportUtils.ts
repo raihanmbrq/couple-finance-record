@@ -1,4 +1,4 @@
-import type { Transaction } from '@/lib/types';
+import type { Budget, Goal, Transaction, Wallet } from '@/lib/types';
 import type { ReportCategoryRow } from '@/components/EStatementPDFDocument';
 
 export interface ReportRange {
@@ -6,7 +6,7 @@ export interface ReportRange {
   end: string;
 }
 
-export type ReportFormat = 'excel' | 'pdf';
+export type ReportFormat = 'excel' | 'pdf' | 'pptx';
 
 export interface ReportData {
   rows: Transaction[];
@@ -19,6 +19,56 @@ export interface ReportData {
   totalTransfer: number;
   netCashflow: number;
   categoryBreakdown: ReportCategoryRow[];
+  topExpensesByAmount: ReportExpenseRow[];
+  topExpensesByFrequency: ReportFrequencyRow[];
+  memberBreakdown: ReportMemberRow[];
+  walletBreakdown: ReportWalletRow[];
+  highlightedTransactions: Transaction[];
+  budgetBreakdown: ReportBudgetRow[];
+  goalBreakdown: ReportGoalRow[];
+}
+
+export interface ReportExpenseRow {
+  transaction: Transaction;
+  percentage: number;
+}
+
+export interface ReportFrequencyRow {
+  key: string;
+  count: number;
+  total: number;
+}
+
+export interface ReportMemberRow {
+  member: string;
+  total: number;
+  percentage: number;
+}
+
+export interface ReportWalletRow {
+  wallet: Wallet;
+  endingBalance: number;
+}
+
+export interface ReportBudgetRow {
+  category: string;
+  limit: number;
+  spent: number;
+  percentage: number;
+  status: 'healthy' | 'warning' | 'over';
+}
+
+export interface ReportGoalRow {
+  goal: Goal;
+  percentage: number;
+}
+
+export interface ReportContext {
+  wallets?: Wallet[];
+  allTransactions?: Transaction[];
+  budgets?: Budget[];
+  goals?: Goal[];
+  highlightedThreshold?: number;
 }
 
 function toDateKey(d: Date): string {
@@ -65,7 +115,7 @@ export function filterTransactionsByRange(
     });
 }
 
-export function computeReportData(txs: Transaction[]): ReportData {
+export function computeReportData(txs: Transaction[], context: ReportContext = {}): ReportData {
   // Internal wallet transfers (`type = 'transfer'`) move money between the
   // household's own wallets, so they must never inflate Income or Expense.
   // They stay in `rows` so the detail sheet keeps the full cashflow history.
@@ -94,6 +144,78 @@ export function computeReportData(txs: Transaction[]): ReportData {
     }))
     .sort((a, b) => b.total - a.total);
 
+  const topExpensesByAmount = counted
+    .filter((tx) => tx.type === 'expense')
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5)
+    .map((transaction) => ({
+      transaction,
+      percentage: totalExpense > 0 ? Math.round((transaction.amount / totalExpense) * 1000) / 10 : 0,
+    }));
+
+  const frequencyMap = new Map<string, { count: number; total: number }>();
+  counted.filter((tx) => tx.type === 'expense').forEach((tx) => {
+    const current = frequencyMap.get(tx.category) ?? { count: 0, total: 0 };
+    frequencyMap.set(tx.category, { count: current.count + 1, total: current.total + tx.amount });
+  });
+  const topExpensesByFrequency = Array.from(frequencyMap.entries())
+    .map(([key, value]) => ({ key, ...value }))
+    .sort((a, b) => b.count - a.count || b.total - a.total)
+    .slice(0, 5);
+
+  const memberMap = new Map<string, number>();
+  counted.filter((tx) => tx.type === 'expense').forEach((tx) => {
+    memberMap.set(tx.spent_by, (memberMap.get(tx.spent_by) ?? 0) + tx.amount);
+  });
+  const memberBreakdown = Array.from(memberMap.entries())
+    .map(([member, total]) => ({
+      member,
+      total,
+      percentage: totalExpense > 0 ? Math.round((total / totalExpense) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const allTransactions = context.allTransactions ?? txs;
+  const reportEnd = txs.length > 0
+    ? txs.reduce((latest, tx) => Math.max(latest, new Date(tx.transaction_date || tx.created_at).getTime()), 0)
+    : 0;
+  const walletBreakdown = (context.wallets ?? []).map((wallet) => {
+    const laterEffect = allTransactions
+      .filter((tx) => new Date(tx.transaction_date || tx.created_at).getTime() > reportEnd)
+      .reduce((sum, tx) => {
+        if (tx.type === 'income' && tx.wallet_id === wallet.id) return sum + tx.amount;
+        if (tx.type === 'expense' && tx.wallet_id === wallet.id) return sum - tx.amount;
+        if (tx.type === 'transfer') {
+          if ((tx.source_wallet_id ?? tx.wallet_id) === wallet.id) return sum - tx.amount;
+          if (tx.destination_wallet_id === wallet.id) return sum + tx.amount;
+        }
+        return sum;
+      }, 0);
+    return { wallet, endingBalance: wallet.balance - laterEffect };
+  });
+
+  const highlightedThreshold = context.highlightedThreshold ?? 500000;
+  const highlightedTransactions = counted
+    .filter((tx) => tx.type === 'expense' && tx.amount > highlightedThreshold)
+    .sort((a, b) => b.amount - a.amount);
+
+  const budgetBreakdown = (context.budgets ?? []).map((budget) => {
+    const spent = expenseByCategory.get(budget.category) ?? 0;
+    const percentage = budget.limit_amount > 0 ? Math.round((spent / budget.limit_amount) * 1000) / 10 : 0;
+    return {
+      category: budget.category,
+      limit: budget.limit_amount,
+      spent,
+      percentage,
+      status: percentage > 100 ? 'over' : percentage >= 80 ? 'warning' : 'healthy',
+    } as ReportBudgetRow;
+  });
+
+  const goalBreakdown = (context.goals ?? []).map((goal) => ({
+    goal,
+    percentage: goal.target_amount > 0 ? Math.min(100, Math.round((goal.current_amount / goal.target_amount) * 1000) / 10) : 0,
+  }));
+
   return {
     rows: txs,
     totalIncome,
@@ -101,6 +223,13 @@ export function computeReportData(txs: Transaction[]): ReportData {
     totalTransfer,
     netCashflow: totalIncome - totalExpense,
     categoryBreakdown,
+    topExpensesByAmount,
+    topExpensesByFrequency,
+    memberBreakdown,
+    walletBreakdown,
+    highlightedTransactions,
+    budgetBreakdown,
+    goalBreakdown,
   };
 }
 

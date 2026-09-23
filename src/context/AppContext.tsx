@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { TRANSFER_CATEGORY, type Profile, type Household, type HouseholdMember, type Wallet, type WalletTypeRow, type Transaction, type Budget, type Goal, type GoalInput, type TransactionCategory } from '@/lib/types';
+import { TRANSFER_CATEGORY, type Profile, type Household, type HouseholdMember, type Wallet, type WalletTypeRow, type Transaction, type Budget, type Goal, type GoalInput, type TransactionCategory, type BulkImportRow } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import { uploadAvatarToCloudinary } from '@/lib/cloudinary';
 import { accumulateEffects, invertEffects, walletEffects } from '@/lib/transactionMath';
@@ -49,6 +49,7 @@ interface AppState {
   deleteCategory: (id: string) => Promise<void>;
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
+  bulkImportTransactions: (rows: BulkImportRow[]) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   bulkUpdateTransactions: (ids: string[], updates: Partial<Pick<Transaction, 'category' | 'wallet_id' | 'spent_by' | 'transaction_date' | 'notes'>>) => Promise<void>;
@@ -937,6 +938,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, [mode, profile, wallets, applyRawTransactions, rawTransactions]);
 
+  const bulkImportTransactions = useCallback(async (rows: BulkImportRow[]) => {
+    if (rows.length === 0) return;
+    if (mode === 'live') {
+      const { error } = await supabase.rpc('bulk_import_transactions', { p_rows: rows });
+      if (error) throw error;
+      if (profile?.id && profile.email) await loadLiveData(profile.id, profile.email);
+      return;
+    }
+
+    const categoryMap = new Map(categories.map((category) => [category.name.toLowerCase(), category.id]));
+    const walletMap = new Map(wallets.map((wallet) => [wallet.name.toLowerCase(), wallet]));
+    for (const row of rows) {
+      let categoryId = categoryMap.get(row.category.toLowerCase());
+      if (!categoryId) {
+        const created = await addCustomCategory(row.category, 'Sparkles', row.type);
+        categoryId = created.id;
+        categoryMap.set(row.category.toLowerCase(), categoryId);
+      }
+      let wallet = walletMap.get(row.wallet.toLowerCase());
+      if (!wallet) {
+        wallet = await addWallet(row.wallet, 'cash', 0);
+        walletMap.set(row.wallet.toLowerCase(), wallet);
+      }
+      await addTransaction({
+        wallet_id: wallet.id,
+        wallet_name: wallet.name,
+        amount: row.amount,
+        type: row.type,
+        category: categoryId,
+        notes: row.notes || null,
+        spent_by: row.spentBy,
+        transaction_date: row.date,
+      });
+    }
+  }, [addCustomCategory, addTransaction, addWallet, categories, loadLiveData, mode, profile, wallets]);
+
   const goalTitleFromDeposit = (tx: Transaction) => {
     const prefix = 'Deposit ke Goal: ';
     if (tx.category !== 'goals' || !tx.notes?.startsWith(prefix)) return null;
@@ -1426,6 +1463,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateCategory,
     deleteCategory,
     addTransaction,
+    bulkImportTransactions,
     updateTransaction,
     deleteTransaction,
     bulkUpdateTransactions,

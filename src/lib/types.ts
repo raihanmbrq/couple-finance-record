@@ -97,6 +97,16 @@ export interface Transaction {
   transfer_group_id?: string | null;
 }
 
+export interface BulkImportRow {
+  date: string;
+  type: 'income' | 'expense';
+  amount: number;
+  category: string;
+  wallet: string;
+  spentBy: string;
+  notes: string;
+}
+
 /** Internal movement between the user's own wallets — excluded from every aggregate. */
 export function isInternalTransfer(tx: Pick<Transaction, 'type'>): boolean {
   return tx.type === 'transfer';
