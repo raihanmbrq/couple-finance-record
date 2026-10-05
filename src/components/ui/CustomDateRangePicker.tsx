@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react';
 
 interface CustomDateRangePickerProps {
   startDate: string; // "YYYY-MM-DD"
@@ -19,6 +19,7 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
     return startDate ? new Date(startDate) : new Date();
   });
   const [showYearGrid, setShowYearGrid] = useState(false);
+  const [showMonthGrid, setShowMonthGrid] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -119,10 +120,12 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
   ];
 
   // Recent-range presets anchored to today (used by the Transactions filter).
+  const lastDayOfMonth = getDaysInMonth(now.getFullYear(), now.getMonth());
+  const thisMonthEndKey = formatDateStr(now.getFullYear(), now.getMonth(), lastDayOfMonth);
   const recentPresets = [
     { key: 'today', label: t('tx.today'), start: todayKey, end: todayKey },
     { key: 'last7', label: t('home.last7Days'), start: shiftDateKey(todayKey, -6), end: todayKey },
-    { key: 'thisMonth', label: t('tx.thisMonth'), start: `${todayKey.slice(0, 7)}-01`, end: todayKey },
+    { key: 'thisMonth', label: t('tx.thisMonth'), start: `${todayKey.slice(0, 7)}-01`, end: thisMonthEndKey },
     { key: 'last30', label: t('home.last30Days'), start: shiftDateKey(todayKey, -29), end: todayKey },
   ];
 
@@ -251,15 +254,25 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
           </button>
           <div className="font-bold text-sm text-text-primary flex items-center gap-1">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
-            <span className="shrink-0">{months[month]}</span>
             <button
               type="button"
-              onClick={() => setShowYearGrid(!showYearGrid)}
-              className={`px-2 py-1 rounded-lg text-sm font-extrabold transition-colors min-h-[36px] flex items-center ${
+              onClick={() => { setShowMonthGrid(!showMonthGrid); setShowYearGrid(false); }}
+              className={`px-2 py-1 rounded-lg text-sm font-extrabold transition-colors min-h-[36px] flex items-center gap-0.5 ${
+                showMonthGrid ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'
+              }`}
+            >
+              {months[month]}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showMonthGrid ? 'rotate-180' : ''}`} />
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowYearGrid(!showYearGrid); setShowMonthGrid(false); }}
+              className={`px-2 py-1 rounded-lg text-sm font-extrabold transition-colors min-h-[36px] flex items-center gap-0.5 ${
                 showYearGrid ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'
               }`}
             >
               {year}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showYearGrid ? 'rotate-180' : ''}`} />
             </button>
           </div>
           <button
@@ -272,7 +285,27 @@ export function CustomDateRangePicker({ startDate, endDate, onChange, open, onCl
           </button>
         </div>
 
-        {showYearGrid ? (
+        {showMonthGrid ? (
+          <div className="grid grid-cols-3 gap-2 py-2">
+            {months.map((monthName, idx) => (
+              <button
+                key={monthName}
+                type="button"
+                onClick={() => {
+                  setCurrentDate(new Date(year, idx, 1));
+                  setShowMonthGrid(false);
+                }}
+                className={`py-3 rounded-xl text-xs font-semibold transition-all min-h-[44px] touch-manipulation ${
+                  idx === month
+                    ? 'bg-primary text-white shadow-soft'
+                    : 'bg-secondary/50 text-text-primary hover:bg-secondary'
+                }`}
+              >
+                {monthName}
+              </button>
+            ))}
+          </div>
+        ) : showYearGrid ? (
           <div className="grid grid-cols-4 gap-2 py-2 max-h-[260px] overflow-y-auto">
             {yearsList.map((y) => (
               <button

@@ -86,7 +86,14 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
   const [filterWallet, setFilterWallet] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterLoggedBy, setFilterLoggedBy] = useState('all');
-  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const lastDay = `${y}-${String(m + 1).padStart(2, '0')}-${String(new Date(y, m + 1, 0).getDate()).padStart(2, '0')}`;
+    return { start: firstDay, end: lastDay };
+  });
   const [dateRangeDraft, setDateRangeDraft] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const [showWalletSheet, setShowWalletSheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
@@ -239,7 +246,12 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
     const today = localDayKey(new Date());
     if (start === end && start === today) return t('tx.today');
     if (start === shiftDayKey(today, -6) && end === today) return t('home.last7Days');
-    if (start === `${today.slice(0, 7)}-01` && end === today) return t('tx.thisMonth');
+    // Detect "Bulan Ini": 1st to last day of the current month
+    const now = new Date();
+    const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const thisMonthEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfCurrentMonth).padStart(2, '0')}`;
+    if (start === thisMonthStart && end === thisMonthEnd) return t('tx.thisMonth');
     if (start === shiftDayKey(today, -29) && end === today) return t('home.last30Days');
     return formatDateRange(start, end);
   }, [dateRange, t]);
@@ -273,7 +285,12 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
     setFilterCategory('all');
     setFilterLoggedBy('all');
     setSearch('');
-    setDateRange({ start: null, end: null });
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const lastDay = `${y}-${String(m + 1).padStart(2, '0')}-${String(new Date(y, m + 1, 0).getDate()).padStart(2, '0')}`;
+    setDateRange({ start: firstDay, end: lastDay });
   };
 
   return (
