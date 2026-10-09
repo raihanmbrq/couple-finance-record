@@ -4,12 +4,20 @@ import { supabase } from '@/lib/supabase';
 import { uploadAvatarToCloudinary } from '@/lib/cloudinary';
 import { accumulateEffects, invertEffects, walletEffects } from '@/lib/transactionMath';
 import { findLegacyIncomeLeg, normalizeLegacyTransfers } from '@/lib/transferNormalize';
+import { DemoTransactionLimitError, GUEST_DEMO_TRANSACTION_LIMIT } from '@/lib/guestDemo';
 import {
   mockProfile, mockPartner, mockHousehold, mockWallets, mockWalletTypes, mockCategories, mockTransactions, mockBudgets, mockGoals,
   generateInviteCode,
 } from '@/lib/mockData';
 
 type AppMode = 'demo' | 'live';
+const GUEST_DEMO_STORAGE_KEY = 'pairflow_guest_demo';
+
+interface GuestDemoSnapshot {
+  transactions: Transaction[];
+  wallets: Wallet[];
+  transactionCount: number;
+}
 
 interface AppState {
   mode: AppMode;
@@ -63,6 +71,11 @@ interface AppState {
   depositToGoal: (goalId: string, walletId: string, amount: number) => Promise<void>;
   // Demo
   enterDemo: () => void;
+  enterGuestDemo: () => void;
+  isGuestDemo: boolean;
+  guestDemoTransactionCount: number;
+  demoLimitReached: boolean;
+  dismissDemoLimit: () => void;
   isDemo: boolean;
 }
 
@@ -174,6 +187,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
+  const [isGuestDemo, setIsGuestDemo] = useState(false);
+  const [guestDemoTransactionCount, setGuestDemoTransactionCount] = useState(0);
+  const [demoLimitReached, setDemoLimitReached] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
 
   /**
@@ -195,6 +211,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => (rawTransactionsRef.current.length > 0 ? rawTransactionsRef.current : transactions),
     [transactions],
   );
+
+  useEffect(() => {
+    if (!isGuestDemo) return;
+    const snapshot: GuestDemoSnapshot = {
+      transactions,
+      wallets,
+      transactionCount: guestDemoTransactionCount,
+    };
+    localStorage.setItem(GUEST_DEMO_STORAGE_KEY, JSON.stringify(snapshot));
+  }, [guestDemoTransactionCount, isGuestDemo, transactions, wallets]);
 
   // Restore demo session from localStorage or check live session
   useEffect(() => {
@@ -392,6 +418,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const enterDemo = useCallback(() => {
     setAppMode('demo');
     setIsDemo(true);
+    setIsGuestDemo(false);
+    setDemoLimitReached(false);
     setProfile(mockProfile);
     setHousehold(mockHousehold);
     setHouseholdMembers([
@@ -421,6 +449,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('duitbersama_session', 'demo');
   }, [applyRawTransactions]);
 
+  const enterGuestDemo = useCallback(() => {
+    let snapshot: GuestDemoSnapshot | null = null;
+    const savedSnapshot = localStorage.getItem(GUEST_DEMO_STORAGE_KEY);
+    if (savedSnapshot) {
+      try {
+        const parsed = JSON.parse(savedSnapshot) as Partial<GuestDemoSnapshot>;
+        if (
+          Array.isArray(parsed.transactions) &&
+          Array.isArray(parsed.wallets) &&
+          Number.isInteger(parsed.transactionCount)
+        ) {
+          snapshot = parsed as GuestDemoSnapshot;
+        } else {
+          console.warn('Ignoring invalid PairFlow guest demo data.');
+        }
+      } catch (err) {
+        console.warn('Could not read PairFlow guest demo data:', err);
+      }
+    }
+
+    setAppMode('demo');
+    setIsDemo(true);
+    setIsGuestDemo(true);
+    setDemoLimitReached(false);
+    setProfile(mockProfile);
+    setHousehold(mockHousehold);
+    setHouseholdMembers([
+      {
+        id: mockProfile.id,
+        user_id: mockProfile.id,
+        household_id: mockHousehold.id,
+        role: 'owner',
+        created_at: mockProfile.created_at,
+        profile: mockProfile,
+      },
+      {
+        id: mockPartner.id,
+        user_id: mockPartner.id,
+        household_id: mockHousehold.id,
+        role: 'member',
+        created_at: mockPartner.created_at,
+        profile: mockPartner,
+      },
+    ]);
+    setWallets(snapshot?.wallets ?? mockWallets);
+    applyRawTransactions(snapshot?.transactions ?? [...mockTransactions].sort(sortByDateDesc));
+    setGuestDemoTransactionCount(snapshot?.transactionCount ?? 0);
+    setBudgets(mockBudgets);
+    setGoals(mockGoals);
+    setWalletTypes(mockWalletTypes);
+    setCategories(mockCategories);
+  }, [applyRawTransactions]);
+
+  const dismissDemoLimit = useCallback(() => setDemoLimitReached(false), []);
+
   const signIn = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -428,6 +511,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
       localStorage.removeItem('duitbersama_session');
+      setIsGuestDemo(false);
+      localStorage.removeItem(GUEST_DEMO_STORAGE_KEY);
       setAppMode('live');
       setIsDemo(false);
       const { data: { session } } = await supabase.auth.getSession();
@@ -490,6 +575,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (profileUpsertError) throw profileUpsertError;
 
       localStorage.removeItem('duitbersama_session');
+      setIsGuestDemo(false);
       setAppMode('live');
       setIsDemo(false);
       await loadLiveData(user.id, email);
@@ -538,6 +624,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
     localStorage.removeItem('duitbersama_session');
+    localStorage.removeItem(GUEST_DEMO_STORAGE_KEY);
     // Remove Supabase/Gotrue-related tokens from localStorage to fully clear session
     try {
       for (const key of Object.keys(localStorage)) {
@@ -561,6 +648,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch {}
     setAppMode('demo');
     setIsDemo(false);
+    setIsGuestDemo(false);
+    setGuestDemoTransactionCount(0);
+    setDemoLimitReached(false);
     setProfile(null);
     setHousehold(null);
     setHouseholdMembers([]);
@@ -869,6 +959,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [mode, transactions]);
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, 'id' | 'created_at'>) => {
+    if (isGuestDemo && guestDemoTransactionCount >= GUEST_DEMO_TRANSACTION_LIMIT) {
+      setDemoLimitReached(true);
+      throw new DemoTransactionLimitError();
+    }
     const targetWallet = wallets.find(w => w.id === tx.wallet_id);
     const destinationWallet = tx.destination_wallet_id
       ? wallets.find(w => w.id === tx.destination_wallet_id)
@@ -936,10 +1030,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const delta = effectMap.get(w.id);
       return delta ? { ...w, balance: w.balance + delta } : w;
     }));
-  }, [mode, profile, wallets, applyRawTransactions, rawTransactions]);
+    if (isGuestDemo) setGuestDemoTransactionCount(prev => prev + 1);
+  }, [guestDemoTransactionCount, isGuestDemo, mode, profile, wallets, applyRawTransactions, rawTransactions]);
 
   const bulkImportTransactions = useCallback(async (rows: BulkImportRow[]) => {
     if (rows.length === 0) return;
+    if (isGuestDemo && guestDemoTransactionCount + rows.length > GUEST_DEMO_TRANSACTION_LIMIT) {
+      setDemoLimitReached(true);
+      throw new DemoTransactionLimitError();
+    }
     if (mode === 'live') {
       const { error } = await supabase.rpc('bulk_import_transactions', { p_rows: rows });
       if (error) throw error;
@@ -972,7 +1071,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         transaction_date: row.date,
       });
     }
-  }, [addCustomCategory, addTransaction, addWallet, categories, loadLiveData, mode, profile, wallets]);
+  }, [addCustomCategory, addTransaction, addWallet, categories, guestDemoTransactionCount, isGuestDemo, loadLiveData, mode, profile, wallets]);
 
   const goalTitleFromDeposit = (tx: Transaction) => {
     const prefix = 'Deposit ke Goal: ';
@@ -1379,6 +1478,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   const depositToGoal = useCallback(async (goalId: string, walletId: string, amount: number) => {
+    if (isGuestDemo && guestDemoTransactionCount >= GUEST_DEMO_TRANSACTION_LIMIT) {
+      setDemoLimitReached(true);
+      throw new DemoTransactionLimitError();
+    }
     const goal = goals.find(g => g.id === goalId);
     const wallet = wallets.find(w => w.id === walletId);
     if (!goal || !wallet) return;
@@ -1427,7 +1530,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     applyRawTransactions([newTx, ...rawTransactions()].sort(sortByDateDesc));
     setWallets(prev => prev.map(w => w.id === walletId ? { ...w, balance: nextBalance } : w));
     setGoals(prev => prev.map(g => g.id === goalId ? { ...g, current_amount: nextCurrent } : g));
-  }, [goals, mode, profile, wallets, applyRawTransactions, rawTransactions]);
+    if (isGuestDemo) setGuestDemoTransactionCount(prev => prev + 1);
+  }, [goals, guestDemoTransactionCount, isGuestDemo, mode, profile, wallets, applyRawTransactions, rawTransactions]);
 
   const value: AppState = {
     mode,
@@ -1474,6 +1578,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteGoal,
     depositToGoal,
     enterDemo,
+    enterGuestDemo,
+    isGuestDemo,
+    guestDemoTransactionCount,
+    demoLimitReached,
+    dismissDemoLimit,
     isDemo,
   };
 

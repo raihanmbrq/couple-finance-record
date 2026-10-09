@@ -6,6 +6,7 @@ import { TransactionsScreen } from '@/screens/TransactionsScreen';
 import { BudgetScreen } from '@/screens/BudgetScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { AddTransactionSheet } from '@/components/AddTransactionSheet';
+import { GuestDemoBanner, GuestDemoGuardrail } from '@/components/GuestDemoGuardrail';
 import { Monitor, X } from 'lucide-react';
 
 export function MobilePwaLayout() {
@@ -41,6 +42,7 @@ export function MobilePwaLayout() {
         </div>
       )}
 
+      <GuestDemoBanner />
       <AppShell 
         showNav 
         activeTab={activeTab} 
@@ -65,7 +67,7 @@ export function MobilePwaLayout() {
         open={showAddTx} 
         onClose={() => setShowAddTx(false)} 
       />
+      <GuestDemoGuardrail />
     </>
   );
 }
-

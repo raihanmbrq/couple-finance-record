@@ -15,6 +15,7 @@ import { getIcon } from '@/lib/icons';
 import { useToast } from '@/context/ToastContext';
 import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
 import { ReceiptAttachButton } from '@/components/ReceiptAttachButton';
+import { DemoTransactionLimitError } from '@/lib/guestDemo';
 
 interface AddTransactionSheetProps {
   open: boolean;
@@ -259,8 +260,10 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
       showToast(t('tx.addedToast'));
       // Return the keyboard user to the dashboard shell.
       requestAnimationFrame(focusDashboardMain);
-    } catch {
-      setError(t('tx.failedSave'));
+    } catch (err) {
+      if (!(err instanceof DemoTransactionLimitError)) {
+        setError(t('tx.failedSave'));
+      }
     } finally {
       setLoading(false);
     }

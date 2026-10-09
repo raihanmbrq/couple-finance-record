@@ -5,6 +5,7 @@ import { SettingsSubPanel } from '@/components/desktop/SettingsSubPanel';
 import { CommandPalette } from '@/components/desktop/CommandPalette';
 import { DesktopAddTransactionModal } from '@/screens/desktop/DesktopAddTransactionModal';
 import { FinanceDateRangeProvider } from '@/context/FinanceDateRangeContext';
+import { GuestDemoBanner, GuestDemoGuardrail } from '@/components/GuestDemoGuardrail';
 
 import { DesktopOverviewScreen } from '@/screens/desktop/DesktopOverviewScreen';
 import { DesktopWalletsWorkspace } from '@/screens/desktop/DesktopWalletsWorkspace';
@@ -81,6 +82,7 @@ export const DesktopDashboardLayout: React.FC = () => {
 
         {/* Main Workspace Area */}
         <div className="flex-1 flex flex-col min-w-0 h-full">
+          <GuestDemoBanner />
           {/* Sticky Header Bar — stays fixed because only <main> scrolls */}
           <DesktopHeader
             onOpenAddTransaction={() => setShowAddTransaction(true)}
@@ -143,9 +145,9 @@ export const DesktopDashboardLayout: React.FC = () => {
           open={showSettings}
           onClose={() => setShowSettings(false)}
         />
+        <GuestDemoGuardrail />
       </div>
     </FinanceDateRangeProvider>
   );
 };
-
 

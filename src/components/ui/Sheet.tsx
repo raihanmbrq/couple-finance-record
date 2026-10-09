@@ -8,9 +8,10 @@ interface SheetProps {
   onClose: () => void;
   title?: string;
   children: ReactNode;
+  zIndexClassName?: string;
 }
 
-export function Sheet({ open, onClose, title, children }: SheetProps) {
+export function Sheet({ open, onClose, title, children, zIndexClassName = 'z-[60]' }: SheetProps) {
   useBackHandler(open, onClose);
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, open);
@@ -39,7 +40,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
   };
 
    return (
-     <div className="fixed inset-0 z-[60] flex items-end justify-center">
+     <div className={`fixed inset-0 ${zIndexClassName} flex items-end justify-center`}>
        <div
          className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
          onClick={onClose}
