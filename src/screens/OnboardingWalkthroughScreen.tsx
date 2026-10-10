@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import {
-  QrCode,
-  Wallet,
   Zap,
   PiggyBank,
-  ShieldCheck,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -15,19 +12,12 @@ import {
   Lock,
   Sparkles,
   Receipt,
-  Target,
 } from 'lucide-react';
 
 interface OnboardingStep {
   id: string;
-  badge: string;
   title: string;
-  subtitle: string;
   description: string;
-  icon: typeof QrCode;
-  accentColor: string;
-  pillColor: string;
-  highlights: string[];
   articlePath: string;
   renderVisual: () => JSX.Element;
 }
@@ -44,19 +34,8 @@ export function OnboardingWalkthroughScreen() {
   const steps: OnboardingStep[] = [
     {
       id: 'pairing',
-      badge: 'Sinkronisasi Pasangan',
-      title: 'Real-time Household & Spouse Pairing',
-      subtitle: 'Satu Akun Rumah Tangga, Terhubung Instan',
-      description:
-        'Hubungkan smartphone Suami & Istri dalam hitungan detik via QR Code atau Kode Undangan unik. Setiap transaksi langsung tersinkron di kedua layar tanpa perlu refresh.',
-      icon: QrCode,
-      accentColor: 'from-brand-500 to-emerald-600',
-      pillColor: 'bg-brand-50 text-brand-700 border-brand-200',
-      highlights: [
-        'Scan QR Code / Kode Invite 6 Karakter',
-        'Sinkron Otomatis Real-time Tanpa Delay',
-        'Privasi Terjaga Antar Pasangan Sah',
-      ],
+      title: 'Keuangan bareng, selalu sinkron',
+      description: 'Scan QR, lalu pantau transaksi di dua layar.',
       articlePath: '/features/household-sync',
       renderVisual: () => (
         <div className="relative mx-auto w-full max-w-sm rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-xl backdrop-blur-md">
@@ -119,19 +98,8 @@ export function OnboardingWalkthroughScreen() {
     },
     {
       id: 'multi-wallet',
-      badge: 'Manajemen Multi-Wallet',
-      title: 'Multi-Wallet & Source of Funds',
-      subtitle: 'Pisahkan Rekening Bersama & Uang Saku',
-      description:
-        'Kelola rekening bank bersama (BCA, Mandiri, BRI), pos tabungan darurat, e-wallet belanja harian, hingga uang pribadi dalam satu dashboard terpadu.',
-      icon: Wallet,
-      accentColor: 'from-blue-600 to-teal-600',
-      pillColor: 'bg-blue-50 text-blue-700 border-blue-200',
-      highlights: [
-        'Dukungan Rekening Bank Nasional & E-Wallet',
-        'Lacak Asal Sumber Dana Setiap Pengeluaran',
-        'Pantau Total Saldo Likuiditas Bersama',
-      ],
+      title: 'Semua dompet, satu ringkasan',
+      description: 'Lihat saldo dan sumber dana tiap dompet.',
       articlePath: '/features/multi-wallet-source-of-funds',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm space-y-2.5">
@@ -190,19 +158,8 @@ export function OnboardingWalkthroughScreen() {
     },
     {
       id: 'fast-logging',
-      badge: 'Pencatatan < 5 Detik',
-      title: 'Fast Logging & Attribution Tagging',
-      subtitle: 'Tahu Pasti Siapa yang Bayar Tanpa Drama',
-      description:
-        'Catat transaksi kurang dari 5 detik dengan penandaan jelas: Apakah dibayar oleh Suami, Istri, atau dari Kas Bersama. Nol salah paham saat rekap akhir bulan.',
-      icon: Zap,
-      accentColor: 'from-amber-500 to-rose-500',
-      pillColor: 'bg-amber-50 text-amber-700 border-amber-200',
-      highlights: [
-        'Tagging Otomatis: Suami, Istri, atau Kas Bersama',
-        'Input Kategori Kilat + Lampiran Bon / Struk',
-        'Notifikasi Instan ke HP Pasangan Saat Dicatat',
-      ],
+      title: 'Catat siapa yang membayar',
+      description: 'Pilih dompet dan penanggung saat mencatat.',
       articlePath: '/features/attribution-tag-siapa-bayar',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
@@ -248,19 +205,8 @@ export function OnboardingWalkthroughScreen() {
     },
     {
       id: 'budgets-goals',
-      badge: 'Budget & Kantong Impian',
-      title: 'Smart Budget Limits & Kantong Impian',
-      subtitle: 'Kawal Pos Pengeluaran & Rencana Impian',
-      description:
-        'Tentukan batas pengeluaran bulanan per kategori dan kumpulkan dana impian bersama pasangan (Liburan, Renovasi Rumah, hingga Dana Pendidikan Anak).',
-      icon: Target,
-      accentColor: 'from-emerald-500 to-teal-600',
-      pillColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      highlights: [
-        'Batas Anggaran Kategori dengan Peringatan Otomatis',
-        'Kantong Impian (Sinking Funds) dengan Progress Bar',
-        'Statistik Visual Cashflow & Proyeksi Akhir Bulan',
-      ],
+      title: 'Anggaran dan tujuan bersama',
+      description: 'Lihat pengeluaran dan tabungan keluarga.',
       articlePath: '/features/smart-budgeting-limits',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm space-y-3">
@@ -301,19 +247,8 @@ export function OnboardingWalkthroughScreen() {
     },
     {
       id: 'bank-security',
-      badge: 'Keamanan Setara Bank',
-      title: 'Bank-grade Security with Supabase RLS',
-      subtitle: 'Data Finansial Privat, Aman & Terenkripsi',
-      description:
-        'Privasi data keluarga Anda terlindungi ketat. Menggunakan Row Level Security (RLS) di level basis data Supabase, hanya Anda dan pasangan yang sah yang dapat melihat data transaksi.',
-      icon: ShieldCheck,
-      accentColor: 'from-emerald-600 to-slate-800',
-      pillColor: 'bg-slate-100 text-slate-800 border-slate-200',
-      highlights: [
-        'Isolasi Data Database dengan Supabase Row Level Security',
-        'Enkripsi Data Standar Industri Perbankan (SSL/TLS & AES)',
-        '100% Bebas Iklan & Tidak Pernah Menjual Data Pengguna',
-      ],
+      title: 'Keuangan keluarga tetap privat',
+      description: 'Hanya anggota household yang dapat melihat data.',
       articlePath: '/features/bank-grade-data-security',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl text-center">
@@ -389,9 +324,9 @@ export function OnboardingWalkthroughScreen() {
   }, [currentStep, isLastStep]);
 
   return (
-    <div className="min-h-screen bg-slate-50/80 font-figtree text-slate-900 flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+    <div className="onboarding-walkthrough bg-slate-50/80 font-figtree text-slate-900 flex flex-col selection:bg-brand-500 selection:text-white">
       {/* Top Header */}
-      <header className="mx-auto w-full max-w-5xl px-5 sm:px-8 pt-6 pb-2 flex items-center justify-between">
+      <header className="onboarding-walkthrough__header mx-auto w-full max-w-5xl px-5 sm:px-8 pt-3 sm:pt-4 pb-1 flex shrink-0 items-center justify-between">
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -414,7 +349,7 @@ export function OnboardingWalkthroughScreen() {
           <button
             type="button"
             onClick={handleSkip}
-            className="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+            className="min-h-11 rounded-xl px-3.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
           >
             Lewati
           </button>
@@ -422,9 +357,9 @@ export function OnboardingWalkthroughScreen() {
       </header>
 
       {/* Main Walkthrough Container */}
-      <main className="mx-auto w-full max-w-4xl px-5 sm:px-8 py-4 flex-1 flex flex-col justify-center">
+      <main className="onboarding-walkthrough__main mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col justify-center px-5 py-2 sm:px-8 sm:py-3">
         {/* Step Progress Bar & Segmented Indicator */}
-        <div className="mb-6">
+        <div className="onboarding-walkthrough__progress mb-3">
           <div className="grid grid-cols-5 gap-2">
             {steps.map((step, idx) => (
               <button
@@ -445,28 +380,16 @@ export function OnboardingWalkthroughScreen() {
         </div>
 
         {/* Content Card */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-xl transition-all duration-300">
-          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="onboarding-walkthrough__card relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 sm:p-6 lg:p-8">
+          <div className="grid items-center gap-4 lg:grid-cols-2 lg:gap-8">
             {/* Left Column: Description & Highlights */}
-            <div className="flex flex-col items-start text-left">
-              {/* Badge */}
-              <div
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${current.pillColor}`}
-              >
-                <current.icon className="h-3.5 w-3.5" />
-                {current.badge}
-              </div>
-
-              {/* Title & Subtitle */}
-              <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl text-balance">
+            <div className="order-last flex flex-col items-start text-left lg:order-first">
+              <h2 className="onboarding-walkthrough__title text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl text-balance lg:text-3xl">
                 {current.title}
               </h2>
-              <p className="mt-1 text-sm font-semibold text-brand-600">
-                {current.subtitle}
-              </p>
 
               {/* Main Description */}
-              <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+              <p className="onboarding-walkthrough__description mt-2 text-sm leading-relaxed text-slate-600">
                 {current.description}
               </p>
 
@@ -481,25 +404,15 @@ export function OnboardingWalkthroughScreen() {
                     },
                   })
                 }
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700 transition-colors hover:bg-brand-100"
+                className="onboarding-walkthrough__details mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700 transition-colors hover:bg-brand-100"
               >
-                Pelajari detail fitur
+                Detail fitur
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
-
-              {/* Bullet Highlights */}
-              <div className="mt-5 space-y-2.5 w-full">
-                {current.highlights.map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                    <CheckCircle2 className="h-4 w-4 text-brand-500 shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Right Column: Visual Preview Card */}
-            <div className="flex items-center justify-center p-2 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-100">
+            <div className="onboarding-walkthrough__visual order-first flex items-center justify-center rounded-2xl border border-slate-100 bg-slate-50/80 p-2 sm:p-4 lg:order-last">
               {current.renderVisual()}
             </div>
           </div>
@@ -507,15 +420,15 @@ export function OnboardingWalkthroughScreen() {
       </main>
 
       {/* Bottom Navigation Controls */}
-      <footer className="mx-auto w-full max-w-4xl px-5 sm:px-8 pt-4 pb-8">
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+      <footer className="onboarding-walkthrough__footer mx-auto w-full max-w-4xl shrink-0 px-5 pt-2 pb-3 sm:px-8">
+        <div className="flex flex-row items-center justify-between gap-3">
           {/* Back button or Login link */}
           <div className="flex items-center gap-3">
             {currentStep > 0 ? (
               <button
                 type="button"
                 onClick={handleBack}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Kembali
@@ -524,7 +437,7 @@ export function OnboardingWalkthroughScreen() {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                className="inline-flex min-h-11 items-center text-xs font-semibold text-slate-500 transition-colors hover:text-slate-800"
               >
                 Sudah punya akun? <span className="text-brand-600 underline">Masuk</span>
               </button>
@@ -532,26 +445,36 @@ export function OnboardingWalkthroughScreen() {
           </div>
 
           {/* Next or Finish CTA */}
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3">
             {!isLastStep ? (
               <button
                 type="button"
                 onClick={handleNext}
-                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-7 py-3 text-sm font-bold text-white shadow-glow-emerald transition-all hover:brightness-105 active:scale-[0.97]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-5 py-3 text-sm font-bold text-white shadow-glow-emerald transition-all hover:brightness-105 active:scale-[0.97] sm:px-7"
               >
                 <span>Lanjut</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             ) : (
-              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+              <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={handleStartPairFlow}
-                  className="group relative overflow-hidden inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-glow-emerald transition-all hover:brightness-105 active:scale-[0.97]"
+                  className="group relative inline-flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-xs font-bold text-white shadow-glow-emerald transition-all hover:brightness-105 active:scale-[0.97] sm:px-8 sm:py-3.5 sm:text-sm"
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    {isDemoMode ? 'Coba Demo Interaktif' : 'Punya Undangan? Daftar'}
+                    {isDemoMode ? (
+                      <>
+                        <span className="sm:hidden">Coba Demo</span>
+                        <span className="hidden sm:inline">Coba Demo Interaktif</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="sm:hidden">Daftar</span>
+                        <span className="hidden sm:inline">Punya Undangan? Daftar</span>
+                      </>
+                    )}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </span>
                   <div className="absolute inset-0 animate-shimmer" />
