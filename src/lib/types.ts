@@ -15,7 +15,33 @@ export interface Profile {
   color_preset?: ColorPreset | null;
   appearance_mode?: AppearanceMode | null;
   language?: Language | null;
+  /** Closed-registration flag: can generate invitation tokens (admin page). */
+  is_admin?: boolean | null;
+  /** When true, the one-time "Adjust Nama Lengkap" popup is shown after login. */
+  is_first_login?: boolean | null;
   created_at: string;
+}
+
+export type InvitationStatus = 'pending' | 'used' | 'expired';
+
+export interface InvitationToken {
+  id: string;
+  email: string;
+  token: string;
+  is_used: boolean;
+  created_by?: string | null;
+  expires_at: string;
+  created_at: string;
+}
+
+/** Derives a display status for an invitation token row. */
+export function getInvitationStatus(
+  invitation: Pick<InvitationToken, 'is_used' | 'expires_at'>,
+  now: number = Date.now(),
+): InvitationStatus {
+  if (invitation.is_used) return 'used';
+  if (new Date(invitation.expires_at).getTime() <= now) return 'expired';
+  return 'pending';
 }
 
 export interface Household {

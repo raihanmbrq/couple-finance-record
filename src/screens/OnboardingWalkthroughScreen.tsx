@@ -39,7 +39,7 @@ export function OnboardingWalkthroughScreen() {
   const { profile } = useApp();
   const [currentStep, setCurrentStep] = useState(0);
   const isDemoMode = searchParams.get('mode') === 'demo';
-  const destination = isDemoMode ? '/demo' : profile ? '/app' : '/signup';
+  const destination = isDemoMode ? '/demo' : profile ? '/app' : '/invite';
 
   const steps: OnboardingStep[] = [
     {
@@ -551,7 +551,7 @@ export function OnboardingWalkthroughScreen() {
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    {isDemoMode ? 'Coba Demo Interaktif' : 'Mulai Pakai PairFlow'}
+                    {isDemoMode ? 'Coba Demo Interaktif' : 'Punya Undangan? Daftar'}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </span>
                   <div className="absolute inset-0 animate-shimmer" />

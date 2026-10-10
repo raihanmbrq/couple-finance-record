@@ -106,7 +106,7 @@ export function HouseholdSyncArticlePage() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate('/invite')}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-bold text-white shadow-glow-emerald transition-all hover:brightness-105 active:scale-[0.98]"
                 >
                   Coba PairFlow

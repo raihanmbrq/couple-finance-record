@@ -112,7 +112,7 @@ export default function Hero({ onSignUp, onDemo }: HeroProps) {
                 onClick={handleGetStarted}
                 className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-7 py-3.5 text-base font-semibold text-white shadow-glow-emerald transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.97] sm:w-auto"
               >
-                <span className="relative z-10">Mulai Gratis Sekarang</span>
+                <span className="relative z-10">Punya Undangan? Masuk</span>
                 <ArrowRight className="relative z-10 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 <div className="absolute inset-0 animate-shimmer" />
               </button>

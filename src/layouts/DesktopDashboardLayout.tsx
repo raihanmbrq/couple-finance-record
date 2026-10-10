@@ -14,6 +14,8 @@ import { DesktopTransactionsScreen } from '@/screens/desktop/DesktopTransactions
 import { DesktopBudgetsGoalsScreen } from '@/screens/desktop/DesktopBudgetsGoalsScreen';
 import { DesktopBulkCenterScreen } from '@/screens/desktop/DesktopBulkCenterScreen';
 import { DesktopCircleMembersScreen } from '@/screens/desktop/DesktopCircleMembersScreen';
+import { DesktopAdminInvitationsScreen } from '@/screens/desktop/DesktopAdminInvitationsScreen';
+import { useApp } from '@/context/AppContext';
 
 interface TransactionFilter {
   category?: string;
@@ -21,6 +23,7 @@ interface TransactionFilter {
 }
 
 export const DesktopDashboardLayout: React.FC = () => {
+  const { profile } = useApp();
   const [activeTab, setActiveTab] = useState<DesktopTabKey>(() => {
     return (localStorage.getItem('pairflow_desktop_active_tab') as DesktopTabKey) || 'overview';
   });
@@ -123,6 +126,7 @@ export const DesktopDashboardLayout: React.FC = () => {
             {activeTab === 'budgets-goals' && <DesktopBudgetsGoalsScreen />}
             {activeTab === 'bulk-import-export' && <DesktopBulkCenterScreen />}
             {activeTab === 'circle-members' && <DesktopCircleMembersScreen />}
+            {activeTab === 'admin-invitations' && profile?.is_admin && <DesktopAdminInvitationsScreen />}
           </main>
         </div>
 

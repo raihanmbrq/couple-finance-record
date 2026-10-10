@@ -14,6 +14,8 @@ import type { AppearanceMode, ColorPreset } from '@/lib/types';
 import { ToastProvider } from '@/context/ToastContext';
 import { Toaster } from '@/components/ui/Toaster';
 import { LoginScreen } from '@/screens/LoginScreen';
+import { InvitationTokenScreen } from '@/screens/InvitationTokenScreen';
+import { InvitedSignupScreen } from '@/screens/InvitedSignupScreen';
 import { OnboardingWalkthroughScreen } from '@/screens/OnboardingWalkthroughScreen';
 import { LandingPage } from '@/landing-page/LandingPage';
 import { HouseholdSyncArticlePage } from '@/landing-page/HouseholdSyncArticlePage';
@@ -21,6 +23,7 @@ import { FeatureArticlePage } from '@/landing-page/FeatureArticlePage';
 import { FooterArticlePage } from '@/landing-page/FooterArticlePage';
 import { StatusPage } from '@/landing-page/StatusPage';
 import { PairFlowLoader } from '@/components/ui/PairFlowLoader';
+import { FirstLoginNameModal } from '@/components/FirstLoginNameModal';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobilePwaLayout } from '@/layouts/MobilePwaLayout';
 import { DesktopDashboardLayout } from '@/layouts/DesktopDashboardLayout';
@@ -48,14 +51,35 @@ function GuestDemoRoute() {
   return isDesktop ? <DesktopDashboardLayout /> : <MobilePwaLayout />;
 }
 
-function PublicAuthRoute({ initialSignUp }: { initialSignUp: boolean }) {
+function PublicAuthRoute() {
   const { profile, isGuestDemo } = useApp();
 
   if (profile && !isGuestDemo) {
     return <Navigate to="/app" replace />;
   }
 
-  return <LoginScreen initialSignUp={initialSignUp} />;
+  return <LoginScreen />;
+}
+
+/** Closed registration: token entry + invited signup (public, invite-only). */
+function PublicInviteTokenRoute() {
+  const { profile, isGuestDemo } = useApp();
+
+  if (profile && !isGuestDemo) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return <InvitationTokenScreen />;
+}
+
+function PublicInvitedSignupRoute() {
+  const { profile, isGuestDemo } = useApp();
+
+  if (profile && !isGuestDemo) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return <InvitedSignupScreen />;
 }
 
 function RouteScrollManager() {
@@ -131,10 +155,13 @@ function AppContent() {
           <Route path="/:section/:slug" element={<FooterArticlePage />} />
 
           {/* Auth Routes */}
-          <Route path="/login" element={<PublicAuthRoute initialSignUp={false} />} />
+          <Route path="/login" element={<PublicAuthRoute />} />
           <Route path="/signin" element={<Navigate to="/login" replace />} />
-          <Route path="/signup" element={<PublicAuthRoute initialSignUp={true} />} />
-          <Route path="/register" element={<Navigate to="/signup" replace />} />
+          {/* Closed registration: public signup is disabled — invite-only via token. */}
+          <Route path="/signup" element={<Navigate to="/login" replace />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
+          <Route path="/invite" element={<PublicInviteTokenRoute />} />
+          <Route path="/invite/signup" element={<PublicInvitedSignupRoute />} />
 
           {/* Main App Dashboard */}
           <Route path="/app" element={<ProtectedDashboardRoute />} />
@@ -144,6 +171,9 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+
+      {/* One-time "Adjust Nama Lengkap" popup for invited first logins */}
+      <FirstLoginNameModal />
     </>
   );
 }

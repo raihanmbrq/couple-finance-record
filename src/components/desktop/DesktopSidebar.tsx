@@ -9,9 +9,11 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Wallet
+  Wallet,
+  ShieldCheck
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useApp } from '@/context/AppContext';
 
 export type DesktopTabKey = 
   | 'overview' 
@@ -20,7 +22,8 @@ export type DesktopTabKey =
   | 'transactions' 
   | 'budgets-goals' 
   | 'bulk-import-export' 
-  | 'circle-members';
+  | 'circle-members'
+  | 'admin-invitations';
 
 interface DesktopSidebarProps {
   activeTab: DesktopTabKey;
@@ -38,6 +41,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onOpenSettings,
 }) => {
   const { t } = useLanguage();
+  const { profile } = useApp();
 
   const navItems: { id: DesktopTabKey; label: string; icon: React.ElementType; testId: string }[] = [
     { id: 'overview', label: t('sidebar.dashboard') || 'Dashboard', icon: LayoutDashboard, testId: 'sidebar-link-overview' },
@@ -47,6 +51,10 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { id: 'budgets-goals', label: t('sidebar.budgets-goals') || 'Budgets & Goals', icon: Target, testId: 'sidebar-link-budgets-goals' },
     { id: 'bulk-import-export', label: t('sidebar.bulk-import-export') || 'Bulk Import/Export', icon: FileSpreadsheet, testId: 'sidebar-link-bulk-import-export' },
     { id: 'circle-members', label: t('sidebar.circle-members') || 'Circle Members', icon: Users2, testId: 'sidebar-link-circle-members' },
+    // Admin-only: invite-only registration token generator (desktop view only).
+    ...(profile?.is_admin
+      ? [{ id: 'admin-invitations' as DesktopTabKey, label: 'Admin Invitations', icon: ShieldCheck, testId: 'sidebar-link-admin-invitations' }]
+      : []),
   ];
 
   return (

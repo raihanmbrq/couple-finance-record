@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { TRANSFER_CATEGORY, type Profile, type Household, type HouseholdMember, type Wallet, type WalletTypeRow, type Transaction, type Budget, type Goal, type GoalInput, type TransactionCategory, type BulkImportRow } from '@/lib/types';
+import { TRANSFER_CATEGORY, type Profile, type Household, type HouseholdMember, type Wallet, type WalletTypeRow, type Transaction, type Budget, type Goal, type GoalInput, type TransactionCategory, type BulkImportRow, type InvitationToken } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import { uploadAvatarToCloudinary } from '@/lib/cloudinary';
+import { buildInvitationShareLink, deriveFullNameFromEmail, generateInvitationToken, sendInvitationEmail, type InvitationEmailResult } from '@/lib/invitations';
 import { accumulateEffects, invertEffects, walletEffects } from '@/lib/transactionMath';
 import { findLegacyIncomeLeg, normalizeLegacyTransfers } from '@/lib/transferNormalize';
 import { DemoTransactionLimitError, GUEST_DEMO_TRANSACTION_LIMIT } from '@/lib/guestDemo';
@@ -40,6 +41,12 @@ interface AppState {
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateCurrency: (code: string) => Promise<void>;
   updateAvatar: (file: File) => Promise<void>;
+  // Closed registration (invitation tokens)
+  verifyInvitationToken: (token: string) => Promise<string | null>;
+  registerWithInvitation: (token: string, email: string, password: string) => Promise<void>;
+  completeFirstLogin: (fullName: string) => Promise<void>;
+  createInvitation: (email: string) => Promise<{ invitation: InvitationToken; emailResult: InvitationEmailResult; shareLink: string }>;
+  listInvitations: () => Promise<InvitationToken[]>;
   // Onboarding
   setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
   createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
@@ -591,6 +598,123 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setError('Google sign-in is not available in this build. Use email/password or try the demo mode.');
   }, []);
 
+  /**
+   * Closed registration: verify an invitation token server-side and return the
+   * email it is bound to (or null when invalid/used/expired).
+   */
+  const verifyInvitationToken = useCallback(async (token: string) => {
+    const { data, error } = await supabase.rpc('verify_invitation_token', { p_token: token.trim() });
+    if (error) throw error;
+    return (data as string | null) ?? null;
+  }, []);
+
+  /**
+   * Closed registration: create the invited account, seed the profile with the
+   * name derived from the email and `is_first_login = true`, then auto sign-in.
+   * The token is validated + consumed server-side by the `auth.users` trigger.
+   */
+  const registerWithInvitation = useCallback(async (token: string, email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const fullName = deriveFullNameFromEmail(normalizedEmail);
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            invitation_token: token.trim(),
+          },
+        },
+      });
+      if (signUpError) throw signUpError;
+
+      const user = data.user;
+      if (!user) {
+        throw new Error('Registrasi tidak mengembalikan data pengguna.');
+      }
+
+      let finalSession = data.session;
+      if (!finalSession) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
+        if (signInError) throw signInError;
+        finalSession = signInData.session;
+      }
+
+      if (!finalSession) {
+        throw new Error('Registrasi berhasil, tetapi sesi login tidak dapat dibuat. Pastikan konfirmasi email dinonaktifkan di Supabase.');
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: user.id,
+            email: normalizedEmail,
+            full_name: fullName,
+            role: 'single',
+            avatar_url: null,
+            currency: 'IDR',
+            is_first_login: true,
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' },
+        );
+      if (profileError) throw profileError;
+
+      localStorage.removeItem('duitbersama_session');
+      setIsGuestDemo(false);
+      setAppMode('live');
+      setIsDemo(false);
+      await loadLiveData(user.id, normalizedEmail);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registrasi gagal');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [loadLiveData]);
+
+  /** Admin: generate + persist an invitation token (RLS enforces admin-only). */
+  const createInvitation = useCallback(async (email: string) => {
+    if (!profile) throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
+    const targetEmail = email.trim().toLowerCase();
+    const token = generateInvitationToken();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await supabase
+      .from('invitation_tokens')
+      .insert({
+        email: targetEmail,
+        token,
+        created_by: profile.id,
+        expires_at: expiresAt,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    const invitation = data as InvitationToken;
+    const emailResult = await sendInvitationEmail({ email: targetEmail, token });
+    return { invitation, emailResult, shareLink: buildInvitationShareLink(token) };
+  }, [profile]);
+
+  /** Admin: invitation history for the dashboard table. */
+  const listInvitations = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('invitation_tokens')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data as InvitationToken[]) ?? [];
+  }, []);
+
   const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!profile) return;
     if (mode === 'live') {
@@ -599,6 +723,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     setProfile(prev => prev ? { ...prev, ...updates } : prev);
   }, [mode, profile]);
+
+  /**
+   * First-login popup: save the adjusted full name (when provided) and clear
+   * the `is_first_login` flag so the modal never reappears.
+   */
+  const completeFirstLogin = useCallback(async (fullName: string) => {
+    const trimmed = fullName.trim();
+    const updates: Partial<Profile> = { is_first_login: false };
+    if (trimmed) updates.full_name = trimmed;
+    await updateProfile(updates);
+  }, [updateProfile]);
 
   const updateCurrency = useCallback(async (code: string) => {
     await updateProfile({ currency: code });
@@ -1553,6 +1688,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateProfile,
     updateCurrency,
     updateAvatar,
+    verifyInvitationToken,
+    registerWithInvitation,
+    completeFirstLogin,
+    createInvitation,
+    listInvitations,
     setMode,
     createHousehold,
     joinHousehold,

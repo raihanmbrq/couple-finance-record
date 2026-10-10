@@ -115,7 +115,7 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
               onClick={handleGetStartedClick}
               className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow-emerald transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.97]"
             >
-              <span className="relative z-10">Mulai Gratis</span>
+              <span className="relative z-10">Punya Undangan?</span>
               <div className="absolute inset-0 animate-shimmer" />
             </button>
           </div>
@@ -167,7 +167,7 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
                   }}
                   className="rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-glow-emerald hover:brightness-105 transition-all"
                 >
-                  Mulai Gratis
+                  Punya Undangan?
                 </button>
               </div>
             </div>

@@ -112,7 +112,7 @@ export default function PwaBanner({ onSignUp }: PwaBannerProps) {
                 className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-brand-400 to-brand-500 px-7 py-3.5 text-base font-semibold text-slate-900 shadow-glow-emerald transition-all hover:brightness-110 active:scale-[0.97]"
               >
                 <Download className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
-                Mulai Gunakan PairFlow
+                Punya Undangan? Masuk
               </button>
               <div className="flex items-center gap-2 text-sm text-slate-400">
                 <span className="flex h-2 w-2 rounded-full bg-brand-400 animate-pulse-ring" />

@@ -606,6 +606,38 @@ export const translations: Record<Language, Record<string, string>> = {
 
     //Desktop Header Profile
     'profileMenu.manage': 'Kelola Akun dan Preferensi',
+
+    // ══ Closed Registration — Invitation Token ══
+    'invite.title': 'Registrasi Terbatas',
+    'invite.subtitle': 'PairFlow saat ini hanya untuk tester yang diundang. Masukkan token undangan kamu untuk melanjutkan.',
+    'invite.tokenLabel': 'Invited Token',
+    'invite.tokenPlaceholder': 'MISAL: A7K2P9QX4M',
+    'invite.verify': 'Verifikasi Token',
+    'invite.verifying': 'Memverifikasi…',
+    'invite.tokenRequired': 'Token undangan wajib diisi.',
+    'invite.invalid': 'Token undangan tidak valid, sudah digunakan, atau sudah kadaluarsa.',
+    'invite.verifyFailed': 'Gagal memverifikasi token. Coba lagi.',
+    'invite.backToLanding': 'Kembali ke Beranda',
+    'invite.closedNote': 'Registrasi publik ditutup — hanya lewat undangan.',
+    'invite.haveAccount': 'Sudah punya akun? Masuk',
+    'invite.haveTokenCta': 'Punya token undangan? Daftar',
+    'invite.footer': 'Butuh undangan? Hubungi admin PairFlow.',
+    'invite.signupTitle': 'Buat Akun Kamu',
+    'invite.signupSubtitle': 'Email & kata sandi saja. Nama lengkap akan otomatis dibuat dari email dan bisa diubah setelah masuk.',
+    'invite.tokenVerified': 'Token terverifikasi',
+    'invite.emailMismatch': 'Email harus sama persis dengan email yang terdaftar pada token undangan ini.',
+    'invite.passwordTooShort': 'Kata sandi minimal 6 karakter.',
+    'invite.createAccount': 'Daftar & Masuk',
+    'invite.emailLockedNote': 'Email terkunci sesuai token undangan kamu.',
+    'invite.autoNameNote': 'Nama lengkap otomatis diambil dari prefix email.',
+
+    // ══ First Login — Adjust Nama Lengkap ══
+    'firstLogin.title': 'Sesuaikan Nama Lengkap',
+    'firstLogin.subtitle': 'Kami mengisi nama kamu otomatis dari email. Perbarui bila perlu — bisa diubah lagi nanti.',
+    'firstLogin.nameLabel': 'Nama Lengkap',
+    'firstLogin.namePlaceholder': 'Nama lengkap kamu',
+    'firstLogin.save': 'Simpan Nama',
+    'firstLogin.skip': 'Nanti saja',
   },
   en: {
     'common.cancel': 'Cancel',
@@ -1210,6 +1242,38 @@ export const translations: Record<Language, Record<string, string>> = {
 
     //Desktop Header Profile
     'profileMenu.manage': 'Manage Account & Preferences',
+
+    // ══ Closed Registration — Invitation Token ══
+    'invite.title': 'Invite-Only Registration',
+    'invite.subtitle': 'PairFlow is currently limited to invited testers. Enter your invitation token to continue.',
+    'invite.tokenLabel': 'Invited Token',
+    'invite.tokenPlaceholder': 'E.G. A7K2P9QX4M',
+    'invite.verify': 'Verify Token',
+    'invite.verifying': 'Verifying…',
+    'invite.tokenRequired': 'Invitation token is required.',
+    'invite.invalid': 'This invitation token is invalid, already used, or expired.',
+    'invite.verifyFailed': 'Could not verify the token. Please try again.',
+    'invite.backToLanding': 'Back to Home',
+    'invite.closedNote': 'Public registration is closed — invitation only.',
+    'invite.haveAccount': 'Already have an account? Sign in',
+    'invite.haveTokenCta': 'Have an invitation token? Register',
+    'invite.footer': 'Need an invitation? Contact the PairFlow admin.',
+    'invite.signupTitle': 'Create Your Account',
+    'invite.signupSubtitle': 'Email & password only. Your full name is derived from the email and can be adjusted after signing in.',
+    'invite.tokenVerified': 'Token verified',
+    'invite.emailMismatch': 'The email must match the email bound to this invitation token exactly.',
+    'invite.passwordTooShort': 'Password must be at least 6 characters.',
+    'invite.createAccount': 'Register & Sign In',
+    'invite.emailLockedNote': 'Email is locked to your invitation token.',
+    'invite.autoNameNote': 'Full name is auto-derived from the email prefix.',
+
+    // ══ First Login — Adjust Full Name ══
+    'firstLogin.title': 'Adjust Full Name',
+    'firstLogin.subtitle': 'We pre-filled your name from your email. Update it if needed — you can change it again later.',
+    'firstLogin.nameLabel': 'Full Name',
+    'firstLogin.namePlaceholder': 'Your full name',
+    'firstLogin.save': 'Save Name',
+    'firstLogin.skip': 'Maybe later',
   },
 };
 

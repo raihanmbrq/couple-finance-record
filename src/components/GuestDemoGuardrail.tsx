@@ -56,10 +56,10 @@ export function GuestDemoGuardrail() {
 
         <button
           type="button"
-          onClick={() => navigate('/signup?fromDemo=true')}
+          onClick={() => navigate('/invite')}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-lg transition hover:brightness-105 active:scale-[0.98]"
         >
-          Daftar &amp; Simpan Data
+          Punya Undangan? Daftar
           <ArrowRight className="h-4 w-4" />
         </button>
         <button
