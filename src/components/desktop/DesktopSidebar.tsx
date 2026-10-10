@@ -9,7 +9,6 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Heart,
   Wallet
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -63,9 +62,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         <div className={`flex items-center overflow-hidden ${
           collapsed ? 'justify-center' : 'gap-3'
         }`}>
-          <div className={`${collapsed ? 'w-8 h-8' : 'w-9 h-9'} rounded-xl bg-accent flex items-center justify-center text-accent-text shrink-0 shadow-sm`}>
-            <Heart className="w-5 h-5 fill-current" />
-          </div>
+          <img src="/icons/icon-512.png" alt="PairFlow logo" className={`${collapsed ? 'w-8 h-8' : 'w-9 h-9'} rounded-xl object-contain shrink-0 shadow-sm`} />
           {!collapsed && (
             <div className="flex flex-col truncate">
               <span className="font-bold text-lg text-text-primary leading-none tracking-tight">PairFlow</span>

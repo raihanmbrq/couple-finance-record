@@ -3,8 +3,10 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import FeatureGrid from './components/FeatureGrid';
 import ProblemSolution from './components/ProblemSolution';
+import SecuritySection from './components/SecuritySection';
 import PwaBanner from './components/PwaBanner';
 import Footer from './components/Footer';
+import PageTransition from './components/PageTransition';
 
 export interface LandingPageProps {
   onLogin?: () => void;
@@ -36,12 +38,13 @@ export function LandingPage({ onLogin, onSignUp, onDemo }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-white font-figtree text-slate-900 antialiased selection:bg-brand-500 selection:text-white">
       <Navbar onLogin={handleLogin} onSignUp={handleSignUp} />
-      <main>
+      <PageTransition>
         <Hero onSignUp={handleSignUp} onDemo={handleDemo} />
         <FeatureGrid />
         <ProblemSolution />
+        <SecuritySection />
         <PwaBanner onSignUp={handleSignUp} />
-      </main>
+      </PageTransition>
       <Footer />
     </div>
   );

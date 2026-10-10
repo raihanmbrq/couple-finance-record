@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -28,6 +29,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
   onOpenSettings,
   onOpenCommandPalette,
 }) => {
+  const navigate = useNavigate();
   const { profile, household, householdMembers, signOut, isDemo } = useApp();
   const { language, setLanguage, t } = useLanguage();
   const { colorPreset, setColorPreset } = useTheme();
@@ -37,6 +39,12 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
   });
 
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    setProfileDropdownOpen(false);
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     localStorage.setItem('pairflow_privacy_hide_balance', String(hideBalance));
@@ -250,10 +258,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
                   </button>
 
                   <button
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      signOut();
-                    }}
+                    onClick={handleSignOut}
                     data-testid="sign-out-btn"
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-rose-500 hover:bg-rose-500/10 transition-colors"
                   >
@@ -269,4 +274,3 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
     </header>
   );
 };
-

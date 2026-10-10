@@ -1,5 +1,35 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Play, Heart, Wallet, TrendingUp, Users, Check, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowLeftRight,
+  ArrowRight,
+  ArrowUpRight,
+  BarChart3,
+  BatteryFull,
+  CalendarDays,
+  Check,
+  DollarSign,
+  FileSpreadsheet,
+  Home,
+  Landmark,
+  LayoutDashboard,
+  Play,
+  PiggyBank,
+  Plus,
+  Settings,
+  ShoppingBag,
+  TableProperties,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  User,
+  Users,
+  Users2,
+  Wallet,
+  Wifi,
+  Zap,
+} from 'lucide-react';
 
 interface HeroProps {
   onSignUp?: () => void;
@@ -119,9 +149,9 @@ export default function Hero({ onSignUp, onDemo }: HeroProps) {
 
 function DualDeviceMockup() {
   return (
-    <div className="relative mx-auto max-w-lg lg:max-w-none">
+    <div className="relative mx-auto w-full min-w-0 max-w-lg lg:min-h-[500px] lg:max-w-none">
       {/* Sync indicator between devices */}
-      <div className="absolute left-1/2 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
+      <div className="absolute left-[39%] top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
         <div className="relative">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-brand-200 bg-white shadow-float">
             <Zap className="h-6 w-6 text-brand-500 fill-brand-500" />
@@ -131,12 +161,12 @@ function DualDeviceMockup() {
       </div>
 
       {/* Mobile phone frame */}
-      <div className="relative z-10 mx-auto w-[280px] animate-float sm:w-[300px] lg:absolute lg:left-0 lg:top-16 lg:mx-0 lg:w-[260px]">
+      <div className="relative z-10 mx-auto w-[280px] animate-float sm:w-[300px] lg:absolute lg:left-0 lg:top-14 lg:mx-0 lg:w-[250px]">
         <PhoneMockup />
       </div>
 
       {/* Laptop/Dashboard frame */}
-      <div className="relative z-0 mt-6 lg:absolute lg:right-0 lg:top-0 lg:mt-0 lg:w-[380px] animate-float-delayed">
+      <div className="relative z-0 mx-auto mt-6 w-full max-w-[420px] animate-float-delayed lg:absolute lg:right-0 lg:top-0 lg:mt-0">
         <DashboardMockup />
       </div>
     </div>
@@ -144,78 +174,180 @@ function DualDeviceMockup() {
 }
 
 function PhoneMockup() {
+  const wallets = [
+    { name: 'Joint Account', balance: '8.500.000', icon: PiggyBank, tone: 'bg-brand-50 text-brand-600' },
+    { name: 'Andi Cash', balance: '1.250.000', icon: Wallet, tone: 'bg-amber-50 text-amber-600' },
+    { name: 'Sari Bank', balance: '3.200.000', icon: Landmark, tone: 'bg-blue-50 text-blue-600' },
+  ];
+
+  const breakdown = [
+    { name: 'Food & Groceries', amount: '2,4jt', pct: 72, bar: 'bg-amber-400' },
+    { name: 'Bills & Utilities', amount: '1,7jt', pct: 52, bar: 'bg-blue-500' },
+    { name: 'Transport', amount: '0,6jt', pct: 30, bar: 'bg-brand-500' },
+  ];
+
+  const recent = [
+    { name: 'Groceries Indomaret', who: 'Sari', amount: '-85.000', icon: ShoppingBag, tone: 'bg-rose-50 text-rose-600', amountColor: 'text-slate-700' },
+    { name: 'Monthly Salary', who: 'Andi', amount: '+5.000.000', icon: TrendingUp, tone: 'bg-emerald-50 text-emerald-600', amountColor: 'text-emerald-600' },
+    { name: 'Electricity & Water', who: 'Bersama', amount: '-1.200.000', icon: Zap, tone: 'bg-slate-100 text-slate-600', amountColor: 'text-slate-700' },
+  ];
+
+  const leftNav = [
+    { label: 'Home', icon: Home, active: true },
+    { label: 'Transaksi', icon: ArrowLeftRight, active: false },
+  ];
+  const rightNav = [
+    { label: 'Budget', icon: PiggyBank },
+    { label: 'Profil', icon: User },
+  ];
+
   return (
-    <div className="rounded-[2.5rem] border-[3px] border-slate-800 bg-slate-800 p-2 shadow-float-lg">
-      <div className="relative overflow-hidden rounded-[2rem] bg-white">
-        {/* Notch */}
-        <div className="absolute left-1/2 top-0 z-10 h-6 w-28 -translate-x-1/2 rounded-b-2xl bg-slate-800" />
+    <div className="rounded-[2.5rem] border-[3px] border-slate-800 bg-slate-800 p-2 shadow-2xl">
+      <div className="relative overflow-hidden rounded-[2rem] bg-slate-50">
+        {/* Dynamic island */}
+        <div className="absolute left-1/2 top-1 z-20 h-4 w-16 -translate-x-1/2 rounded-full bg-slate-900" />
 
         {/* Screen content */}
-        <div className="px-4 pt-9 pb-4">
+        <div className="px-3.5 pb-16 pt-5">
           {/* Status bar */}
-          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400">
+          <div className="flex items-center justify-between text-[9px] font-bold text-slate-800">
             <span>9:41</span>
-            <span>PairFlow</span>
-            <span>100%</span>
+            <span className="flex items-center gap-1.5" aria-label="Wi-Fi connected, battery full">
+              <Wifi className="h-3 w-3" />
+              <BatteryFull className="h-3.5 w-3.5" />
+            </span>
           </div>
 
-          {/* Balance card */}
-          <div className="mt-3 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 p-4 text-white shadow-glow-emerald">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-brand-100">Total Saldo Bersama</span>
-              <Users className="h-3.5 w-3.5 text-brand-100" />
+          {/* Top app bar */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img src="/icons/icon-512.png" alt="PairFlow logo" className="h-7 w-7 rounded-lg object-contain" />
+              <span className="text-sm font-extrabold tracking-tight text-slate-900">PairFlow</span>
             </div>
-            <p className="mt-1 text-2xl font-bold">Rp 12.450.000</p>
-            <div className="mt-2 flex items-center gap-1.5">
-              <TrendingUp className="h-3 w-3 text-brand-100" />
-              <span className="text-[10px] text-brand-100">+8.2% bulan ini</span>
-            </div>
-          </div>
-
-          {/* Quick actions */}
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {['Catat', 'Wallet', 'Impian'].map((label) => (
-              <div
-                key={label}
-                className="flex flex-col items-center gap-1 rounded-xl bg-slate-50 py-2"
-              >
-                <div className="h-7 w-7 rounded-lg bg-brand-100 flex items-center justify-center">
-                  <Wallet className="h-3.5 w-3.5 text-brand-600" />
-                </div>
-                <span className="text-[9px] font-medium text-slate-600">{label}</span>
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-1">
+              <div className="flex -space-x-1">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-white bg-brand-500 text-[7px] font-bold text-white">A</span>
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-white bg-rose-400 text-[7px] font-bold text-white">S</span>
               </div>
-            ))}
+              <span className="text-[8px] font-semibold text-slate-500">Andi &amp; Sari</span>
+            </div>
           </div>
 
-          {/* Recent transactions */}
+          {/* Greeting */}
+          <div className="mt-3">
+            <p className="text-sm font-extrabold tracking-tight text-slate-900">Dashboard</p>
+            <p className="text-[9px] font-medium text-slate-400">Halo, Andi 👋</p>
+          </div>
+
+          {/* Total balance hero card */}
+          <div className="mt-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-3.5 text-white shadow-lg shadow-emerald-900/15">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-medium text-emerald-50/90">Total Saldo Bersama</span>
+              <Wallet className="h-3 w-3 text-emerald-50" />
+            </div>
+            <p className="mt-1 text-lg font-extrabold tracking-tight tabular-nums">Rp 12.450.000</p>
+            <div className="mt-2.5 flex gap-2">
+              <div className="flex-1 rounded-xl bg-white/10 p-2">
+                <div className="flex items-center gap-1 text-[8px] text-emerald-50/90">
+                  <ArrowUpRight className="h-3 w-3" />
+                  <span>Pemasukan</span>
+                </div>
+                <p className="mt-0.5 text-[10px] font-bold tabular-nums">+Rp 9.200.000</p>
+              </div>
+              <div className="flex-1 rounded-xl bg-white/10 p-2">
+                <div className="flex items-center gap-1 text-[8px] text-emerald-50/90">
+                  <ArrowDownRight className="h-3 w-3" />
+                  <span>Pengeluaran</span>
+                </div>
+                <p className="mt-0.5 text-[10px] font-bold tabular-nums">-Rp 3.450.000</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Wallet mini slider */}
           <div className="mt-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-700">Transaksi Terakhir</span>
-              <span className="text-[9px] text-brand-600 font-medium">Lihat semua</span>
+              <span className="text-[10px] font-bold text-slate-700">Wallet Saya</span>
+              <span className="text-[8px] font-medium text-brand-600">Lihat semua</span>
             </div>
-            <div className="mt-2 space-y-2">
-              {[
-                { name: 'GrabFood', amt: '-45.000', who: 'Istri', color: 'bg-rose-100 text-rose-600' },
-                { name: 'Gaji Bulanan', amt: '+8.500.000', who: 'Suami', color: 'bg-brand-100 text-brand-600' },
-                { name: 'Listrik PLN', amt: '-340.000', who: 'Bersama', color: 'bg-blue-100 text-blue-600' },
-              ].map((tx) => (
-                <div key={tx.name} className="flex items-center justify-between rounded-xl border border-slate-100 p-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-7 w-7 rounded-lg ${tx.color} flex items-center justify-center`}>
-                      <Wallet className="h-3.5 w-3.5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-semibold text-slate-700">{tx.name}</p>
-                      <p className="text-[8px] text-slate-400">{tx.who}</p>
-                    </div>
+            <div className="mt-1.5 flex gap-2">
+              {wallets.map((w) => (
+                <div key={w.name} className="min-w-0 flex-1 rounded-xl border border-slate-100 bg-white p-2 shadow-sm">
+                  <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${w.tone}`}>
+                    <w.icon className="h-3 w-3" strokeWidth={2.2} />
                   </div>
-                  <span className={`text-[10px] font-bold ${tx.amt.startsWith('+') ? 'text-brand-600' : 'text-slate-700'}`}>
-                    {tx.amt}
-                  </span>
+                  <p className="mt-1 truncate text-[8px] font-semibold text-slate-700">{w.name}</p>
+                  <p className="truncate text-[8px] font-bold tabular-nums text-slate-900">Rp {w.balance}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-1.5 flex justify-center gap-1">
+              <span className="h-1 w-4 rounded-full bg-brand-500" />
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+            </div>
+          </div>
+
+          {/* Expense breakdown */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-700">Pengeluaran per Kategori</span>
+              <span className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[7px] font-semibold text-slate-500">Bulan ini</span>
+            </div>
+            <div className="mt-1.5 space-y-2 rounded-xl border border-slate-100 bg-white p-2.5 shadow-sm">
+              {breakdown.map((item) => (
+                <div key={item.name}>
+                  <div className="flex items-center justify-between text-[8px]">
+                    <span className="font-semibold text-slate-600">{item.name}</span>
+                    <span className="font-bold tabular-nums text-slate-700">Rp {item.amount}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full rounded-full ${item.bar}`} style={{ width: `${item.pct}%` }} />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Recent activity */}
+          <div className="mt-3">
+            <span className="text-[10px] font-bold text-slate-700">Aktivitas Terakhir</span>
+            <div className="mt-1.5 space-y-1.5">
+              {recent.map((tx) => (
+                <div key={tx.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-2 shadow-sm">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${tx.tone}`}>
+                      <tx.icon className="h-3 w-3" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[8px] font-semibold text-slate-700">{tx.name}</p>
+                      <p className="text-[7px] text-slate-400">{tx.who}</p>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 text-[9px] font-bold tabular-nums ${tx.amountColor}`}>{tx.amount}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom navigation */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-slate-200 bg-white/95 px-2.5 pb-2.5 pt-2 backdrop-blur">
+          {leftNav.map((item) => (
+            <div key={item.label} className="flex w-11 flex-col items-center gap-0.5">
+              <item.icon className={`h-4 w-4 ${item.active ? 'text-brand-600' : 'text-slate-400'}`} strokeWidth={item.active ? 2.5 : 2} />
+              <span className={`text-[7px] font-semibold ${item.active ? 'text-brand-600' : 'text-slate-400'}`}>{item.label}</span>
+            </div>
+          ))}
+          <div className="-mt-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-4 border-slate-50 bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/30">
+            <Plus className="h-5 w-5" strokeWidth={2.5} />
+          </div>
+          {rightNav.map((item) => (
+            <div key={item.label} className="flex w-11 flex-col items-center gap-0.5">
+              <item.icon className="h-4 w-4 text-slate-400" strokeWidth={2} />
+              <span className="text-[7px] font-semibold text-slate-400">{item.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -223,86 +355,204 @@ function PhoneMockup() {
 }
 
 function DashboardMockup() {
+  const navItems = [
+    { label: 'Dashboard', icon: LayoutDashboard, active: true },
+    { label: 'Wallets', icon: Wallet, active: false },
+    { label: 'Analytics', icon: BarChart3, active: false },
+    { label: 'Transactions', icon: TableProperties, active: false },
+    { label: 'Budgets & Goals', icon: Target, active: false },
+    { label: 'Import / Export', icon: FileSpreadsheet, active: false },
+    { label: 'Circle Members', icon: Users2, active: false },
+  ];
+
+  const metrics = [
+    { label: 'Total Balance', value: 'Rp 13,4jt', tone: 'text-slate-900', icon: Wallet, iconTone: 'bg-brand-500/15 text-brand-600' },
+    { label: 'Total Income', value: 'Rp 9,2jt', tone: 'text-emerald-600', icon: TrendingUp, iconTone: 'bg-emerald-500/15 text-emerald-600' },
+    { label: 'Total Expenses', value: 'Rp 3,45jt', tone: 'text-rose-600', icon: TrendingDown, iconTone: 'bg-rose-500/15 text-rose-600' },
+    { label: 'Net Cashflow', value: 'Rp 5,75jt', tone: 'text-emerald-600', icon: DollarSign, iconTone: 'bg-emerald-500/15 text-emerald-600' },
+  ];
+
+  const members = [
+    { name: 'Andi (Suami)', spent: 'Rp 1,05jt', pct: 45, bar: 'bg-brand-500' },
+    { name: 'Sari (Istri)', spent: 'Rp 1,28jt', pct: 55, bar: 'bg-amber-400' },
+  ];
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-float-lg">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
       {/* Browser bar */}
-      <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2">
+      <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50/70 px-3 py-2">
         <div className="h-2.5 w-2.5 rounded-full bg-rose-300" />
         <div className="h-2.5 w-2.5 rounded-full bg-amber-300" />
         <div className="h-2.5 w-2.5 rounded-full bg-brand-300" />
-        <div className="ml-2 flex-1 rounded-md bg-slate-50 px-2 py-0.5 text-[9px] text-slate-400">
-          app.pairflow.id
-        </div>
+        <div className="ml-2 flex-1 rounded-md bg-white px-2 py-0.5 text-[8px] text-slate-400">app.pairflow.id/dashboard</div>
       </div>
 
-      {/* Dashboard content */}
-      <div className="pt-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-slate-400">Dashboard</p>
-            <p className="text-sm font-bold text-slate-800">Ringkasan Keuangan</p>
-          </div>
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-[88px] shrink-0 border-r border-slate-100 bg-slate-50/60 p-2">
           <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1 rounded-lg bg-brand-50 px-2 py-1">
-              <Heart className="h-3 w-3 text-brand-600 fill-brand-600" strokeWidth={0} />
-              <span className="text-[9px] font-semibold text-brand-700">Synced</span>
-            </div>
+            <img src="/icons/icon-512.png" alt="PairFlow logo" className="h-5 w-5 rounded-md object-contain" />
+            <span className="text-[9px] font-extrabold tracking-tight text-slate-900">PairFlow</span>
           </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {[
-            { label: 'Pemasukan', val: '18.5jt', color: 'text-brand-600', bg: 'bg-brand-50' },
-            { label: 'Pengeluaran', val: '6.1jt', color: 'text-rose-600', bg: 'bg-rose-50' },
-            { label: 'Tabungan', val: '12.4jt', color: 'text-slate-700', bg: 'bg-slate-100' },
-          ].map((stat) => (
-            <div key={stat.label} className={`rounded-xl ${stat.bg} p-2.5`}>
-              <p className="text-[8px] font-medium text-slate-500">{stat.label}</p>
-              <p className={`text-sm font-bold ${stat.color}`}>Rp {stat.val}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Chart */}
-        <div className="mt-3 rounded-xl border border-slate-100 p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-700">Pengeluaran Mingguan</span>
-            <span className="text-[9px] text-slate-400">7 hari</span>
-          </div>
-          <div className="mt-3 flex h-20 items-end gap-1.5">
-            {[40, 65, 35, 80, 50, 70, 55].map((h, i) => (
-              <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-t-md bg-gradient-to-t from-brand-400 to-brand-500 transition-all"
-                  style={{ height: `${h}%` }}
-                />
-                <span className="text-[7px] text-slate-400">{['S', 'S', 'R', 'K', 'J', 'S', 'M'][i]}</span>
+          <p className="mt-0.5 text-[5px] font-medium uppercase tracking-wider text-slate-400">Household Finance</p>
+          <div className="mt-2 space-y-1">
+            {navItems.map((item) => (
+              <div
+                key={item.label}
+                className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[7px] font-semibold ${
+                  item.active ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-sm' : 'text-slate-500'
+                }`}
+              >
+                <item.icon className="h-2.5 w-2.5 shrink-0" strokeWidth={2.2} />
+                <span className="truncate">{item.label}</span>
               </div>
             ))}
           </div>
+          <div className="mt-2 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[7px] font-semibold text-slate-400">
+            <Settings className="h-2.5 w-2.5 shrink-0" />
+            <span>Settings</span>
+          </div>
         </div>
 
-        {/* Budget progress */}
-        <div className="mt-3 space-y-2">
-          {[
-            { label: 'Makanan', pct: 72, color: 'bg-amber-400' },
-            { label: 'Transport', pct: 45, color: 'bg-brand-500' },
-          ].map((budget) => (
-            <div key={budget.label}>
-              <div className="flex items-center justify-between text-[9px]">
-                <span className="font-medium text-slate-600">{budget.label}</span>
-                <span className="text-slate-400">{budget.pct}%</span>
+        {/* Workspace */}
+        <div className="min-w-0 flex-1 p-2.5">
+          {/* Top header */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/80 px-2 py-1">
+              <div className="flex h-4 w-4 items-center justify-center rounded-md bg-brand-500/15 text-brand-600">
+                <Users className="h-2.5 w-2.5" />
               </div>
-              <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${budget.color} transition-all`}
-                  style={{ width: `${budget.pct}%` }}
-                />
+              <div className="leading-tight">
+                <p className="text-[7px] font-medium text-slate-400">Andi &amp; Sari</p>
+                <p className="text-[7px] font-semibold text-slate-700">Couple Mode · Suami</p>
               </div>
             </div>
-          ))}
+            <div className="flex h-5 items-center gap-1 rounded-md bg-gradient-to-r from-brand-500 to-brand-600 px-2 text-[7px] font-semibold text-white shadow-sm">
+              <Plus className="h-2.5 w-2.5" strokeWidth={2.5} />
+              Add Transaction
+            </div>
+          </div>
+
+          {/* Title row */}
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand-500/15 text-brand-600">
+                <LayoutDashboard className="h-2.5 w-2.5" />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[9px] font-bold text-slate-900">Dashboard Overview</p>
+                <p className="flex items-center gap-0.5 text-[6px] text-slate-400">
+                  <CalendarDays className="h-2 w-2" />
+                  1 Sep — 30 Sep 2026
+                </p>
+              </div>
+            </div>
+            <div className="flex h-5 items-center gap-1 rounded-md border border-brand-200 bg-brand-50 px-1.5 text-[7px] font-semibold text-brand-700">
+              <CalendarDays className="h-2.5 w-2.5" />
+              Bulan Ini
+            </div>
+          </div>
+
+          {/* Financial insight banner */}
+          <div className="mt-2.5 flex items-start gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2 py-1.5">
+            <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-amber-500/20 text-amber-600">
+              <AlertTriangle className="h-2.5 w-2.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[7px] font-bold text-amber-700">Food &amp; Groceries naik 24% vs bulan lalu</p>
+              <p className="text-[6px] tabular-nums text-slate-500">Kelebihan Rp 320.000 — tinjau transaksi terbaru.</p>
+            </div>
+          </div>
+
+          {/* Metric cards */}
+          <div className="mt-2.5 grid grid-cols-4 gap-1.5">
+            {metrics.map((m) => (
+              <div key={m.label} className="rounded-lg border border-slate-100 bg-white p-1.5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[6px] font-semibold uppercase tracking-wide text-slate-400">{m.label}</span>
+                  <div className={`flex h-3.5 w-3.5 items-center justify-center rounded ${m.iconTone}`}>
+                    <m.icon className="h-2 w-2" />
+                  </div>
+                </div>
+                <p className={`mt-1 text-[9px] font-extrabold tabular-nums ${m.tone}`}>{m.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Charts row */}
+          <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+            {/* Cashflow trend */}
+            <div className="col-span-2 rounded-lg border border-slate-100 bg-white p-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[7px] font-bold text-slate-700">Cashflow Trend</span>
+                <span className="text-[6px] text-slate-400">Income vs Expense</span>
+              </div>
+              <svg viewBox="0 0 200 56" preserveAspectRatio="none" className="mt-1.5 h-16 w-full">
+                <defs>
+                  <linearGradient id="heroIncomeGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity="0.35" />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="heroExpenseGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity="0.3" />
+                    <stop offset="95%" stopColor="#f43f5e" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M0 14 H200 M0 28 H200 M0 42 H200" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2 2" />
+                <path d="M0 44 L25 30 L50 36 L75 18 L100 24 L125 12 L150 20 L175 10 L200 16 L200 56 L0 56 Z" fill="url(#heroIncomeGrad)" />
+                <path d="M0 44 L25 30 L50 36 L75 18 L100 24 L125 12 L150 20 L175 10 L200 16" fill="none" stroke="#10b981" strokeWidth="1.4" />
+                <path d="M0 50 L25 46 L50 52 L75 40 L100 46 L125 38 L150 44 L175 36 L200 42 L200 56 L0 56 Z" fill="url(#heroExpenseGrad)" />
+                <path d="M0 50 L25 46 L50 52 L75 40 L100 46 L125 38 L150 44 L175 36 L200 42" fill="none" stroke="#f43f5e" strokeWidth="1.4" />
+              </svg>
+              <div className="mt-0.5 flex items-center justify-center gap-3 text-[6px] text-slate-400">
+                <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Income</span>
+                <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rose-500" />Expense</span>
+              </div>
+            </div>
+
+            {/* Member breakdown */}
+            <div className="rounded-lg border border-slate-100 bg-white p-2 shadow-sm">
+              <span className="text-[7px] font-bold text-slate-700">Siapa Belanja Apa?</span>
+              <div className="mt-1.5 space-y-1.5">
+                {members.map((mb) => (
+                  <div key={mb.name} className="rounded-md bg-slate-50 p-1.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="truncate text-[6px] font-semibold text-slate-600">{mb.name}</span>
+                      <span className="shrink-0 text-[6px] font-bold tabular-nums text-slate-700">{mb.spent}</span>
+                    </div>
+                    <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-200">
+                      <div className={`h-full rounded-full ${mb.bar}`} style={{ width: `${mb.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Distribution donuts */}
+          <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+            <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-white p-2 shadow-sm">
+              <div className="relative h-11 w-11 shrink-0 rounded-full" style={{ background: 'conic-gradient(#10b981 0% 45%, #f59e0b 45% 100%)' }}>
+                <div className="absolute inset-[22%] rounded-full bg-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[7px] font-bold text-slate-700">Kontribusi Pasangan</p>
+                <p className="mt-0.5 flex items-center gap-1 text-[6px] text-slate-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Suami 45%</p>
+                <p className="flex items-center gap-1 text-[6px] text-slate-400"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />Istri 55%</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-white p-2 shadow-sm">
+              <div className="relative h-11 w-11 shrink-0 rounded-full" style={{ background: 'conic-gradient(#f59e0b 0% 38%, #3b82f6 38% 62%, #a855f7 62% 82%, #14b8a6 82% 100%)' }}>
+                <div className="absolute inset-[22%] rounded-full bg-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[7px] font-bold text-slate-700">Alokasi Kategori</p>
+                <p className="mt-0.5 flex items-center gap-1 text-[6px] text-slate-400"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />Food 38%</p>
+                <p className="flex items-center gap-1 text-[6px] text-slate-400"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" />Bills 24%</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

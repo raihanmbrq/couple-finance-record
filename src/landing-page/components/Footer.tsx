@@ -1,17 +1,32 @@
 import { Heart, Twitter, Instagram, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const footerLinks = [
   {
     title: 'Produk',
-    links: ['Fitur', 'Cara Kerja', 'Keamanan', 'Edukasi PWA', 'Roadmap'],
+    links: [
+      { label: 'Fitur', href: '/produk/fitur' },
+      { label: 'Cara Kerja', href: '/produk/cara-kerja' },
+      { label: 'Keamanan', href: '/produk/keamanan' },
+      { label: 'Edukasi PWA', href: '/produk/edukasi-pwa' },
+      { label: 'Roadmap', href: '/produk/roadmap' },
+    ],
   },
   {
     title: 'Perusahaan',
-    links: ['Tentang Kami', 'Blog', 'Karir', 'Kontak', 'Press Kit'],
+    links: [
+      { label: 'Tentang Kami', href: '/perusahaan/tentang-kami' },
+      { label: 'Kontak', href: '/perusahaan/kontak' },
+    ],
   },
   {
     title: 'Bantuan',
-    links: ['Pusat Bantuan', 'Privacy Policy', 'Terms of Service', 'Contact Support', 'Status'],
+    links: [
+      { label: 'Privacy Policy', href: '/bantuan/privacy-policy' },
+      { label: 'Terms of Service', href: '/bantuan/terms-of-service' },
+      { label: 'Contact Support', href: '/bantuan/contact-support' },
+      { label: 'Status', href: '/bantuan/status' },
+    ],
   },
 ];
 
@@ -68,13 +83,13 @@ export default function Footer() {
               </h4>
               <ul className="mt-4 space-y-3">
                 {column.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                  <li key={link.href}>
+                    <Link
+                      to={link.href}
                       className="text-sm text-slate-500 transition-colors hover:text-brand-600"
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

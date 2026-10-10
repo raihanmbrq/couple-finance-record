@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import {
   QrCode,
@@ -28,11 +28,13 @@ interface OnboardingStep {
   accentColor: string;
   pillColor: string;
   highlights: string[];
+  articlePath: string;
   renderVisual: () => JSX.Element;
 }
 
 export function OnboardingWalkthroughScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { profile } = useApp();
   const [currentStep, setCurrentStep] = useState(0);
@@ -55,6 +57,7 @@ export function OnboardingWalkthroughScreen() {
         'Sinkron Otomatis Real-time Tanpa Delay',
         'Privasi Terjaga Antar Pasangan Sah',
       ],
+      articlePath: '/features/household-sync',
       renderVisual: () => (
         <div className="relative mx-auto w-full max-w-sm rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -129,6 +132,7 @@ export function OnboardingWalkthroughScreen() {
         'Lacak Asal Sumber Dana Setiap Pengeluaran',
         'Pantau Total Saldo Likuiditas Bersama',
       ],
+      articlePath: '/features/multi-wallet-source-of-funds',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm space-y-2.5">
           {/* Card 1: BCA Rekening Bersama */}
@@ -199,6 +203,7 @@ export function OnboardingWalkthroughScreen() {
         'Input Kategori Kilat + Lampiran Bon / Struk',
         'Notifikasi Instan ke HP Pasangan Saat Dicatat',
       ],
+      articlePath: '/features/attribution-tag-siapa-bayar',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
           <div className="flex items-center justify-between">
@@ -256,6 +261,7 @@ export function OnboardingWalkthroughScreen() {
         'Kantong Impian (Sinking Funds) dengan Progress Bar',
         'Statistik Visual Cashflow & Proyeksi Akhir Bulan',
       ],
+      articlePath: '/features/smart-budgeting-limits',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm space-y-3">
           {/* Budget bar */}
@@ -308,6 +314,7 @@ export function OnboardingWalkthroughScreen() {
         'Enkripsi Data Standar Industri Perbankan (SSL/TLS & AES)',
         '100% Bebas Iklan & Tidak Pernah Menjual Data Pengguna',
       ],
+      articlePath: '/features/bank-grade-data-security',
       renderVisual: () => (
         <div className="mx-auto w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-slate-900 text-white shadow-lg">
@@ -360,6 +367,10 @@ export function OnboardingWalkthroughScreen() {
 
   const handleSkip = () => {
     navigate(destination);
+  };
+
+  const handleStartPairFlow = () => {
+    navigate(destination, { state: { pageTransition: 'onboarding' } });
   };
 
   // Keyboard navigation support
@@ -459,6 +470,23 @@ export function OnboardingWalkthroughScreen() {
                 {current.description}
               </p>
 
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(current.articlePath, {
+                    state: {
+                      returnTo: `${location.pathname}${location.search}${location.hash}`,
+                      returnScrollY: window.scrollY,
+                      returnLabel: 'walkthrough',
+                    },
+                  })
+                }
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700 transition-colors hover:bg-brand-100"
+              >
+                Pelajari detail fitur
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+
               {/* Bullet Highlights */}
               <div className="mt-5 space-y-2.5 w-full">
                 {current.highlights.map((item) => (
@@ -518,7 +546,7 @@ export function OnboardingWalkthroughScreen() {
               <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() => navigate(destination)}
+                  onClick={handleStartPairFlow}
                   className="group relative overflow-hidden inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-glow-emerald transition-all hover:brightness-105 active:scale-[0.97]"
                 >
                   <span className="relative z-10 flex items-center gap-2">

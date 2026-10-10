@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -12,6 +13,7 @@ import { useToast } from '@/context/ToastContext';
 import { SettingsScreen } from './SettingsScreen';
 
 export function ProfileScreen() {
+  const navigate = useNavigate();
   const { profile, household, householdMembers, wallets, transactions, budgets, isDemo, signOut, joinHousehold, leaveHousehold, updateAvatar, updateProfile } = useApp();
   const { showToast } = useToast();
   const [showAvatarAction, setShowAvatarAction] = useState(false);
@@ -30,6 +32,11 @@ export function ProfileScreen() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
   const { t } = useLanguage();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   const handleCopy = () => {
     if (household?.invite_code) {
@@ -370,7 +377,7 @@ export function ProfileScreen() {
       </Card>
 
       {/* Sign Out */}
-      <Button variant="danger" fullWidth onClick={signOut}>
+      <Button variant="danger" fullWidth onClick={handleSignOut}>
         <LogOut className="w-5 h-5 inline mr-2" />
         {t('profile.signOut')}
       </Button>

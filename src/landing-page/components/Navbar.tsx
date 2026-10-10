@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
@@ -21,9 +21,12 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const isNavSolid = scrolled || mobileOpen;
 
   const handleLoginClick = () => {
     if (onLogin) {
@@ -41,10 +44,27 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
     }
   };
 
+  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    const target = document.getElementById(href.replace('#', ''));
+    if (!target) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+
+    event.preventDefault();
+    target.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+    // Keep the URL hash in sync without triggering the browser's instant jump.
+    window.history.replaceState(null, '', href);
+  };
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+        isNavSolid
           ? 'glass border-b border-slate-200/60 shadow-sm'
           : 'bg-transparent'
       }`}
@@ -73,6 +93,7 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
               <a
                 key={link.href}
                 href={link.href}
+                onClick={(event) => handleNavClick(event, link.href)}
                 className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
               >
                 {link.label}
@@ -104,6 +125,7 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
             onClick={() => setMobileOpen(!mobileOpen)}
             className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
             aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -117,7 +139,10 @@ export default function Navbar({ onLogin, onSignUp }: NavbarProps) {
                 <a
                   key={link.href}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(event) => {
+                    handleNavClick(event, link.href);
+                    setMobileOpen(false);
+                  }}
                   className="rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
                 >
                   {link.label}

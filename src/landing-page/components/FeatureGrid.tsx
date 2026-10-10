@@ -1,3 +1,4 @@
+import { useLocation, useNavigate } from 'react-router-dom';
 import { QrCode, Wallet, UserCheck, PieChart, Target, ShieldCheck, ArrowRight } from 'lucide-react';
 
 const features = [
@@ -9,6 +10,7 @@ const features = [
     bg: 'bg-brand-50',
     iconColor: 'text-brand-600',
     tag: 'Sinkronisasi',
+    href: '/features/household-sync',
   },
   {
     icon: Wallet,
@@ -18,6 +20,7 @@ const features = [
     bg: 'bg-rose-50',
     iconColor: 'text-rose-600',
     tag: 'Multi Wallet',
+    href: '/features/multi-wallet-source-of-funds',
   },
   {
     icon: UserCheck,
@@ -27,6 +30,7 @@ const features = [
     bg: 'bg-blue-50',
     iconColor: 'text-blue-600',
     tag: 'Attribution',
+    href: '/features/attribution-tag-siapa-bayar',
   },
   {
     icon: PieChart,
@@ -36,6 +40,7 @@ const features = [
     bg: 'bg-amber-50',
     iconColor: 'text-amber-600',
     tag: 'Budgeting',
+    href: '/features/smart-budgeting-limits',
   },
   {
     icon: Target,
@@ -45,6 +50,7 @@ const features = [
     bg: 'bg-violet-50',
     iconColor: 'text-violet-600',
     tag: 'Sinking Fund',
+    href: '/features/kantong-impian-sinking-funds',
   },
   {
     icon: ShieldCheck,
@@ -54,6 +60,7 @@ const features = [
     bg: 'bg-slate-100',
     iconColor: 'text-slate-700',
     tag: 'Security',
+    href: '/features/bank-grade-data-security',
   },
 ];
 
@@ -96,7 +103,19 @@ function FeatureCard({
   feature: (typeof features)[number];
   index: number;
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const Icon = feature.icon;
+  const handleLearnMore = () => {
+    navigate(feature.href, {
+      state: {
+        returnTo: `${location.pathname}${location.search}${location.hash}`,
+        returnScrollY: window.scrollY,
+        returnLabel: 'fitur',
+      },
+    });
+  };
+
   return (
     <div
       id={`feature-${index}`}
@@ -130,10 +149,14 @@ function FeatureCard({
       </p>
 
       {/* Hover arrow */}
-      <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-slate-400 transition-colors group-hover:text-slate-700">
+      <button
+        type="button"
+        onClick={handleLearnMore}
+        className="mt-4 flex items-center gap-1 text-sm font-semibold text-slate-400 transition-colors group-hover:text-slate-700 hover:text-brand-700"
+      >
         <span>Pelajari lebih lanjut</span>
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-      </div>
+      </button>
     </div>
   );
 }

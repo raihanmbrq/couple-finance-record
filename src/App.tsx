@@ -1,5 +1,12 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useLayoutEffect } from 'react';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigationType,
+} from 'react-router-dom';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
@@ -9,10 +16,15 @@ import { Toaster } from '@/components/ui/Toaster';
 import { LoginScreen } from '@/screens/LoginScreen';
 import { OnboardingWalkthroughScreen } from '@/screens/OnboardingWalkthroughScreen';
 import { LandingPage } from '@/landing-page/LandingPage';
+import { HouseholdSyncArticlePage } from '@/landing-page/HouseholdSyncArticlePage';
+import { FeatureArticlePage } from '@/landing-page/FeatureArticlePage';
+import { FooterArticlePage } from '@/landing-page/FooterArticlePage';
+import { StatusPage } from '@/landing-page/StatusPage';
 import { PairFlowLoader } from '@/components/ui/PairFlowLoader';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobilePwaLayout } from '@/layouts/MobilePwaLayout';
 import { DesktopDashboardLayout } from '@/layouts/DesktopDashboardLayout';
+import { getRestoreScrollY } from '@/landing-page/articleNavigation';
 
 function ProtectedDashboardRoute() {
   const { profile } = useApp();
@@ -46,6 +58,22 @@ function PublicAuthRoute({ initialSignUp }: { initialSignUp: boolean }) {
   return <LoginScreen initialSignUp={initialSignUp} />;
 }
 
+function RouteScrollManager() {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+
+  useLayoutEffect(() => {
+    const restoreScrollY = getRestoreScrollY(location.state);
+    if (restoreScrollY !== undefined) {
+      window.scrollTo(0, restoreScrollY);
+    } else if (navigationType !== 'POP') {
+      window.scrollTo(0, 0);
+    }
+  }, [location.key, location.state, navigationType]);
+
+  return null;
+}
+
 function PublicLandingRoute() {
   const { profile, isGuestDemo } = useApp();
 
@@ -59,8 +87,13 @@ function PublicLandingRoute() {
 function AppContent() {
   const { profile, loading } = useApp();
   const { setAppearanceMode, setColorPreset } = useTheme();
+  const location = useLocation();
 
   const isAuthenticated = Boolean(profile);
+  const shouldAnimatePage =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    (location.state as Record<string, unknown>).pageTransition === 'onboarding';
 
   // Sync preference theme from profile
   useEffect(() => {
@@ -82,27 +115,36 @@ function AppContent() {
   }
 
   return (
-    <Routes>
-      {/* Root / Landing Page */}
-      <Route path="/" element={<PublicLandingRoute />} />
+    <>
+      <RouteScrollManager />
+      <div className={shouldAnimatePage ? 'animate-page-enter' : undefined}>
+        <Routes>
+          {/* Root / Landing Page */}
+          <Route path="/" element={<PublicLandingRoute />} />
 
-      {/* Feature Onboarding Walkthrough */}
-      <Route path="/onboarding" element={<OnboardingWalkthroughScreen />} />
-      <Route path="/intro" element={<Navigate to="/onboarding" replace />} />
+          {/* Feature Onboarding Walkthrough */}
+          <Route path="/onboarding" element={<OnboardingWalkthroughScreen />} />
+          <Route path="/intro" element={<Navigate to="/onboarding" replace />} />
+          <Route path="/features/household-sync" element={<HouseholdSyncArticlePage />} />
+          <Route path="/features/:slug" element={<FeatureArticlePage />} />
+          <Route path="/bantuan/status" element={<StatusPage />} />
+          <Route path="/:section/:slug" element={<FooterArticlePage />} />
 
-      {/* Auth Routes */}
-      <Route path="/login" element={<PublicAuthRoute initialSignUp={false} />} />
-      <Route path="/signin" element={<Navigate to="/login" replace />} />
-      <Route path="/signup" element={<PublicAuthRoute initialSignUp={true} />} />
-      <Route path="/register" element={<Navigate to="/signup" replace />} />
+          {/* Auth Routes */}
+          <Route path="/login" element={<PublicAuthRoute initialSignUp={false} />} />
+          <Route path="/signin" element={<Navigate to="/login" replace />} />
+          <Route path="/signup" element={<PublicAuthRoute initialSignUp={true} />} />
+          <Route path="/register" element={<Navigate to="/signup" replace />} />
 
-      {/* Main App Dashboard */}
-      <Route path="/app" element={<ProtectedDashboardRoute />} />
-      <Route path="/demo" element={<GuestDemoRoute />} />
+          {/* Main App Dashboard */}
+          <Route path="/app" element={<ProtectedDashboardRoute />} />
+          <Route path="/demo" element={<GuestDemoRoute />} />
 
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </>
   );
 }
 
