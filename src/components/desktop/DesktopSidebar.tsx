@@ -23,7 +23,7 @@ export type DesktopTabKey =
   | 'budgets-goals' 
   | 'bulk-import-export' 
   | 'circle-members'
-  | 'admin-invitations';
+  | 'admin-console';
 
 interface DesktopSidebarProps {
   activeTab: DesktopTabKey;
@@ -51,9 +51,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { id: 'budgets-goals', label: t('sidebar.budgets-goals') || 'Budgets & Goals', icon: Target, testId: 'sidebar-link-budgets-goals' },
     { id: 'bulk-import-export', label: t('sidebar.bulk-import-export') || 'Bulk Import/Export', icon: FileSpreadsheet, testId: 'sidebar-link-bulk-import-export' },
     { id: 'circle-members', label: t('sidebar.circle-members') || 'Circle Members', icon: Users2, testId: 'sidebar-link-circle-members' },
-    // Admin-only: invite-only registration token generator (desktop view only).
+    // Admin-only: Database GUI management console (desktop view only).
     ...(profile?.is_admin
-      ? [{ id: 'admin-invitations' as DesktopTabKey, label: 'Admin Invitations', icon: ShieldCheck, testId: 'sidebar-link-admin-invitations' }]
+      ? [{ id: 'admin-console' as DesktopTabKey, label: t('sidebar.admin-console') || 'Admin Console', icon: ShieldCheck, testId: 'sidebar-link-admin-console' }]
       : []),
   ];
 

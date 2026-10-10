@@ -15,6 +15,7 @@ import {
   ArrowDown,
   CornerDownLeft,
   Receipt,
+  ShieldCheck,
   Command as CommandIcon,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
@@ -89,6 +90,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       'budgets-goals': 'Budgets & Goals',
       'bulk-import-export': 'Import & Export Center',
       'circle-members': 'Circle Members',
+      'admin-console': 'Admin Console',
     } as Record<DesktopTabKey, string>)[tab];
 
   // ⌘/Ctrl + K global trigger + Escape close (registered regardless of open state).
@@ -188,7 +190,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       },
     ];
 
-    const navCommands: CommandItem[] = NAV_TABS.map(({ tab, icon }) => ({
+    // Admin-only: expose the Database GUI console in the palette.
+    const navTabs = profile?.is_admin
+      ? [...NAV_TABS, { tab: 'admin-console' as DesktopTabKey, icon: ShieldCheck }]
+      : NAV_TABS;
+
+    const navCommands: CommandItem[] = navTabs.map(({ tab, icon }) => ({
       id: `nav-${tab}`,
       group: 'navigation',
       label: navLabel(tab),
@@ -235,7 +242,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     return [...actionCommands, ...navCommands, ...transactionCommands];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, transactions, categories, currency, language, t, range, onClose, onNavigate, onAddTransaction]);
+  }, [query, transactions, categories, currency, language, t, range, onClose, onNavigate, onAddTransaction, profile?.is_admin]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

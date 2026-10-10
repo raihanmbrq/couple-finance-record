@@ -80,7 +80,7 @@ export function TransactionsScreen({ dateFilter, onDateFilterConsumed }: { dateF
   const { t } = useLanguage();
   const { showToast } = useToast();
   const currency = profile?.currency ?? 'IDR';
-  const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
+  const isCircle = householdMembers.length > 1 || household?.mode === 'Circle';
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
   const [filterWallet, setFilterWallet] = useState('all');

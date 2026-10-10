@@ -22,7 +22,10 @@ export function OnboardingScreen() {
     setError('');
     setLoading(true);
     try {
-      const code = await createHousehold('couple', partnerName.trim());
+      const partner = partnerName.trim();
+      const code = await createHousehold(
+        partner ? `${profile?.full_name ?? 'Me'} & ${partner}` : undefined,
+      );
       setCreatedCode(code);
       setStep('created');
     } catch {
@@ -91,7 +94,7 @@ export function OnboardingScreen() {
                  setError('');
                  setLoading(true);
                  try {
-                   await createHousehold('single');
+                   await createHousehold();
                  } catch {
                     setError(t('onboard.setupFailed'));
                  } finally {

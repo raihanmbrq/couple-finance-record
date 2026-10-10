@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/Input';
 import { AvatarActionSheet } from '@/components/AvatarActionSheet';
 import { AvatarCropSheet } from '@/components/AvatarCropSheet';
 import { useLanguage } from '@/context/LanguageContext';
-import { User, Mail, Users, LogOut, Copy, Check, X, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Loader2, ChevronRight } from 'lucide-react';
+import { User, Mail, Users, LogOut, Copy, Check, X, Wallet, Receipt, PiggyBank, Sparkles, Pencil, Settings2, Loader2, ChevronRight, AlertTriangle, UserMinus } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { SettingsScreen } from './SettingsScreen';
 
 export function ProfileScreen() {
   const navigate = useNavigate();
-  const { profile, household, householdMembers, wallets, transactions, budgets, isDemo, signOut, joinHousehold, leaveHousehold, updateAvatar, updateProfile } = useApp();
+  const { profile, household, householdMembers, wallets, transactions, budgets, isDemo, signOut, joinHousehold, leaveHousehold, removeMember, updateAvatar, updateProfile } = useApp();
   const { showToast } = useToast();
   const [showAvatarAction, setShowAvatarAction] = useState(false);
   const [showAvatarView, setShowAvatarView] = useState(false);
@@ -30,7 +30,10 @@ export function ProfileScreen() {
   const [joinError, setJoinError] = useState('');
   const [joining, setJoining] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
+  const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string; email?: string | null; avatarUrl?: string | null } | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
+  const isCircle = householdMembers.length > 1 || household?.mode === 'Circle';
+  const isOwner = householdMembers.some((m) => m.user_id === profile?.id && m.role === 'owner');
   const { t } = useLanguage();
 
   const handleSignOut = async () => {
@@ -76,8 +79,28 @@ export function ProfileScreen() {
     try {
       await leaveHousehold();
       showToast(t('toast.left'));
-    } catch {
-      showToast(t('toast.error'), 'error');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('toast.error');
+      showToast(message, 'error');
+    }
+  };
+
+  const handleRemoveMember = (memberUserId: string, memberName: string, email?: string | null, avatarUrl?: string | null) => {
+    setRemoveTarget({ userId: memberUserId, name: memberName, email, avatarUrl });
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!removeTarget) return;
+    setRemovingMember(true);
+    try {
+      await removeMember(removeTarget.userId);
+      showToast(t('profile.removeMemberSuccess'));
+      setRemoveTarget(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('toast.error');
+      showToast(message, 'error');
+    } finally {
+      setRemovingMember(false);
     }
   };
 
@@ -294,6 +317,7 @@ export function ProfileScreen() {
             {householdMembers.map((member) => {
               const memberProfile = member.profile;
               const displayName = memberProfile?.full_name || memberProfile?.email || 'Member';
+              const canRemove = isOwner && member.role !== 'owner' && member.user_id !== profile?.id;
               return (
                 <div key={member.user_id} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center font-bold text-text-primary overflow-hidden">
@@ -307,12 +331,24 @@ export function ProfileScreen() {
                     <p className="font-semibold text-sm text-text-primary truncate">{displayName}</p>
                     <p className="text-xs text-text-secondary truncate">{memberProfile?.email ?? '—'}</p>
                   </div>
-                  {/*{ <Badge>{member.role}</Badge> }  hide role badge for now */}
+                  <Badge color={member.role === 'owner' ? 'primary' : 'secondary'}>
+                    {member.role === 'owner' ? t('profile.roleOwner') : t('profile.roleMember')}
+                  </Badge>
+                  {canRemove && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMember(member.user_id, displayName, memberProfile?.email, memberProfile?.avatar_url)}
+                      className="p-2 rounded-xl bg-expense/10 text-expense hover:bg-expense/20 transition-colors"
+                      aria-label={t('profile.removeMember')}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               );
             })}
           </div>
-          {isCircle && (
+          {isCircle && !isOwner && (
             <Button variant="danger" fullWidth onClick={handleLeave}>
               {t('profile.leaveCircle')}
             </Button>
@@ -421,6 +457,63 @@ export function ProfileScreen() {
         </div>
       )}
       <SettingsScreen open={showSettings} onClose={() => setShowSettings(false)} />
+
+      {/* Owner confirmation before removing a circle member */}
+      {removeTarget && (
+        <div
+          data-testid="remove-member-confirm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 animate-fade-in"
+        >
+          <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-12 h-12 rounded-full bg-expense/10 flex items-center justify-center">
+                <UserMinus className="w-6 h-6 text-expense" />
+              </div>
+              <h2 className="text-lg font-bold text-text-primary">{t('circle.removeMemberTitle')}</h2>
+              <p className="text-sm text-text-secondary">{t('profile.removeMemberConfirm', { name: removeTarget.name })}</p>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl bg-secondary px-3.5 py-3">
+              <div className="w-10 h-10 rounded-full bg-expense/10 text-expense flex items-center justify-center font-bold overflow-hidden shrink-0">
+                {removeTarget.avatarUrl ? (
+                  <img src={removeTarget.avatarUrl} alt={removeTarget.name} className="w-full h-full object-cover" />
+                ) : (
+                  removeTarget.name.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-sm font-semibold text-text-primary truncate">{removeTarget.name}</p>
+                {removeTarget.email && <p className="text-xs text-text-secondary truncate">{removeTarget.email}</p>}
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-warning/10 border border-warning/30">
+              <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <p className="text-xs text-text-secondary">{t('circle.removeMemberWarning', { name: removeTarget.name })}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRemoveTarget(null)}
+                disabled={removingMember}
+                className="flex-1 py-3 rounded-xl font-semibold text-text-primary bg-secondary hover:bg-secondary/80 transition-all disabled:opacity-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveMember}
+                disabled={removingMember}
+                data-testid="remove-member-confirm-btn"
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-expense hover:bg-expense/90 transition-all disabled:opacity-50"
+              >
+                {removingMember ? t('circle.removeMemberRemoving') : t('circle.removeMemberConfirmBtn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

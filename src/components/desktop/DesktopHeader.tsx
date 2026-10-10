@@ -73,7 +73,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({
             </span>
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold text-text-primary">
-                {household?.mode === 'couple' ? 'Couple Mode' : 'Single Mode'}
+                {household?.mode === 'Circle' ? 'Circle Mode' : 'Single Mode'}
               </span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent/20 text-accent font-medium uppercase">
                 {profile?.role || 'Member'}

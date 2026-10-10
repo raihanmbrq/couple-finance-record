@@ -19,6 +19,11 @@ export interface Profile {
   is_admin?: boolean | null;
   /** When true, the one-time "Adjust Nama Lengkap" popup is shown after login. */
   is_first_login?: boolean | null;
+  /**
+   * Soft-delete marker. When set, the account is deactivated and the client
+   * blocks sign-in. Managed from the admin console.
+   */
+  deactivated_at?: string | null;
   created_at: string;
 }
 
@@ -48,8 +53,10 @@ export interface Household {
   id: string;
   name: string;
   invite_code: string;
-  mode: 'single' | 'couple';
-  partner_name?: string | null;
+  /** `Single` = the user stands alone; `Circle` = shared with members. */
+  mode: 'Single' | 'Circle';
+  /** The member who owns the household's invite code. */
+  owner_id?: string | null;
   created_at: string;
 }
 
@@ -58,7 +65,7 @@ export interface HouseholdMember {
   user_id: string;
   household_id: string;
   role: 'owner' | 'member';
-  created_at: string;
+  joined_at: string;
   profile?: Profile;
 }
 
@@ -121,6 +128,11 @@ export interface Transaction {
   destination_wallet_name?: string | null;
   /** Internal transfer only: links the legs of a legacy paired transfer. */
   transfer_group_id?: string | null;
+  /**
+   * Soft-delete marker. Archived transactions stay in the table (audit trail)
+   * but are hidden from user-facing views. Managed from the admin console.
+   */
+  archived_at?: string | null;
 }
 
 export interface BulkImportRow {
@@ -247,3 +259,47 @@ export const CATEGORY_ICON_OPTIONS = [
   'ShieldCheck',
   'Sparkles',
 ] as const;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Admin Console (Database GUI Management) — desktop & admin-only
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Sub-tabs inside the Admin Console workspace. */
+export type AdminPanelKey = 'users' | 'invitations' | 'households' | 'wallets-transactions' | 'raw';
+
+/** A profile row enriched with household info for the admin users table. */
+export interface AdminProfileRow extends Profile {
+  household_name?: string | null;
+}
+
+/** A household row enriched with a member count for the admin table. */
+export interface AdminHouseholdRow extends Household {
+  member_count: number;
+  member_names?: string[];
+}
+
+/** A wallet row enriched with its household name for the admin table. */
+export interface AdminWalletRow extends Wallet {
+  household_name?: string | null;
+  is_archived: boolean;
+}
+
+/** A transaction row enriched for the centralized admin table. */
+export interface AdminTransactionRow extends Transaction {
+  household_id?: string | null;
+  household_name?: string | null;
+  is_archived: boolean;
+}
+
+/** Filters accepted by the centralized admin transaction query. */
+export interface AdminTransactionFilters {
+  userId?: string;
+  householdId?: string;
+  category?: string;
+  type?: TransactionType | 'all';
+  /** Inclusive ISO date (YYYY-MM-DD). */
+  from?: string;
+  /** Inclusive ISO date (YYYY-MM-DD). */
+  to?: string;
+  includeArchived?: boolean;
+}

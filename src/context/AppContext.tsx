@@ -47,11 +47,14 @@ interface AppState {
   completeFirstLogin: (fullName: string) => Promise<void>;
   createInvitation: (email: string) => Promise<{ invitation: InvitationToken; emailResult: InvitationEmailResult; shareLink: string }>;
   listInvitations: () => Promise<InvitationToken[]>;
-  // Onboarding
-  setMode: (mode: 'single' | 'couple', partnerName?: string) => Promise<void>;
-  createHousehold: (mode: 'single' | 'couple', partnerName?: string) => Promise<string>;
+  // Onboarding & Circle management
+  setMode: (mode: 'Single' | 'Circle') => Promise<void>;
+  /** Creates (or re-creates) the caller's personal Single household. */
+  createHousehold: (name?: string) => Promise<string>;
   joinHousehold: (inviteCode: string) => Promise<void>;
   leaveHousehold: () => Promise<void>;
+  /** Owner-only: removes a member from the current circle. */
+  removeMember: (memberUserId: string) => Promise<void>;
   // Wallets
   addWallet: (name: string, type: Wallet['type'], balance: number, icon?: string | null) => Promise<Wallet>;
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
@@ -297,6 +300,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } else {
         currentProfile = prof as Profile;
       }
+
+      // Deactivated (soft-deleted) accounts cannot sign in. The admin console
+      // sets `profiles.deactivated_at`; this is the client-side enforcement of
+      // that block (RLS still governs data access).
+      if (currentProfile.deactivated_at) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('duitbersama_session');
+        localStorage.removeItem(GUEST_DEMO_STORAGE_KEY);
+        setProfile(null);
+        throw new Error('Akun ini telah dinonaktifkan oleh admin. Hubungi administrator untuk mengaktifkan kembali.');
+      }
+
       setProfile(currentProfile);
 
       let householdId = currentProfile.household_id;
@@ -335,7 +350,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const { data: memberRows } = await supabase
         .from('household_members')
-        .select('id, user_id, household_id, role, created_at, profile:profiles(*)')
+        .select('id, user_id, household_id, role, joined_at, profile:profiles(*)')
         .eq('household_id', householdId);
       let members = (memberRows as unknown as HouseholdMember[]) ?? [];
 
@@ -352,7 +367,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             user_id: p.id,
             household_id: householdId,
             role: (p.id === userId ? 'owner' : 'member') as 'owner' | 'member',
-            created_at: p.created_at,
+            joined_at: p.created_at,
             profile: p,
           }));
         }
@@ -435,7 +450,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user_id: mockProfile.id,
         household_id: mockHousehold.id,
         role: 'owner',
-        created_at: mockProfile.created_at,
+        joined_at: mockProfile.created_at,
         profile: mockProfile,
       },
       {
@@ -443,7 +458,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user_id: mockPartner.id,
         household_id: mockHousehold.id,
         role: 'member',
-        created_at: mockPartner.created_at,
+        joined_at: mockPartner.created_at,
         profile: mockPartner,
       },
     ]);
@@ -488,7 +503,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user_id: mockProfile.id,
         household_id: mockHousehold.id,
         role: 'owner',
-        created_at: mockProfile.created_at,
+        joined_at: mockProfile.created_at,
         profile: mockProfile,
       },
       {
@@ -496,7 +511,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user_id: mockPartner.id,
         household_id: mockHousehold.id,
         role: 'member',
-        created_at: mockPartner.created_at,
+        joined_at: mockPartner.created_at,
         profile: mockPartner,
       },
     ]);
@@ -797,30 +812,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCategories([]);
   }, [mode, applyRawTransactions]);
 
-  const setMode = useCallback(async (_mode: 'single' | 'couple', _partnerName?: string) => {
+  const setMode = useCallback(async () => {
     // This is handled by createHousehold/joinHousehold
   }, []);
 
-  const createHousehold = useCallback(async (hhMode: 'single' | 'couple', partnerName?: string): Promise<string> => {
+  const createHousehold = useCallback(async (name?: string): Promise<string> => {
     const code = generateInviteCode();
+    const householdName = name?.trim() || 'My Personal Finance';
     const newHousehold: Household = {
       id: crypto.randomUUID(),
-      name: hhMode === 'couple'
-        ? `${profile?.full_name ?? 'Me'}${partnerName ? ` & ${partnerName}` : ''}`
-        : 'My Personal Finance',
+      name: householdName,
       invite_code: code,
-      mode: hhMode,
-      partner_name: partnerName || null,
+      mode: 'Single',
+      owner_id: profile?.id ?? null,
       created_at: new Date().toISOString(),
     };
 
     if (mode === 'live' && profile) {
       const { data: hh, error } = await supabase.rpc('create_household', {
-        p_name: hhMode === 'couple'
-          ? `${profile.full_name ?? 'Me'}${partnerName ? ` & ${partnerName}` : ''}`
-          : 'My Personal Finance',
-        p_partner: partnerName ?? null,
-        p_mode: hhMode,
+        p_name: householdName,
       });
       if (error) throw error;
       await loadLiveData(profile.id, profile.email);
@@ -829,30 +839,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Demo mode
     setHousehold(newHousehold);
-    setProfile(prev => prev ? { ...prev, household_id: newHousehold.id, role: hhMode === 'couple' ? 'suami' : 'single' } : prev);
+    setProfile(prev => prev ? { ...prev, household_id: newHousehold.id, role: 'single' } : prev);
     setWallets([]);
     setGoals([]);
     return code;
-  }, [mode, profile]);
+  }, [loadLiveData, mode, profile]);
 
   const joinHousehold = useCallback(async (inviteCode: string) => {
     if (mode === 'live' && profile) {
-      const { data: hh, error } = await supabase.rpc('join_household_by_code', { code: inviteCode });
+      const { data: hh, error } = await supabase.rpc('join_circle', { p_invite_code: inviteCode });
       if (error) throw error;
       setHousehold(hh as Household);
       await loadLiveData(profile.id, profile.email);
       return;
     }
     // Demo: simulate joining
-    setHousehold({ ...mockHousehold, invite_code: inviteCode.toUpperCase() });
-    setProfile(prev => prev ? { ...prev, household_id: mockHousehold.id, role: 'istri' } : prev);
+    setHousehold({ ...mockHousehold, invite_code: inviteCode.toUpperCase(), mode: 'Circle' });
+    setProfile(prev => prev ? { ...prev, household_id: mockHousehold.id, role: 'partner' } : prev);
   }, [loadLiveData, mode, profile]);
 
   const leaveHousehold = useCallback(async () => {
     if (!profile) return;
 
     if (mode === 'live') {
-      const { error } = await supabase.rpc('leave_current_household');
+      const { error } = await supabase.rpc('leave_circle');
       if (error) throw error;
       await loadLiveData(profile.id, profile.email);
       return;
@@ -867,6 +877,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setProfile({ ...profile, household_id: null, role: 'single' });
   }, [loadLiveData, mode, profile, applyRawTransactions]);
 
+  const removeMember = useCallback(async (memberUserId: string) => {
+    if (mode === 'live') {
+      const { error } = await supabase.rpc('remove_member', { p_member_user_id: memberUserId });
+      if (error) throw error;
+      if (profile) await loadLiveData(profile.id, profile.email);
+      return;
+    }
+    // Demo: drop the member locally.
+    setHouseholdMembers(prev => prev.filter(m => m.user_id !== memberUserId));
+  }, [loadLiveData, mode, profile]);
+
   const addWallet = useCallback(async (name: string, type: Wallet['type'], balance: number, icon?: string | null) => {
     let hh = household;
 
@@ -877,8 +898,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: crypto.randomUUID(),
         name: 'My Personal Finance',
         invite_code: generateInviteCode(),
-        mode: 'single',
-        partner_name: null,
+        mode: 'Single',
+        owner_id: profile?.id ?? null,
         created_at: new Date().toISOString(),
       };
 
@@ -888,7 +909,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           name: newHousehold.name,
           invite_code: newHousehold.invite_code,
           mode: newHousehold.mode,
-          partner_name: newHousehold.partner_name,
+          owner_id: newHousehold.owner_id,
         });
         if (hhErr) throw hhErr;
 
@@ -1697,6 +1718,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     createHousehold,
     joinHousehold,
     leaveHousehold,
+    removeMember,
     addWallet,
     updateWallet,
     deleteWallet,

@@ -275,7 +275,7 @@ export const DesktopWalletsWorkspace: React.FC<DesktopWalletsWorkspaceProps> = (
           </section>
 
           {/* SECTION 2: Circle / spouse wallets */}
-          {(circleWallets.length > 0 || household?.mode === 'couple') && (
+          {(circleWallets.length > 0 || household?.mode === 'Circle') && (
             <section
               className="rounded-2xl border border-border bg-surface p-5 shadow-xs"
               data-testid="wallet-section-circle"

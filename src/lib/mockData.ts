@@ -24,8 +24,8 @@ export const mockHousehold: Household = {
   id: mockHouseholdId,
   name: 'Andi & Sari',
   invite_code: 'ANDSAR',
-  mode: 'couple',
-  partner_name: 'Sari Wulandari',
+  mode: 'Circle',
+  owner_id: mockUserId,
   created_at: daysAgo(30),
 };
 

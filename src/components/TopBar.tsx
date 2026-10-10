@@ -6,7 +6,7 @@ export function TopBar() {
   const { household, householdMembers, isDemo } = useApp();
   const { t } = useLanguage();
 
-  const isCircle = householdMembers.length > 1 || household?.mode === 'couple';
+  const isCircle = householdMembers.length > 1 || household?.mode === 'Circle';
   const statusText = isCircle
     ? t('topbar.circleMode', { name: household?.name ?? 'Household' })
     : t('topbar.singleMode');

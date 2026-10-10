@@ -43,8 +43,8 @@ export const MetricCardsWidget: React.FC = () => {
 
   const displayVal = (val: number) => (hideBalance ? '••••••••' : formatMoney(val, currency));
 
-  // Circle member slides if in couple/circle mode
-  const isCircleMode = household?.mode === 'couple' || householdMembers.length > 1;
+  // Circle member slides if in circle mode
+  const isCircleMode = household?.mode === 'Circle' || householdMembers.length > 1;
 
   // Compute balance breakdown per member
   const memberBalances: { name: string; role: string; balance: number; avatarUrl?: string | null }[] = [];

@@ -14,7 +14,7 @@ import { DesktopTransactionsScreen } from '@/screens/desktop/DesktopTransactions
 import { DesktopBudgetsGoalsScreen } from '@/screens/desktop/DesktopBudgetsGoalsScreen';
 import { DesktopBulkCenterScreen } from '@/screens/desktop/DesktopBulkCenterScreen';
 import { DesktopCircleMembersScreen } from '@/screens/desktop/DesktopCircleMembersScreen';
-import { DesktopAdminInvitationsScreen } from '@/screens/desktop/DesktopAdminInvitationsScreen';
+import { DesktopAdminConsoleScreen } from '@/screens/desktop/DesktopAdminConsoleScreen';
 import { useApp } from '@/context/AppContext';
 
 interface TransactionFilter {
@@ -22,10 +22,19 @@ interface TransactionFilter {
   loggedBy?: string;
 }
 
-export const DesktopDashboardLayout: React.FC = () => {
+interface DesktopDashboardLayoutProps {
+  /** Force the initial tab (used by the `/admin/dashboard` route). */
+  initialTab?: DesktopTabKey;
+}
+
+export const DesktopDashboardLayout: React.FC<DesktopDashboardLayoutProps> = ({ initialTab }) => {
   const { profile } = useApp();
   const [activeTab, setActiveTab] = useState<DesktopTabKey>(() => {
-    return (localStorage.getItem('pairflow_desktop_active_tab') as DesktopTabKey) || 'overview';
+    if (initialTab) return initialTab;
+    const stored = (localStorage.getItem('pairflow_desktop_active_tab') as DesktopTabKey) || 'overview';
+    // Never restore the admin tab for a non-admin (stale localStorage).
+    if (stored === 'admin-console' && !profile?.is_admin) return 'overview';
+    return stored;
   });
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
@@ -39,6 +48,8 @@ export const DesktopDashboardLayout: React.FC = () => {
   const [transactionFilter, setTransactionFilter] = useState<TransactionFilter | null>(null);
 
   const handleTabChange = (tab: DesktopTabKey) => {
+    // Frontend guard: a non-admin can never activate the admin tab.
+    if (tab === 'admin-console' && !profile?.is_admin) return;
     setActiveTab(tab);
     if (tab !== 'transactions') setTransactionFilter(null);
     localStorage.setItem('pairflow_desktop_active_tab', tab);
@@ -126,7 +137,7 @@ export const DesktopDashboardLayout: React.FC = () => {
             {activeTab === 'budgets-goals' && <DesktopBudgetsGoalsScreen />}
             {activeTab === 'bulk-import-export' && <DesktopBulkCenterScreen />}
             {activeTab === 'circle-members' && <DesktopCircleMembersScreen />}
-            {activeTab === 'admin-invitations' && profile?.is_admin && <DesktopAdminInvitationsScreen />}
+            {activeTab === 'admin-console' && profile?.is_admin && <DesktopAdminConsoleScreen />}
           </main>
         </div>
 

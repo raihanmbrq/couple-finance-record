@@ -40,6 +40,27 @@ function ProtectedDashboardRoute() {
   return isDesktop ? <DesktopDashboardLayout /> : <MobilePwaLayout />;
 }
 
+/**
+ * Admin-only, desktop-only guard for the Admin Console route
+ * (`/admin/dashboard`). Non-admins and mobile viewports are redirected to the
+ * regular dashboard. The Postgres RLS policies + admin RPCs are the
+ * authoritative guard; this only keeps the UI in sync.
+ */
+function RequireAdminRoute() {
+  const { profile } = useApp();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+
+  if (!profile) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!profile.is_admin || !isDesktop) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return <DesktopDashboardLayout initialTab="admin-console" />;
+}
+
 function GuestDemoRoute() {
   const { enterGuestDemo } = useApp();
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -166,6 +187,9 @@ function AppContent() {
           {/* Main App Dashboard */}
           <Route path="/app" element={<ProtectedDashboardRoute />} />
           <Route path="/demo" element={<GuestDemoRoute />} />
+
+          {/* Admin-only Database GUI Console (desktop only) */}
+          <Route path="/admin/dashboard" element={<RequireAdminRoute />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
