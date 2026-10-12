@@ -22,7 +22,7 @@ import { getIcon } from '@/lib/icons';
 import { formatMoneyInput, parseMoneyInput } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { uploadReceipt } from '@/lib/receiptUpload';
-import { type TransactionType } from '@/lib/types';
+import { type HouseholdMember, type TransactionType, type Wallet } from '@/lib/types';
 import { ARROW_DIRECTIONS, getNextGridIndex } from '@/lib/gridNav';
 import {
   ArrowDownCircle,
@@ -60,10 +60,11 @@ const ADD_CATEGORY_KEY = '__add_category__';
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
 
 export function DesktopAddTransactionModal({ isOpen, onClose }: DesktopAddTransactionModalProps) {
-  const { wallets, walletTypes, categories, profile, household, addTransaction } = useApp();
+  const { wallets, walletTypes, categories, profile, household, householdMembers, addTransaction } = useApp();
   const { t } = useLanguage();
   const { showToast } = useToast();
   const currency = profile?.currency ?? 'IDR';
+  const isCircleMode = household?.mode === 'Circle' || householdMembers.length > 1;
 
   const dialogRef = useRef<HTMLDivElement>(null);
   // Keeps Tab / Shift+Tab cycling inside the dialog while it is open.
@@ -101,6 +102,18 @@ export function DesktopAddTransactionModal({ isOpen, onClose }: DesktopAddTransa
     if (row) return row.name;
     return walletType.charAt(0).toUpperCase() + walletType.slice(1);
   };
+
+  const memberName = (member: HouseholdMember) =>
+    member.profile?.full_name || member.profile?.email?.split('@')[0] || t('common.unknownUser');
+
+  const walletOwnerLabel = (wallet: Wallet) => {
+    if (wallet.user_id === profile?.id) return t('common.me');
+    const member = householdMembers.find((item) => item.user_id === wallet.user_id);
+    return member ? memberName(member) : t('common.unknownUser');
+  };
+
+  const walletSecondaryLabel = (wallet: Wallet) =>
+    isCircleMode ? walletOwnerLabel(wallet) : formatWalletType(wallet.type);
 
   const filteredCategories = useMemo(
     () => categories.filter((cat) => cat.type === 'both' || cat.type === type),
@@ -640,7 +653,7 @@ export function DesktopAddTransactionModal({ isOpen, onClose }: DesktopAddTransa
                       <span className="w-full min-w-0">
                         <span className="block truncate text-xs font-semibold text-text-primary">{wallet.name}</span>
                         <span className="block truncate text-[10px] text-text-muted">
-                          {formatWalletType(wallet.type)}
+                          {walletSecondaryLabel(wallet)}
                         </span>
                       </span>
                     </button>

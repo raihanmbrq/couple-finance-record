@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { AddWalletSheet } from '@/components/AddWalletSheet';
 import { CreateCategorySheet } from '@/components/CreateCategorySheet';
-import { type TransactionType } from '@/lib/types';
+import { type HouseholdMember, type TransactionType, type Wallet } from '@/lib/types';
 import { formatMoneyInput, parseMoneyInput } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { ArrowDownCircle, ArrowUpCircle, Plus } from 'lucide-react';
@@ -30,14 +30,29 @@ const ADD_CATEGORY_KEY = '__add_category__';
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
 
 export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps) {
-  const { wallets, profile, addTransaction, walletTypes, categories } = useApp();
+  const { wallets, profile, household, householdMembers, addTransaction, walletTypes, categories } = useApp();
   const { t } = useLanguage();
   const currency = profile?.currency ?? 'IDR';
+  const isCircleMode = household?.mode === 'Circle' || householdMembers.length > 1;
+
   const formatWalletType = (type: string) => {
     const row = walletTypes.find((t) => t.id === type);
     if (row) return row.name;
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
+
+  const memberName = (member: HouseholdMember) =>
+    member.profile?.full_name || member.profile?.email?.split('@')[0] || t('common.unknownUser');
+
+  const walletOwnerLabel = (wallet: Wallet) => {
+    if (wallet.user_id === profile?.id) return t('common.me');
+    const member = householdMembers.find((item) => item.user_id === wallet.user_id);
+    return member ? memberName(member) : t('common.unknownUser');
+  };
+
+  const walletSecondaryLabel = (wallet: Wallet) =>
+    isCircleMode ? walletOwnerLabel(wallet) : formatWalletType(wallet.type);
+
   const { showToast } = useToast();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
@@ -364,7 +379,7 @@ export function AddTransactionSheet({ open, onClose }: AddTransactionSheetProps)
                   }`}
                 >
                   <p className="font-semibold text-sm text-text-primary truncate">{w.name}</p>
-                  <p className="text-xs text-text-secondary">{formatWalletType(w.type)}</p>
+                  <p className="text-xs text-text-secondary truncate">{walletSecondaryLabel(w)}</p>
                 </button>
               );
             })}

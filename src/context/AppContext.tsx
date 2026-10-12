@@ -1128,6 +1128,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newTx: Transaction = {
       ...tx,
       id: crypto.randomUUID(),
+      user_id: tx.user_id ?? profile?.id,
       wallet_name: targetWallet?.name ?? tx.wallet_name ?? null,
       destination_wallet_name: tx.type === 'transfer'
         ? destinationWallet?.name ?? tx.destination_wallet_name ?? null

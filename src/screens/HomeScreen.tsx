@@ -162,7 +162,7 @@ export function HomeScreen({ onOpenDate }: { onOpenDate?: (date: string) => void
   // `transfer` type so they are excluded here; an EXPENSE/INCOME row with the
   // "Transfer" category is an external movement and stays counted.
   const monthTx = transactions.filter(t => {
-    const d = new Date(t.created_at);
+    const d = new Date(t.transaction_date || t.created_at);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
   const monthIncomeFor = (uid: string) =>

@@ -5,15 +5,16 @@ import { useLanguage } from '@/context/LanguageContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
-import { Input, Select } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ASSET_CATEGORIES, type Goal } from '@/lib/types';
 import { formatMoney, formatMoneyInput, parseMoneyInput, formatDateShort, formatDate } from '@/lib/format';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { calculateMonthlyContribution, durationLabel, monthsBetween } from '@/lib/goalMath';
-import { PiggyBank, Plus, Trash2, Wallet, Pencil } from 'lucide-react';
+import { PiggyBank, Plus, Trash2, Wallet, Pencil, ChevronDown } from 'lucide-react';
 import { CustomDateRangePicker } from '@/components/ui/CustomDateRangePicker';
+import { CustomSelectSheet } from '@/components/ui/CustomSelectSheet';
 
 function SummaryRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
@@ -39,6 +40,7 @@ export function GoalsSection() {
   const [targetDate, setTargetDate] = useState('');
   const [dateRangePickerOpen, setDateRangePickerOpen] = useState(false);
   const [category, setCategory] = useState<Goal['asset_category']>('Tabungan Biasa');
+  const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [returnRate, setReturnRate] = useState('5');
   const [saving, setSaving] = useState(false);
   const [deleteGoalTarget, setDeleteGoalTarget] = useState<Goal | null>(null);
@@ -46,6 +48,7 @@ export function GoalsSection() {
   // Deposit
   const [depositGoal, setDepositGoal] = useState<Goal | null>(null);
   const [depositWallet, setDepositWallet] = useState('');
+  const [depositWalletSheetOpen, setDepositWalletSheetOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositing, setDepositing] = useState(false);
 
@@ -289,15 +292,28 @@ export function GoalsSection() {
               <span className="text-primary font-bold text-xs">Change</span>
             </button>
           </div>
-          <Select
-            label={t('goals.categoryLabel')}
-            value={category}
-            onChange={(e) => setCategory(e.target.value as Goal['asset_category'])}
-          >
-            {ASSET_CATEGORIES.map((c) => (
-              <option key={c.key} value={c.key}>{c.label}</option>
-            ))}
-          </Select>
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">{t('goals.categoryLabel')}</label>
+            <button
+              type="button"
+              onClick={() => setCategorySheetOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-secondary/50 border border-secondary/35 rounded-xl hover:border-primary/50 transition-all font-medium text-sm text-text-primary min-h-[48px]"
+            >
+              <span>{categoryLabel}</span>
+              <ChevronDown className="w-4 h-4 text-text-secondary stroke-[2.5px]" />
+            </button>
+            <CustomSelectSheet
+              title={t('goals.categoryLabel')}
+              open={categorySheetOpen}
+              onClose={() => setCategorySheetOpen(false)}
+              value={category}
+              onChange={(val) => setCategory(val as Goal['asset_category'])}
+              options={ASSET_CATEGORIES.map((c) => ({
+                value: c.key,
+                label: c.label,
+              }))}
+            />
+          </div>
 
           {isInvestment && (
             <>
@@ -347,16 +363,32 @@ export function GoalsSection() {
         title={depositGoal ? t('goals.depositTitle', { title: depositGoal.title }) : t('goals.deposit')}
       >
         <div className="space-y-4">
-          <Select
-            label={t('goals.fromWallet')}
-            value={depositWallet}
-            onChange={(e) => setDepositWallet(e.target.value)}
-          >
-            <option value="">{t('goals.selectWallet')}</option>
-            {wallets.map((w) => (
-              <option key={w.id} value={w.id}>{w.name} — {formatMoney(w.balance, currency)}</option>
-            ))}
-          </Select>
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">{t('goals.fromWallet')}</label>
+            <button
+              type="button"
+              onClick={() => setDepositWalletSheetOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-secondary/50 border border-secondary/35 rounded-xl hover:border-primary/50 transition-all font-medium text-sm text-text-primary min-h-[48px]"
+            >
+              <span className={depositWallet ? '' : 'text-text-secondary'}>
+                {wallets.find((w) => w.id === depositWallet)
+                  ? `${wallets.find((w) => w.id === depositWallet)?.name} — ${formatMoney(wallets.find((w) => w.id === depositWallet)?.balance ?? 0, currency)}`
+                  : t('goals.selectWallet')}
+              </span>
+              <ChevronDown className="w-4 h-4 text-text-secondary stroke-[2.5px]" />
+            </button>
+            <CustomSelectSheet
+              title={t('goals.fromWallet')}
+              open={depositWalletSheetOpen}
+              onClose={() => setDepositWalletSheetOpen(false)}
+              value={depositWallet}
+              onChange={(val) => setDepositWallet(val)}
+              options={wallets.map((w) => ({
+                value: w.id,
+                label: `${w.name} — ${formatMoney(w.balance, currency)}`,
+              }))}
+            />
+          </div>
           <Input
             label={t('goals.depositAmount')}
             prefix={getCurrencySymbol(currency)}
