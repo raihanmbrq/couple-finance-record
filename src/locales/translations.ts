@@ -29,7 +29,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'common.you': 'kamu',
     'nav.home': 'Beranda',
     'nav.transactions': 'Transaksi',
-    'nav.budget': 'Anggaran dan Tujuan',
+    'nav.budget': 'Budget',
     'nav.profile': 'Profil',
     'topbar.circleMode': 'Mode Circle — {name}',
     'topbar.singleMode': 'Mode Single',
@@ -604,6 +604,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'sidebar.bulk-import-export': 'Impor & Ekspor',
     'sidebar.circle-members': 'Anggota Circle',
     'sidebar.admin-console': 'Konsol Admin',
+    'sidebar.profile_settings': 'Profil & Pengaturan',
 
     // Desktop Header
     'header.addTransaction': 'Tambah Transaksi',
@@ -690,7 +691,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'common.you': 'you',
     'nav.home': 'Home',
     'nav.transactions': 'Transactions',
-    'nav.budget': 'Budget and Goals',
+    'nav.budget': 'Budget',
     'nav.profile': 'Profile',
     'topbar.circleMode': 'Circle Mode — {name}',
     'topbar.singleMode': 'Single Mode',
@@ -1265,6 +1266,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'sidebar.bulk-import-export': 'Bulk Import/Export',
     'sidebar.circle-members': 'Circle Members',
     'sidebar.admin-console': 'Admin Console',
+    'sidebar.profile_settings': 'Profile & Settings',
 
     // Desktop Header
     'header.addTransaction': 'Add Transaction',

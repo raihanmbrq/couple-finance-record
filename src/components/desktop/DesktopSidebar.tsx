@@ -129,7 +129,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         <button
           onClick={onOpenSettings}
           data-testid="sidebar-link-settings"
-          title={collapsed ? (t('profile_settings') || 'Settings') : undefined}
+          title={collapsed ? (t('sidebar.profile_settings') || 'Settings') : undefined}
           className={`group relative flex text-sm font-medium text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors ${
             collapsed
               ? 'w-full h-11 items-center justify-center rounded-xl px-0 py-0'
@@ -137,10 +137,10 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           }`}
         >
           <Settings className="w-5 h-5 shrink-0 text-text-muted" />
-          {!collapsed && <span className="truncate">{t('profile_settings') || 'Settings'}</span>}
+          {!collapsed && <span className="truncate">{t('sidebar.profile_settings') || 'Settings'}</span>}
           {collapsed && (
             <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-              {t('profile_settings') || 'Settings'}
+              {t('sidebar.profile_settings') || 'Settings'}
             </span>
           )}
         </button>

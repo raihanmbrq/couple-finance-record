@@ -95,28 +95,28 @@ html[data-mode='dark'][data-preset='emerald'] {
   --color-primary-dark: 16 185 129;     /* #10B981 */
   --color-primary-hover: 16 185 129;
   --color-expense-dark: 248 113 113;    /* #F87171 */
-  --color-secondary: 10 107 99;
-  --color-bg-app: 2 44 34;              /* #022C22 */
-  --color-bg-card: 6 78 59;             /* #064E3B */
-  --color-background: 2 44 34;
-  --color-surface: 6 78 59;
+  --color-secondary: 30 41 59;          /* #1E293B */
+  --color-bg-app: 15 23 42;             /* #0F172A - Deep Slate/Blue Dark background */
+  --color-bg-card: 24 35 54;            /* #182336 */
+  --color-background: 15 23 42;
+  --color-surface: 24 35 54;
   --color-text-main: 248 250 252;       /* #F8FAFC */
   --color-text-primary: 248 250 252;
-  --color-text-secondary: 167 243 208;
+  --color-text-secondary: 148 163 184;  /* Slate-400 */
   --color-total-balance: 52 211 153;
-  --color-stone-50: 2 44 34;
-  --color-stone-100: 6 78 59;
-  --color-stone-200: 10 107 99;
-  --color-stone-300: 16 185 129;
-  --color-stone-400: 52 211 153;
-  --color-stone-500: 110 231 183;
-  --color-stone-600: 167 243 208;
-  --color-stone-700: 209 250 229;
-  --color-stone-800: 236 253 245;
+  --color-stone-50: 15 23 42;
+  --color-stone-100: 24 35 54;
+  --color-stone-200: 30 41 59;
+  --color-stone-300: 51 65 85;
+  --color-stone-400: 100 116 139;
+  --color-stone-500: 148 163 184;
+  --color-stone-600: 203 213 225;
+  --color-stone-700: 226 232 240;
+  --color-stone-800: 241 245 249;
   --color-stone-900: 248 250 252;
-  --color-cream-100: 2 44 34;
-  --color-teal-50: 3 50 40;
-  --color-teal-100: 6 78 59;
+  --color-cream-100: 24 35 54;
+  --color-teal-50: 15 23 42;
+  --color-teal-100: 24 35 54;
   --color-teal-600: 52 211 153;
   --color-teal-700: 16 185 129;
   --color-amber-50: 45 30 8;
@@ -243,35 +243,35 @@ html[data-mode='dark'][data-preset='rose'] {
   --color-primary-dark: 244 63 94;      /* #F43F5E */
   --color-primary-hover: 244 63 94;
   --color-expense-dark: 248 113 113;    /* #F87171 */
-  --color-secondary: 159 18 57;
-  --color-bg-app: 76 5 25;              /* #4C0519 */
-  --color-bg-card: 136 19 55;           /* #881337 */
-  --color-background: 76 5 25;
-  --color-surface: 136 19 55;
+  --color-secondary: 42 35 50;          /* Subtle deep slate */
+  --color-bg-app: 17 21 34;             /* #111522 - Deep Midnight background */
+  --color-bg-card: 28 32 48;            /* #1C2030 */
+  --color-background: 17 21 34;
+  --color-surface: 28 32 48;
   --color-text-main: 248 250 252;       /* #F8FAFC */
   --color-text-primary: 248 250 252;
-  --color-text-secondary: 251 113 133;
+  --color-text-secondary: 148 163 184;  /* Slate-400 */
   --color-total-balance: 244 63 94;
-  --color-stone-50: 76 5 25;
-  --color-stone-100: 136 19 55;
-  --color-stone-200: 159 18 57;
-  --color-stone-300: 190 18 60;
-  --color-stone-400: 225 29 72;
-  --color-stone-500: 244 63 94;
-  --color-stone-600: 251 113 133;
-  --color-stone-700: 254 205 211;
-  --color-stone-800: 255 228 230;
+  --color-stone-50: 17 21 34;
+  --color-stone-100: 28 32 48;
+  --color-stone-200: 42 35 50;
+  --color-stone-300: 71 85 105;
+  --color-stone-400: 100 116 139;
+  --color-stone-500: 148 163 184;
+  --color-stone-600: 203 213 225;
+  --color-stone-700: 226 232 240;
+  --color-stone-800: 241 245 249;
   --color-stone-900: 248 250 252;
-  --color-cream-100: 136 19 55;
-  --color-teal-50: 76 5 25;
-  --color-teal-100: 136 19 55;
+  --color-cream-100: 28 32 48;
+  --color-teal-50: 17 21 34;
+  --color-teal-100: 28 32 48;
   --color-teal-600: 244 63 94;
   --color-teal-700: 225 29 72;
-  --color-amber-50: 69 42 8;
-  --color-amber-100: 120 53 15;
-  --color-amber-200: 190 18 60;
-  --color-amber-600: 244 63 94;
-  --color-amber-700: 225 29 72;
+  --color-amber-50: 45 30 8;
+  --color-amber-100: 69 42 8;
+  --color-amber-200: 146 64 14;
+  --color-amber-600: 251 191 36;
+  --color-amber-700: 245 158 11;
 }
 
 /* ── SLATE (Ocean Blue) · LIGHT ───────────────────────────── */

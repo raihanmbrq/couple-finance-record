@@ -1,23 +1,14 @@
-import { useLanguage } from '@/context/LanguageContext';
-
 export function PairFlowLoader() {
-  const { t } = useLanguage();
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <div className="relative h-20 w-20">
-        <div
-          className="absolute h-16 w-16 animate-pulse rounded-full bg-sky-300 opacity-75"
-          style={{ backgroundColor: '#7DD3FC' }}
-        />
-        <div
-          className="absolute right-0 h-16 w-16 animate-pulse rounded-full bg-sky-400 opacity-75"
-          style={{ animationDelay: '0.5s', backgroundColor: '#38BDF8' }}
+    <div className="flex flex-col items-center justify-center gap-3 animate-fade-in">
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center p-1">
+        <img
+          src="/icons/icon-512.png"
+          alt="PairFlow Logo"
+          className="w-14 h-14 rounded-2xl object-contain drop-shadow-md animate-pulse"
         />
       </div>
-      <div className="text-center">
-        <p className="text-lg font-bold text-text-primary">PairFlow</p>
-        <p className="text-sm text-text-secondary">{t('loader.tagline')}</p>
-      </div>
+      <p className="text-sm font-semibold tracking-wide text-text-primary">PairFlow</p>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Sheet } from '@/components/ui/Sheet';
-import { Check, Sun, Moon, Smartphone } from 'lucide-react';
+import { Check, Sun, Moon } from 'lucide-react';
 import type { AppearanceMode, ColorPreset } from '@/lib/types';
 
 interface AppearanceOption {
@@ -13,7 +13,6 @@ interface AppearanceOption {
 const APPEARANCE_OPTIONS: AppearanceOption[] = [
   { id: 'light', labelKey: 'theme.light', icon: Sun },
   { id: 'dark', labelKey: 'theme.dark', icon: Moon },
-  { id: 'system', labelKey: 'theme.system', icon: Smartphone },
 ];
 
 interface PresetOption {
@@ -54,7 +53,6 @@ export function getAppearanceLabel(mode: AppearanceMode): string {
   const labels: Record<AppearanceMode, string> = {
     light: 'theme.light',
     dark: 'theme.dark',
-    system: 'theme.system',
   };
   return labels[mode];
 }
@@ -85,7 +83,7 @@ export function ThemeSettingsSheet({ open, onClose }: ThemeSettingsSheetProps) {
           {/* SECTION 1: Mode Tampilan */}
           <section>
             <h3 className="text-sm font-bold text-text-primary mb-2">{t('theme.displayMode')}</h3>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {APPEARANCE_OPTIONS.map((opt) => {
                 const Icon = opt.icon;
                 const isActive = opt.id === appearanceMode;

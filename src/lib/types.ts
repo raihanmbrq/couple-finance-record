@@ -1,6 +1,6 @@
 export type UserRole = 'suami' | 'istri' | 'single' | 'partner' | 'owner' | 'member';
 
-export type AppearanceMode = 'light' | 'dark' | 'system';
+export type AppearanceMode = 'light' | 'dark';
 export type ColorPreset = 'emerald' | 'gold' | 'rose' | 'slate';
 export type Language = 'id' | 'en';
 

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { CURRENCIES } from '@/lib/currencies';
-import { X, User, Palette, Globe, DollarSign, Users, Copy, Check, Sun, Moon, Laptop } from 'lucide-react';
+import { CustomDesktopDropdown, type DropdownOption } from '@/components/desktop/ui/CustomDesktopDropdown';
+import { AvatarCropSheet } from '@/components/AvatarCropSheet';
+import { X, User, Palette, Globe, DollarSign, Users, Copy, Check, Sun, Moon, Camera, Loader2 } from 'lucide-react';
 import type { AppearanceMode, ColorPreset } from '@/lib/types';
 
 interface SettingsSubPanelProps {
@@ -12,22 +14,51 @@ interface SettingsSubPanelProps {
 }
 
 export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClose }) => {
-  const { profile, household, updateProfile, updateCurrency } = useApp();
+  const { profile, household, updateProfile, updateCurrency, updateAvatar } = useApp();
   const { language, setLanguage, t } = useLanguage();
   const { appearanceMode, setAppearanceMode, colorPreset, setColorPreset } = useTheme();
 
   const [fullName, setFullName] = useState(profile?.full_name || '');
-  const [role, setRole] = useState(profile?.role || 'member');
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Avatar states
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showCrop, setShowCrop] = useState(false);
+  const [cropSource, setCropSource] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   if (!open) return null;
+
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Pilih file gambar yang valid');
+      return;
+    }
+    setCropSource(URL.createObjectURL(file));
+    setShowCrop(true);
+    e.target.value = '';
+  };
+
+  const handleSaveCroppedAvatar = async (file: File) => {
+    setUploadingAvatar(true);
+    try {
+      await updateAvatar(file);
+      setShowCrop(false);
+    } catch (err) {
+      console.error('Failed to update avatar:', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await updateProfile({ full_name: fullName, role: role as any });
+      await updateProfile({ full_name: fullName });
     } finally {
       setIsSaving(false);
     }
@@ -40,6 +71,11 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
       setTimeout(() => setCopiedInvite(false), 2000);
     }
   };
+
+  const currencyOptions: DropdownOption[] = CURRENCIES.map((c) => ({
+    value: c.code,
+    label: `${c.flag} ${c.code} — ${c.name} (${c.symbol})`,
+  }));
 
   const colorPresets: { key: ColorPreset; label: string; bgClass: string }[] = [
     { key: 'emerald', label: 'Emerald', bgClass: 'bg-emerald-500' },
@@ -65,7 +101,7 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
         <div className="h-16 px-6 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-bold text-text-primary">{t('profile_settings') || 'Settings & Preferences'}</h2>
+            <h2 className="text-lg font-bold text-text-primary">{t('sidebar.profile_settings') || 'Settings & Preferences'}</h2>
           </div>
           <button
             onClick={onClose}
@@ -80,6 +116,48 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
           {/* User Profile Form */}
           <form onSubmit={handleSaveProfile} className="space-y-4 bg-surface-hover/50 p-4 rounded-2xl border border-border/60">
             <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">Account Details</h3>
+            
+            {/* Avatar Photo Section */}
+            <div>
+              <label className="block text-xs font-medium text-text-muted mb-2">Profile Picture</label>
+              <div className="flex items-center gap-4">
+                <div className="relative group shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center text-accent-text font-bold text-xl overflow-hidden shadow-sm border border-border">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt="Profile Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      fullName.charAt(0).toUpperCase() || profile?.full_name?.charAt(0).toUpperCase() || 'U'
+                    )}
+                  </div>
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-surface hover:bg-surface-hover text-xs font-medium text-text-primary transition-colors disabled:opacity-50"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-accent" />
+                    <span>{uploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
+                  </button>
+                  <span className="text-[11px] text-text-muted">JPG, PNG, or WebP. Max 5MB.</span>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarFileSelect}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-text-muted mb-1">Full Name</label>
               <input
@@ -90,22 +168,7 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
                 className="w-full px-3.5 py-2 bg-surface border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-text-muted mb-1">Household Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as any)}
-                data-testid="select-settings-role"
-                className="w-full px-3.5 py-2 bg-surface border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="suami">Suami</option>
-                <option value="istri">Istri</option>
-                <option value="partner">Partner</option>
-                <option value="single">Single</option>
-                <option value="owner">Owner</option>
-                <option value="member">Member</option>
-              </select>
-            </div>
+
             <button
               type="submit"
               disabled={isSaving}
@@ -122,18 +185,13 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
               <DollarSign className="w-4 h-4 text-accent" />
               <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">Currency Bound</h3>
             </div>
-            <select
+            <CustomDesktopDropdown
+              options={currencyOptions}
               value={profile?.currency || 'IDR'}
-              onChange={(e) => updateCurrency(e.target.value)}
-              data-testid="select-currency"
-              className="w-full px-3.5 py-2 bg-surface border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.flag} {c.code} - {c.name} ({c.symbol})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => updateCurrency(val)}
+              testId="select-currency"
+              floating
+            />
           </div>
 
           {/* Appearance & Color Themes */}
@@ -143,14 +201,13 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
               <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">Appearance & Theme</h3>
             </div>
 
-            {/* Mode: Light, Dark, System */}
+            {/* Mode: Light, Dark */}
             <div>
               <label className="block text-xs font-medium text-text-muted mb-2">Display Mode</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { mode: 'light' as AppearanceMode, label: 'Light', icon: Sun },
                   { mode: 'dark' as AppearanceMode, label: 'Dark', icon: Moon },
-                  { mode: 'system' as AppearanceMode, label: 'System', icon: Laptop },
                 ].map(({ mode, label, icon: Icon }) => (
                   <button
                     key={mode}
@@ -215,6 +272,17 @@ export const SettingsSubPanel: React.FC<SettingsSubPanelProps> = ({ open, onClos
           </div>
         </div>
       </div>
+
+      {/* Avatar Cropper Modal */}
+      <AvatarCropSheet
+        open={showCrop}
+        onClose={() => {
+          setShowCrop(false);
+          setCropSource(null);
+        }}
+        imageSrc={cropSource}
+        onSave={handleSaveCroppedAvatar}
+      />
     </div>
   );
 };

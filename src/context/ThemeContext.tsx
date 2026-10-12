@@ -5,14 +5,14 @@ import type { AppearanceMode, ColorPreset } from '@/lib/types';
 const APPEARANCE_KEY = 'pf-appearance';
 const PRESET_KEY = 'pf-color-preset';
 
-const VALID_APPEARANCE: AppearanceMode[] = ['light', 'dark', 'system'];
+const VALID_APPEARANCE: AppearanceMode[] = ['light', 'dark'];
 const VALID_PRESETS: ColorPreset[] = ['emerald', 'gold', 'rose', 'slate'];
 
 // HEX --bg-app per preset, per resolved mode (untuk <meta theme-color>).
 const THEME_BG: Record<ColorPreset, { light: string; dark: string }> = {
-  emerald: { light: '#F8FAFC', dark: '#022C22' },
+  emerald: { light: '#F8FAFC', dark: '#0F172A' },
   gold: { light: '#F8FAFC', dark: '#0F172A' },
-  rose: { light: '#F8FAFC', dark: '#4C0519' },
+  rose: { light: '#F8FAFC', dark: '#111522' },
   slate: { light: '#F8FAFC', dark: '#090D16' },
 };
 
@@ -27,15 +27,11 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getSystemDark(): boolean {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
 function initialAppearance(userAppearance?: AppearanceMode | null): AppearanceMode {
   const stored = localStorage.getItem(APPEARANCE_KEY) as AppearanceMode | null;
   if (stored && VALID_APPEARANCE.includes(stored)) return stored;
   if (userAppearance && VALID_APPEARANCE.includes(userAppearance)) return userAppearance;
-  return 'system';
+  return 'light';
 }
 
 function initialPreset(userPreset?: ColorPreset | null): ColorPreset {
@@ -54,11 +50,10 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, userAppearance, userPreset }: ThemeProviderProps) {
   const [appearanceMode, setAppearanceModeState] = useState<AppearanceMode>(() => initialAppearance(userAppearance));
   const [colorPreset, setColorPresetState] = useState<ColorPreset>(() => initialPreset(userPreset));
-  const [systemDark, setSystemDark] = useState<boolean>(() => getSystemDark());
 
   // Track preferensi dari Supabase; tanpa override bila user sudah pilih manual di localStorage
   useEffect(() => {
-    if (userAppearance && !localStorage.getItem(APPEARANCE_KEY) && userAppearance !== appearanceMode) {
+    if (userAppearance && !localStorage.getItem(APPEARANCE_KEY) && userAppearance !== appearanceMode && VALID_APPEARANCE.includes(userAppearance)) {
       setAppearanceModeState(userAppearance);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,26 +66,16 @@ export function ThemeProvider({ children, userAppearance, userPreset }: ThemePro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPreset]);
 
-  // Watch OS color scheme real-time (efektif saat appearanceMode === 'system')
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
   // Apply data-mode + data-preset di <html>
   useEffect(() => {
     document.documentElement.dataset.mode = appearanceMode;
     document.documentElement.dataset.preset = colorPreset;
   }, [appearanceMode, colorPreset]);
 
-  const resolvedTheme: 'light' | 'dark' =
-    appearanceMode === 'system' ? (systemDark ? 'dark' : 'light') : appearanceMode;
+  const resolvedTheme: 'light' | 'dark' = appearanceMode;
 
   // Update <meta name="theme-color"> mengikuti --bg-app aktif
   useEffect(() => {
-    setSystemDark(getSystemDark());
     const color = THEME_BG[colorPreset][resolvedTheme];
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (!meta) {
